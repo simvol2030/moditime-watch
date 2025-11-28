@@ -5,6 +5,9 @@ import { setupAdmin } from './admin';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy for correct HTTPS detection behind Nginx
+app.set('trust proxy', 1);
+
 // Basic API route (before AdminJS middleware)
 app.get('/', (req, res) => {
 	res.json({
