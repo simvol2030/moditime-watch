@@ -669,7 +669,6 @@ export async function setupAdmin() {
 		branding: {
 			companyName: 'Moditimewatch Admin',
 			withMadeWithLove: false,
-			softwareBrothers: false,
 			logo: false,
 			favicon: 'https://cdn-icons-png.flaticon.com/512/2972/2972531.png'
 		},
