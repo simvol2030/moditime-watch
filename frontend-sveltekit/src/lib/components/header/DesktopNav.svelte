@@ -5,7 +5,8 @@
 	let { items = [] }: { items: NavigationLink[] } = $props();
 
 	let navElement: HTMLElement | null = $state(null);
-	let itemElements: (HTMLElement | null)[] = $state([]);
+	// FIX: Use a Map for element references instead of sparse array
+	let itemElementsMap = $state<Map<number, HTMLElement>>(new Map());
 	// ИСПРАВЛЕНИЕ: splitIndex управляет какие элементы показывать
 	// -1 означает показывать все (по умолчанию для SSR)
 	let splitIndex = $state(-1);
@@ -20,6 +21,16 @@
 	// Computed: overflow items (все после splitIndex)
 	let overflowItems = $derived(splitIndex === -1 ? [] : items.slice(splitIndex));
 
+	// Svelte action to set element reference
+	function setItemElement(el: HTMLElement, index: number) {
+		itemElementsMap.set(index, el);
+		return {
+			destroy() {
+				itemElementsMap.delete(index);
+			}
+		};
+	}
+
 	// Update navigation items based on available space
 	async function updateNavItems() {
 		if (!navElement || !mounted) return;
@@ -32,14 +43,15 @@
 		let currentWidth = 0;
 		let newSplitIndex = -1;
 
-		itemElements.forEach((el, index) => {
-			if (!el || newSplitIndex !== -1) return;
+		for (let index = 0; index < items.length; index++) {
+			const el = itemElementsMap.get(index);
+			if (!el || newSplitIndex !== -1) continue;
 			currentWidth += el.offsetWidth;
 
 			if (currentWidth > containerWidth - OVERFLOW_BTN_WIDTH) {
 				newSplitIndex = index;
 			}
-		});
+		}
 
 		splitIndex = newSplitIndex;
 	}
@@ -108,7 +120,7 @@
 			<li
 				class="desktop-nav__item"
 				class:desktop-nav__item--dropdown={item.submenu}
-				bind:this={itemElements[index]}
+				use:setItemElement={index}
 			>
 				{#if item.submenu}
 					<button
