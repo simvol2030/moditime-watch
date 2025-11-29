@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { setupAdmin } from './admin';
 
 const app = express();
@@ -7,6 +8,34 @@ const PORT = process.env.PORT || 3000;
 
 // Trust proxy for correct HTTPS detection behind Nginx
 app.set('trust proxy', 1);
+
+// ============================================
+// RATE LIMITING
+// ============================================
+
+// General API rate limiter: 100 requests per minute per IP
+const generalLimiter = rateLimit({
+	windowMs: 60 * 1000, // 1 minute
+	max: 100,
+	standardHeaders: true,
+	legacyHeaders: false,
+	message: { error: 'Too many requests, please try again later' },
+	skip: (req) => req.path.startsWith('/admin/frontend-assets') // Skip static assets
+});
+
+// Stricter rate limiter for authentication: 5 attempts per 15 minutes
+const authLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 5,
+	standardHeaders: true,
+	legacyHeaders: false,
+	message: { error: 'Too many login attempts, please try again after 15 minutes' },
+	skipSuccessfulRequests: true // Only count failed attempts
+});
+
+// Apply rate limiting
+app.use(generalLimiter);
+app.use('/admin/login', authLimiter);
 
 // Basic API route (before AdminJS middleware)
 app.get('/', (req, res) => {
