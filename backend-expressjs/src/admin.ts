@@ -2,6 +2,7 @@ import AdminJS, { ComponentLoader } from 'adminjs';
 import AdminJSExpress from '@adminjs/express';
 import * as AdminJSSequelize from '@adminjs/sequelize';
 import path from 'path';
+import bcrypt from 'bcryptjs';
 
 // Import all models
 import {
@@ -54,14 +55,35 @@ AdminJS.registerAdapter({
 	Database: AdminJSSequelize.Database
 });
 
-// Authentication function - checks against Admin table
+// Authentication function - checks against Admin table with bcrypt
 const authenticate = async (email: string, password: string) => {
 	console.log('Login attempt:', { email });
 
 	try {
 		const admin = await Admin.findOne({ where: { email } });
 
-		if (admin && admin.password === password) {
+		if (!admin) {
+			console.log('Authentication failed: user not found');
+			return null;
+		}
+
+		// Check if password is hashed (bcrypt hashes start with $2a$ or $2b$)
+		const isHashed = admin.password.startsWith('$2a$') || admin.password.startsWith('$2b$');
+
+		let isValid = false;
+		if (isHashed) {
+			// Compare with bcrypt
+			isValid = await bcrypt.compare(password, admin.password);
+		} else {
+			// Legacy plaintext comparison (for migration period only)
+			// TODO: Remove after all passwords are migrated
+			isValid = admin.password === password;
+			if (isValid) {
+				console.warn('⚠️  WARNING: Admin using plaintext password. Please update password.');
+			}
+		}
+
+		if (isValid) {
 			console.log('Authentication successful - Role:', admin.role);
 			return {
 				id: admin.id,
@@ -71,7 +93,7 @@ const authenticate = async (email: string, password: string) => {
 			};
 		}
 
-		console.log('Authentication failed');
+		console.log('Authentication failed: invalid password');
 		return null;
 	} catch (error) {
 		console.error('Authentication error:', error);
@@ -636,8 +658,32 @@ export async function setupAdmin() {
 						}
 					},
 					actions: {
-						new: { isAccessible: isSuperAdmin },
-						edit: { isAccessible: isSuperAdmin },
+						new: {
+							isAccessible: isSuperAdmin,
+							before: async (request: any) => {
+								// Hash password before creating admin
+								if (request.payload?.password) {
+									request.payload.password = await bcrypt.hash(request.payload.password, 10);
+								}
+								return request;
+							}
+						},
+						edit: {
+							isAccessible: isSuperAdmin,
+							before: async (request: any) => {
+								// Hash password only if it was changed (not empty)
+								if (request.payload?.password && request.payload.password.length > 0) {
+									// Don't re-hash if already hashed
+									if (!request.payload.password.startsWith('$2a$') && !request.payload.password.startsWith('$2b$')) {
+										request.payload.password = await bcrypt.hash(request.payload.password, 10);
+									}
+								} else {
+									// If password field is empty, remove it from payload to keep existing password
+									delete request.payload?.password;
+								}
+								return request;
+							}
+						},
 						delete: { isAccessible: isSuperAdmin },
 						bulkDelete: { isAccessible: isSuperAdmin }
 					}

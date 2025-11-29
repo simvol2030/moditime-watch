@@ -1,5 +1,6 @@
 import { Sequelize, DataTypes, Model, Optional } from 'sequelize';
 import { join } from 'path';
+import bcrypt from 'bcryptjs';
 
 // Path to the shared database
 const DB_PATH = join(__dirname, '..', '..', 'data', 'db', 'sqlite', 'app.db');
@@ -1045,13 +1046,24 @@ export async function initializeAdmins() {
 
 		const adminCount = await Admin.count();
 		if (adminCount === 0) {
+			// Get credentials from environment or use defaults (for development only!)
+			const email = process.env.ADMIN_EMAIL || 'admin@example.com';
+			const plainPassword = process.env.ADMIN_PASSWORD || 'admin123';
+
+			// Hash the password before storing
+			const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
 			await Admin.create({
-				email: process.env.ADMIN_EMAIL || 'admin@example.com',
-				password: process.env.ADMIN_PASSWORD || 'admin123',
+				email,
+				password: hashedPassword,
 				role: 'super-admin',
 				name: 'Super Admin'
 			});
-			console.log('✅ Default super-admin created');
+			console.log('✅ Default super-admin created with hashed password');
+
+			if (email === 'admin@example.com' || plainPassword === 'admin123') {
+				console.warn('⚠️  WARNING: Using default admin credentials. Change them in production!');
+			}
 		}
 	} catch (error) {
 		console.error('Error initializing admins:', error);
