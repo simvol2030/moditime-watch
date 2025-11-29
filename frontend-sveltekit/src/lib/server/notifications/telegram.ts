@@ -77,20 +77,18 @@ ${itemsList}
 }
 
 /**
- * Send order notification to Telegram
- *
- * @returns true if message was sent (or mock logged), false on error
+ * Send message to Telegram with retry logic
  */
-export async function sendTelegramNotification(order: OrderData): Promise<boolean> {
-	const botToken = env.TELEGRAM_BOT_TOKEN;
-	const chatId = env.TELEGRAM_CHAT_ID;
+async function sendWithRetry(
+	botToken: string,
+	chatId: string,
+	message: string,
+	maxRetries: number = 3
+): Promise<boolean> {
+	const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
-	// Check if real credentials configured
-	if (botToken && chatId) {
+	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
-			const message = generateOrderMessage(order);
-			const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
 			const response = await fetch(url, {
 				method: 'POST',
 				headers: {
@@ -103,18 +101,52 @@ export async function sendTelegramNotification(order: OrderData): Promise<boolea
 				})
 			});
 
-			if (!response.ok) {
-				const error = await response.text();
-				console.error('[Telegram] API error:', error);
-				return false;
+			if (response.ok) {
+				return true;
 			}
 
-			console.log('[Telegram] Notification sent successfully');
-			return true;
+			const error = await response.text();
+			console.error(`[Telegram] Attempt ${attempt}/${maxRetries} failed:`, error);
+
+			// Don't retry on client errors (4xx) except rate limits (429)
+			if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+				return false;
+			}
 		} catch (error) {
-			console.error('[Telegram] Failed to send notification:', error);
-			return false;
+			console.error(`[Telegram] Attempt ${attempt}/${maxRetries} network error:`, error);
 		}
+
+		if (attempt < maxRetries) {
+			// Exponential backoff: 1s, 2s, 4s
+			const delay = Math.pow(2, attempt - 1) * 1000;
+			await new Promise((resolve) => setTimeout(resolve, delay));
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Send order notification to Telegram
+ *
+ * @returns true if message was sent (or mock logged), false on error
+ */
+export async function sendTelegramNotification(order: OrderData): Promise<boolean> {
+	const botToken = env.TELEGRAM_BOT_TOKEN;
+	const chatId = env.TELEGRAM_CHAT_ID;
+
+	// Check if real credentials configured
+	if (botToken && chatId) {
+		const message = generateOrderMessage(order);
+		const success = await sendWithRetry(botToken, chatId, message);
+
+		if (success) {
+			console.log('[Telegram] Notification sent successfully');
+		} else {
+			console.error('[Telegram] Failed to send notification after retries');
+		}
+
+		return success;
 	}
 
 	// Mock implementation - just log
@@ -144,6 +176,10 @@ export async function sendTelegramNotification(order: OrderData): Promise<boolea
 	console.log('\u{1F4B0} ИТОГО:', formatPrice(order.totalAmount));
 	console.log('='.repeat(60));
 
-	// In mock mode, always return true
+	// In mock mode, return true to not block checkout
+	console.log('');
+	console.log('⚠️  Configure TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID to send real notifications');
+	console.log('='.repeat(60));
+
 	return true;
 }
