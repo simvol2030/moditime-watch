@@ -15,25 +15,51 @@
 
 	// State for interactive catalog features
 	let viewMode = $state<'grid' | 'list'>('grid');
-	let currentSort = $state('popular');
+	let currentSort = $state(data.currentSort || 'popular');
 	let activeFilters = $state<CatalogFilter>(data.filtersContent.filters);
 	let filtersOpen = $state(false);
+
+	// Helper: Build URL with filters
+	function buildFilterUrl(filters: CatalogFilter, sort: string, pageNum: number = 1): string {
+		const params = new URLSearchParams();
+
+		if (filters.brands.length > 0) {
+			params.set('brand', filters.brands.join(','));
+		}
+		if (filters.availability.length > 0) {
+			params.set('availability', filters.availability.join(','));
+		}
+		if (filters.priceRange.min > 0) {
+			params.set('minPrice', String(filters.priceRange.min));
+		}
+		if (filters.priceRange.max > 0 && filters.priceRange.max < 10000000) {
+			params.set('maxPrice', String(filters.priceRange.max));
+		}
+		if (sort && sort !== 'popular') {
+			params.set('sort', sort);
+		}
+		if (pageNum > 1) {
+			params.set('page', String(pageNum));
+		}
+
+		const queryString = params.toString();
+		return queryString ? `/catalog?${queryString}` : '/catalog';
+	}
 
 	// Event handlers
 	function handleSortChange(value: string) {
 		currentSort = value;
-		console.log('Sort changed to:', value);
-		// TODO: Trigger data reload with new sort
+		const url = buildFilterUrl(activeFilters, value, 1);
+		goto(url, { invalidateAll: true, noScroll: true });
 	}
 
 	function handleViewChange(mode: 'grid' | 'list') {
 		viewMode = mode;
-		console.log('View mode changed to:', mode);
 	}
 
 	function handleFiltersToggle() {
 		filtersOpen = !filtersOpen;
-		document.body.style.overflow = filtersOpen ? 'hidden' : ''; // Prevent scroll on mobile
+		document.body.style.overflow = filtersOpen ? 'hidden' : '';
 	}
 
 	function handleFiltersClose() {
@@ -42,7 +68,7 @@
 	}
 
 	function handleFiltersReset() {
-		activeFilters = {
+		const emptyFilters: CatalogFilter = {
 			availability: [],
 			brands: [],
 			priceRange: { min: 0, max: 10000000 },
@@ -50,26 +76,41 @@
 			mechanisms: [],
 			scenarios: []
 		};
-		console.log('Filters reset');
-		// TODO: Trigger data reload with empty filters
+		activeFilters = emptyFilters;
+		goto('/catalog', { invalidateAll: true });
 	}
 
 	function handleFiltersApply(filters: CatalogFilter) {
 		activeFilters = filters;
 		filtersOpen = false;
 		document.body.style.overflow = '';
-		console.log('Filters applied:', filters);
-		// TODO: Trigger data reload with new filters
+		const url = buildFilterUrl(filters, currentSort, 1);
+		goto(url, { invalidateAll: true });
 	}
 
 	function handleRemoveFilter(filterId: string) {
-		console.log('Remove filter:', filterId);
-		// TODO: Remove filter from activeFilters
+		const [type, value] = filterId.split(':');
+		const newFilters = { ...activeFilters };
+
+		if (type === 'brand') {
+			newFilters.brands = newFilters.brands.filter((b) => b !== value);
+		} else if (type === 'availability') {
+			newFilters.availability = newFilters.availability.filter((a) => a !== value);
+		} else if (type === 'price') {
+			newFilters.priceRange = { min: 0, max: 10000000 };
+		}
+
+		activeFilters = newFilters;
+		const url = buildFilterUrl(newFilters, currentSort, 1);
+		goto(url, { invalidateAll: true });
 	}
 
 	function handleLoadMore() {
-		console.log('Load more products');
-		// TODO: Load next page of products
+		const nextPage = data.currentPage + 1;
+		if (nextPage <= data.totalPages) {
+			const url = buildFilterUrl(activeFilters, currentSort, nextPage);
+			goto(url, { invalidateAll: true, noScroll: true });
+		}
 	}
 
 	function handleAddToCart(product: CatalogProduct) {
