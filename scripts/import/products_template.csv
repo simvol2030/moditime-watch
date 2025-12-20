@@ -1,0 +1,13 @@
+# Moditimewatch Products Import Template
+# Version: 1.0
+#
+# Instructions:
+# - Save as UTF-8 with BOM (for Excel compatibility)
+# - Price in rubles (will be converted to kopecks)
+# - Images: comma-separated URLs
+# - Filters: comma-separated values (e.g., "gold-18k,mechanical")
+# - Leave empty cells for optional fields
+#
+slug,brand_slug,category_slug,name,sku,price,availability_status,availability_text,description,is_active,is_featured,is_new,is_limited,image_urls,specs_json,material,movement,style
+rolex-submariner-date,rolex,mens,Rolex Submariner Date,RS-126610LN,1320000,in-stock,В наличии,"Легендарные дайверские часы с датой и Cerachrom безелем",1,1,0,0,"https://example.com/img1.jpg,https://example.com/img2.jpg","{""Корпус"":[{""label"":""Материал"",""value"":""Сталь Oystersteel""},{""label"":""Диаметр"",""value"":""41 мм""}],""Механизм"":[{""label"":""Калибр"",""value"":""3235""}]}",steel,mechanical,sport
+patek-nautilus-5711,patek-philippe,mens,Patek Philippe Nautilus 5711/1A,PP-5711-1A,5200000,waitlist,Лист ожидания,"Культовая модель от Джеральда Дженты в стальном исполнении",1,1,0,1,"https://example.com/nautilus.jpg","{}",steel,mechanical,classic
