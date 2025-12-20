@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { queries, db } from '$lib/server/db/database';
+import { queries, db, getFiltersWithValues, type FilterAttribute } from '$lib/server/db/database';
 import type {
 	CatalogHeroProps,
 	CatalogFiltersProps,
@@ -81,6 +81,18 @@ export const load: PageServerLoad = async ({ url }) => {
 	const featured = url.searchParams.get('featured') === '1';
 	const collection = url.searchParams.get('collection');
 
+	// Get dynamic filters from database (early, for URL parsing)
+	const dynamicFilters = getFiltersWithValues();
+
+	// Parse dynamic filter parameters from URL
+	const dynamicFilterValues: Record<string, string[]> = {};
+	dynamicFilters.forEach(attr => {
+		const values = url.searchParams.get(attr.slug)?.split(',').filter(v => v && /^[a-z0-9-]+$/.test(v)) || [];
+		if (values.length > 0) {
+			dynamicFilterValues[attr.slug] = values.slice(0, 10); // Limit to 10 values per filter
+		}
+	});
+
 	// Build dynamic WHERE clause
 	const conditions: string[] = ['p.is_active = 1'];
 	const params: (string | number)[] = [];
@@ -107,6 +119,27 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	if (featured) {
 		conditions.push('p.is_featured = 1');
+	}
+
+	// Add dynamic filter conditions (material, movement, style, etc.)
+	for (const [attrSlug, values] of Object.entries(dynamicFilterValues)) {
+		if (values.length > 0) {
+			const attr = dynamicFilters.find(f => f.slug === attrSlug);
+			if (attr) {
+				// Subquery: product must have at least one of the selected filter values
+				conditions.push(`
+					EXISTS (
+						SELECT 1 FROM product_filters pf
+						JOIN filter_values fv ON fv.id = pf.filter_value_id
+						JOIN filter_attributes fa ON fa.id = fv.attribute_id
+						WHERE pf.product_id = p.id
+						AND fa.slug = ?
+						AND fv.value IN (${values.map(() => '?').join(', ')})
+					)
+				`);
+				params.push(attrSlug, ...values);
+			}
+		}
 	}
 
 	// Build ORDER BY using whitelist (SQL injection safe)
@@ -208,35 +241,39 @@ export const load: PageServerLoad = async ({ url }) => {
 		{ value: 'waitlist', label: 'Лист ожидания', checked: availabilityFilter.includes('waitlist') }
 	];
 
-	const materialOptions: FilterOption[] = [
-		{ value: 'steel', label: 'Сталь', checked: false },
-		{ value: 'gold-18k', label: 'Золото 18К', checked: false },
-		{ value: 'platinum', label: 'Платина', checked: false },
-		{ value: 'titanium', label: 'Титан', checked: false }
-	];
+	// Build dynamic filter options from DB (using dynamicFilters loaded earlier)
+	const materialAttr = dynamicFilters.find(f => f.slug === 'material');
+	const materialOptions: FilterOption[] = materialAttr?.values.map(v => ({
+		value: v.value,
+		label: v.label,
+		checked: dynamicFilterValues['material']?.includes(v.value) || false,
+		count: v.product_count
+	})) || [];
 
-	const mechanismOptions: FilterOption[] = [
-		{ value: 'automatic', label: 'Автоматический', checked: false },
-		{ value: 'manual', label: 'Механический', checked: false },
-		{ value: 'quartz', label: 'Кварцевый', checked: false }
-	];
+	const mechanismAttr = dynamicFilters.find(f => f.slug === 'movement');
+	const mechanismOptions: FilterOption[] = mechanismAttr?.values.map(v => ({
+		value: v.value,
+		label: v.label,
+		checked: dynamicFilterValues['movement']?.includes(v.value) || false,
+		count: v.product_count
+	})) || [];
 
-	const scenarioOptions: FilterOption[] = [
-		{ value: 'investment', label: 'Инвестиция', checked: false },
-		{ value: 'gift', label: 'Подарок', checked: false },
-		{ value: 'daily', label: 'Ежедневные', checked: false },
-		{ value: 'sport', label: 'Спорт', checked: false },
-		{ value: 'jewelry', label: 'Ювелирные', checked: false }
-	];
+	const styleAttr = dynamicFilters.find(f => f.slug === 'style');
+	const scenarioOptions: FilterOption[] = styleAttr?.values.map(v => ({
+		value: v.value,
+		label: v.label,
+		checked: dynamicFilterValues['style']?.includes(v.value) || false,
+		count: v.product_count
+	})) || [];
 
 	// Current filter state
 	const currentFilters: CatalogFilter = {
 		availability: availabilityFilter,
 		brands: brandFilter,
 		priceRange: { min: minPrice / 100, max: maxPrice / 100 },
-		materials: [],
-		mechanisms: [],
-		scenarios: []
+		materials: dynamicFilterValues['material'] || [],
+		mechanisms: dynamicFilterValues['movement'] || [],
+		scenarios: dynamicFilterValues['style'] || []
 	};
 
 	const controlsContent = {
@@ -276,6 +313,22 @@ export const load: PageServerLoad = async ({ url }) => {
 			label: `${formatPriceShort(minPrice / 100)} — ${formatPriceShort(maxPrice / 100)}`
 		});
 	}
+
+	// Add active filters for dynamic attributes
+	(dynamicFilterValues['material'] || []).forEach(val => {
+		const opt = materialOptions.find(o => o.value === val);
+		if (opt) activeFilters.push({ id: `material:${val}`, label: opt.label });
+	});
+
+	(dynamicFilterValues['movement'] || []).forEach(val => {
+		const opt = mechanismOptions.find(o => o.value === val);
+		if (opt) activeFilters.push({ id: `movement:${val}`, label: opt.label });
+	});
+
+	(dynamicFilterValues['style'] || []).forEach(val => {
+		const opt = scenarioOptions.find(o => o.value === val);
+		if (opt) activeFilters.push({ id: `style:${val}`, label: opt.label });
+	});
 
 	return {
 		heroContent,
