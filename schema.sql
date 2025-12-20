@@ -13,16 +13,21 @@ PRAGMA foreign_keys = ON;
 -- БЛОК 1: ГЛОБАЛЬНЫЕ НАСТРОЙКИ
 -- ============================================
 
--- Общие настройки сайта
+-- Общие настройки сайта (email, telegram, seo и др.)
 CREATE TABLE IF NOT EXISTS site_config (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   key TEXT UNIQUE NOT NULL,
   value TEXT,
   type TEXT DEFAULT 'string', -- 'string', 'number', 'boolean', 'json'
+  category TEXT DEFAULT 'general', -- 'general', 'email', 'telegram', 'seo'
   description TEXT,
+  is_sensitive INTEGER DEFAULT 0, -- 1 = скрывать значение (пароли, токены)
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_site_config_category ON site_config(category);
+CREATE INDEX IF NOT EXISTS idx_site_config_key ON site_config(key);
 
 -- Навигационное меню (header + footer)
 CREATE TABLE IF NOT EXISTS navigation_items (

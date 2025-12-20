@@ -23,13 +23,15 @@ sequelize.query('PRAGMA journal_mode = WAL;').then(() => {
 // БЛОК 1: ГЛОБАЛЬНЫЕ НАСТРОЙКИ
 // ============================================
 
-// Site Config
+// Site Config (настройки сайта: email, telegram, general, seo)
 export class SiteConfig extends Model {
 	declare id: number;
 	declare key: string;
 	declare value: string | null;
 	declare type: string;
+	declare category: string;
 	declare description: string | null;
+	declare is_sensitive: number;
 	declare created_at: Date;
 	declare updated_at: Date;
 }
@@ -40,7 +42,9 @@ SiteConfig.init(
 		key: { type: DataTypes.STRING, allowNull: false, unique: true },
 		value: { type: DataTypes.TEXT },
 		type: { type: DataTypes.STRING, defaultValue: 'string' },
+		category: { type: DataTypes.STRING, defaultValue: 'general' },
 		description: { type: DataTypes.TEXT },
+		is_sensitive: { type: DataTypes.INTEGER, defaultValue: 0 },
 		created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
 		updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 	},

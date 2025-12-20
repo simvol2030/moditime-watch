@@ -229,7 +229,85 @@ export function seedDatabase() {
     insertFooterLink.run(footerServiceId.id, 'Контакты', '/contacts', 3);
     insertFooterLink.run(footerServiceId.id, 'Telegram', 'https://t.me/moditimewatch', 4);
 
-    console.log('✅ Database seeded successfully (с Hero, Experience, Navigation, Footer)');
+    // Site Config (Email, Telegram, General settings)
+    const insertConfig = db.prepare('INSERT OR IGNORE INTO site_config (key, value, type, category, description, is_sensitive) VALUES (?, ?, ?, ?, ?, ?)');
+
+    // Email settings
+    insertConfig.run('email_provider', 'smtp', 'string', 'email', 'Провайдер: smtp, sendgrid, mailgun', 0);
+    insertConfig.run('smtp_host', '', 'string', 'email', 'SMTP сервер', 0);
+    insertConfig.run('smtp_port', '587', 'number', 'email', 'SMTP порт', 0);
+    insertConfig.run('smtp_user', '', 'string', 'email', 'SMTP пользователь', 0);
+    insertConfig.run('smtp_password', '', 'string', 'email', 'SMTP пароль', 1);
+    insertConfig.run('smtp_from_email', 'orders@moditimewatch.ru', 'string', 'email', 'Email отправителя', 0);
+    insertConfig.run('smtp_from_name', 'Moditimewatch', 'string', 'email', 'Имя отправителя', 0);
+    insertConfig.run('email_enabled', 'false', 'boolean', 'email', 'Включить email уведомления', 0);
+
+    // Telegram settings
+    insertConfig.run('telegram_bot_token', '', 'string', 'telegram', 'Токен бота от @BotFather', 1);
+    insertConfig.run('telegram_channel_id', '', 'string', 'telegram', 'ID канала для уведомлений', 0);
+    insertConfig.run('telegram_enabled', 'false', 'boolean', 'telegram', 'Включить Telegram уведомления', 0);
+
+    // General settings
+    insertConfig.run('site_name', 'Moditimewatch', 'string', 'general', 'Название сайта', 0);
+    insertConfig.run('site_url', 'https://moditimewatch.ru', 'string', 'general', 'URL основного сайта', 0);
+    insertConfig.run('admin_email', 'admin@moditimewatch.ru', 'string', 'general', 'Email администратора', 0);
+
+    // Filter Attributes
+    const insertFilterAttr = db.prepare('INSERT INTO filter_attributes (slug, name, type, is_active, position) VALUES (?, ?, ?, ?, ?)');
+    insertFilterAttr.run('material', 'Материал корпуса', 'checkbox', 1, 1);
+    insertFilterAttr.run('movement', 'Механизм', 'checkbox', 1, 2);
+    insertFilterAttr.run('style', 'Стиль', 'checkbox', 1, 3);
+    insertFilterAttr.run('water_resistance', 'Водозащита', 'checkbox', 1, 4);
+
+    // Filter Values
+    const insertFilterVal = db.prepare('INSERT INTO filter_values (attribute_id, value, label, position) VALUES (?, ?, ?, ?)');
+
+    // Material values (attribute_id = 1)
+    insertFilterVal.run(1, 'steel', 'Сталь', 1);
+    insertFilterVal.run(1, 'gold', 'Золото', 2);
+    insertFilterVal.run(1, 'titanium', 'Титан', 3);
+    insertFilterVal.run(1, 'ceramic', 'Керамика', 4);
+
+    // Movement values (attribute_id = 2)
+    insertFilterVal.run(2, 'automatic', 'Автоматический', 1);
+    insertFilterVal.run(2, 'manual', 'Ручной завод', 2);
+    insertFilterVal.run(2, 'quartz', 'Кварцевый', 3);
+
+    // Style values (attribute_id = 3)
+    insertFilterVal.run(3, 'classic', 'Классика', 1);
+    insertFilterVal.run(3, 'sport', 'Спорт', 2);
+    insertFilterVal.run(3, 'luxury', 'Люкс', 3);
+    insertFilterVal.run(3, 'casual', 'Повседневные', 4);
+
+    // Water resistance values (attribute_id = 4)
+    insertFilterVal.run(4, '30m', '30 м', 1);
+    insertFilterVal.run(4, '50m', '50 м', 2);
+    insertFilterVal.run(4, '100m', '100 м', 3);
+    insertFilterVal.run(4, '200m', '200 м', 4);
+    insertFilterVal.run(4, '300m', '300 м+', 5);
+
+    // Link products to filter values
+    const insertProductFilter = db.prepare('INSERT INTO product_filters (product_id, filter_value_id) VALUES (?, ?)');
+
+    // Rolex Submariner: steel, automatic, sport, 300m
+    insertProductFilter.run(1, 1);  // steel
+    insertProductFilter.run(1, 5);  // automatic
+    insertProductFilter.run(1, 10); // sport
+    insertProductFilter.run(1, 17); // 300m
+
+    // Patek Philippe Nautilus: steel, automatic, luxury
+    insertProductFilter.run(2, 1);  // steel
+    insertProductFilter.run(2, 5);  // automatic
+    insertProductFilter.run(2, 11); // luxury
+    insertProductFilter.run(2, 15); // 100m
+
+    // Omega Speedmaster: steel, manual, sport
+    insertProductFilter.run(3, 1);  // steel
+    insertProductFilter.run(3, 6);  // manual
+    insertProductFilter.run(3, 10); // sport
+    insertProductFilter.run(3, 14); // 50m
+
+    console.log('✅ Database seeded successfully (с Hero, Experience, Navigation, Footer, Config, Filters)');
   });
   seed();
 }
@@ -325,12 +403,98 @@ export const queries = {
 
   // Static pages
   getPageBySlug: db.prepare('SELECT * FROM pages WHERE slug = ? AND is_published = 1'),
-  getSeoMetaBySlug: db.prepare('SELECT * FROM seo_meta WHERE page_type = ? AND slug = ?')
+  getSeoMetaBySlug: db.prepare('SELECT * FROM seo_meta WHERE page_type = ? AND slug = ?'),
+
+  // Site Config (настройки сайта)
+  getConfigByKey: db.prepare('SELECT * FROM site_config WHERE key = ?'),
+  getConfigByCategory: db.prepare('SELECT * FROM site_config WHERE category = ?'),
+  getAllConfig: db.prepare('SELECT * FROM site_config ORDER BY category, key'),
+  updateConfig: db.prepare('UPDATE site_config SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?'),
+
+  // Filter Attributes & Values
+  getFilterAttributes: db.prepare(`
+    SELECT fa.id, fa.slug, fa.name, fa.type, fa.position
+    FROM filter_attributes fa
+    WHERE fa.is_active = 1
+    ORDER BY fa.position
+  `),
+  getFilterValues: db.prepare(`
+    SELECT fv.id, fv.attribute_id, fv.value, fv.label, fv.position
+    FROM filter_values fv
+    WHERE fv.attribute_id = ?
+    ORDER BY fv.position
+  `),
+  getFilterValuesWithCounts: db.prepare(`
+    SELECT fv.id, fv.attribute_id, fv.value, fv.label, fv.position,
+           COUNT(pf.product_id) as product_count
+    FROM filter_values fv
+    LEFT JOIN product_filters pf ON pf.filter_value_id = fv.id
+    LEFT JOIN products p ON p.id = pf.product_id AND p.is_active = 1
+    WHERE fv.attribute_id = ?
+    GROUP BY fv.id
+    ORDER BY fv.position
+  `)
 };
 
 // Utility
 export function formatPrice(kopecks: number): string {
   return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(kopecks / 100);
+}
+
+// Settings helpers
+export interface SiteConfigRow {
+  id: number;
+  key: string;
+  value: string | null;
+  type: string;
+  category: string;
+  description: string | null;
+  is_sensitive: number;
+}
+
+export function getSettings(category: string): Record<string, string> {
+  const rows = queries.getConfigByCategory.all(category) as SiteConfigRow[];
+  const settings: Record<string, string> = {};
+  for (const row of rows) {
+    settings[row.key] = row.value || '';
+  }
+  return settings;
+}
+
+export function getSetting(key: string): string | null {
+  const row = queries.getConfigByKey.get(key) as SiteConfigRow | undefined;
+  return row?.value || null;
+}
+
+export function updateSetting(key: string, value: string): void {
+  queries.updateConfig.run(value, key);
+}
+
+// Filter helpers
+export interface FilterAttribute {
+  id: number;
+  slug: string;
+  name: string;
+  type: string;
+  position: number;
+  values: FilterValue[];
+}
+
+export interface FilterValue {
+  id: number;
+  attribute_id: number;
+  value: string;
+  label: string;
+  position: number;
+  product_count?: number;
+}
+
+export function getFiltersWithValues(): FilterAttribute[] {
+  const attributes = queries.getFilterAttributes.all() as Omit<FilterAttribute, 'values'>[];
+  return attributes.map(attr => ({
+    ...attr,
+    values: queries.getFilterValuesWithCounts.all(attr.id) as FilterValue[]
+  }));
 }
 
 export function getProductComplete(slug: string): (Product & { brand_name: string; images: any[]; specs: any }) | null {
