@@ -5,6 +5,10 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			csrfToken?: string;
+			/** City slug when accessed via subdomain (e.g., "moscow" for moscow.moditimewatch.ru) */
+			citySlug?: string;
+			/** True if page is accessed via city subdomain */
+			isSubdomain?: boolean;
 		}
 		// interface PageData {}
 		// interface PageState {}

@@ -3,7 +3,112 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { randomBytes } from 'crypto';
 
 // Импортируем database для инициализации при старте сервера
-import '$lib/server/db/database';
+import { db } from '$lib/server/db/database';
+
+// Cache city slugs in memory for fast subdomain lookup
+let citySlugCache: Set<string> | null = null;
+const CITY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+let cityCacheTime = 0;
+
+function getCitySlugCache(): Set<string> {
+	const now = Date.now();
+	if (!citySlugCache || now - cityCacheTime > CITY_CACHE_TTL) {
+		try {
+			const cities = db.prepare('SELECT slug FROM cities WHERE is_active = 1').all() as { slug: string }[];
+			citySlugCache = new Set(cities.map(c => c.slug));
+			cityCacheTime = now;
+		} catch {
+			citySlugCache = new Set();
+		}
+	}
+	return citySlugCache;
+}
+
+/**
+ * Subdomain Routing Hook
+ * Handles city subdomains (moscow.moditimewatch.ru → /city/moscow)
+ *
+ * Configured domains (from environment or defaults):
+ * - moditimewatch.ru (production)
+ * - moditimewatch.com (alias)
+ * - localhost (development)
+ *
+ * Any subdomain that matches an active city slug is rewritten to /city/{slug}
+ */
+const subdomainRouting: Handle = async ({ event, resolve }) => {
+	const host = event.request.headers.get('host') || '';
+
+	// Extract subdomain from host
+	// moscow.moditimewatch.ru → subdomain = "moscow"
+	// www.moditimewatch.ru → subdomain = "www"
+	// moditimewatch.ru → subdomain = ""
+	// localhost:5173 → subdomain = ""
+
+	// Main domains to recognize
+	const mainDomains = ['moditimewatch.ru', 'moditimewatch.com', 'localhost'];
+
+	let subdomain = '';
+
+	for (const domain of mainDomains) {
+		// Check if host ends with or equals the main domain
+		if (host === domain || host.startsWith(domain + ':')) {
+			// No subdomain
+			subdomain = '';
+			break;
+		}
+
+		// Check for subdomain pattern: {subdomain}.{domain}
+		const domainWithDot = '.' + domain;
+		if (host.includes(domainWithDot)) {
+			const parts = host.split(domainWithDot);
+			if (parts.length > 0 && parts[0]) {
+				subdomain = parts[0].split('.').pop() || ''; // Get the last subdomain part
+				break;
+			}
+		}
+	}
+
+	// Skip common subdomains that are not city subdomains
+	const ignoredSubdomains = new Set(['www', 'admin', 'api', 'cdn', 'static', 'assets', 'mail', 'smtp']);
+	if (subdomain && ignoredSubdomains.has(subdomain)) {
+		subdomain = '';
+	}
+
+	// If we have a subdomain, check if it's a valid city
+	if (subdomain) {
+		const validCities = getCitySlugCache();
+
+		if (validCities.has(subdomain)) {
+			// Store city slug in locals for use in pages
+			event.locals.citySlug = subdomain;
+			event.locals.isSubdomain = true;
+
+			// If user is on root path of subdomain, redirect/rewrite to city page
+			const pathname = event.url.pathname;
+
+			// Rewrite root to city page
+			if (pathname === '/' || pathname === '') {
+				// Internal rewrite to /city/{slug}
+				const url = new URL(event.url);
+				url.pathname = `/city/${subdomain}`;
+				event.url = url;
+
+				// Also update the request URL for downstream handlers
+				Object.defineProperty(event, 'url', { value: url, writable: false });
+			}
+
+			// Handle city article paths: /article/{slug} → /city/{city}/article/{slug}
+			if (pathname.startsWith('/article/')) {
+				const url = new URL(event.url);
+				url.pathname = `/city/${subdomain}${pathname}`;
+				event.url = url;
+				Object.defineProperty(event, 'url', { value: url, writable: false });
+			}
+		}
+	}
+
+	return resolve(event);
+};
 
 /**
  * Security Headers Hook
@@ -148,6 +253,7 @@ const requestLogger: Handle = async ({ event, resolve }) => {
  */
 export const handle = sequence(
 	requestLogger,      // 1. Логирование (первым, чтобы замерить всё)
-	securityHeaders,    // 2. Security headers (рано, чтобы защитить всё)
-	csrfProtection      // 3. CSRF защита (после headers)
+	subdomainRouting,   // 2. Subdomain routing (до security, чтобы правильно обработать URL)
+	securityHeaders,    // 3. Security headers (рано, чтобы защитить всё)
+	csrfProtection      // 4. CSRF защита (после headers)
 );

@@ -377,6 +377,8 @@ export const queries = {
   getCityBySlug: db.prepare('SELECT * FROM cities WHERE slug = ? AND is_active = 1'),
   getAllCities: db.prepare('SELECT * FROM cities WHERE is_active = 1 ORDER BY priority DESC, name'),
   getCityArticles: db.prepare('SELECT * FROM city_articles WHERE city_id = ? AND is_published = 1 ORDER BY published_at DESC LIMIT ? OFFSET ?'),
+  getCityArticleBySlug: db.prepare('SELECT ca.*, c.slug as city_slug, c.name as city_name FROM city_articles ca JOIN cities c ON c.id = ca.city_id WHERE ca.city_id = ? AND ca.slug = ? AND ca.is_published = 1'),
+  getCityArticleBySlugs: db.prepare('SELECT ca.*, c.slug as city_slug, c.name as city_name, c.name_prepositional FROM city_articles ca JOIN cities c ON c.id = ca.city_id WHERE c.slug = ? AND ca.slug = ? AND ca.is_published = 1 AND c.is_active = 1'),
 
   // Layout data (для всех страниц!)
   getNavigationItems: db.prepare(`
