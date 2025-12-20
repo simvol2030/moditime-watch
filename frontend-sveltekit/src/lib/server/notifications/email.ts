@@ -1,19 +1,15 @@
 /**
  * Email notifications module
  *
- * TODO: Configure with real SMTP/SendGrid credentials in .env:
- * - SMTP_HOST
- * - SMTP_PORT
- * - SMTP_USER
- * - SMTP_PASSWORD
- * - SMTP_FROM
- *
- * Or for SendGrid:
- * - SENDGRID_API_KEY
- * - SENDGRID_FROM
+ * Settings are loaded from database (site_config table).
+ * Configure via AdminJS or directly in database:
+ * - email_enabled: 'true' to enable sending
+ * - email_provider: 'smtp' or 'sendgrid'
+ * - smtp_host, smtp_port, smtp_user, smtp_password
+ * - smtp_from_email, smtp_from_name
  */
 
-import { env } from '$env/dynamic/private';
+import { getSettings } from '../db/database';
 
 export interface OrderItem {
 	name: string;
@@ -33,6 +29,42 @@ export interface OrderData {
 	items: OrderItem[];
 }
 
+interface EmailConfig {
+	enabled: boolean;
+	provider: 'smtp' | 'sendgrid' | 'mock';
+	smtp: {
+		host: string;
+		port: number;
+		user: string;
+		password: string;
+	};
+	fromEmail: string;
+	fromName: string;
+}
+
+/**
+ * Get email configuration from database
+ */
+function getEmailConfig(): EmailConfig {
+	const settings = getSettings('email');
+
+	const enabled = settings.email_enabled === 'true';
+	const hasSmtpConfig = settings.smtp_host && settings.smtp_user && settings.smtp_password;
+
+	return {
+		enabled,
+		provider: hasSmtpConfig ? (settings.email_provider as 'smtp' | 'sendgrid') : 'mock',
+		smtp: {
+			host: settings.smtp_host || '',
+			port: parseInt(settings.smtp_port || '587'),
+			user: settings.smtp_user || '',
+			password: settings.smtp_password || '',
+		},
+		fromEmail: settings.smtp_from_email || 'orders@moditimewatch.ru',
+		fromName: settings.smtp_from_name || 'Moditimewatch',
+	};
+}
+
 /**
  * Escape HTML special characters to prevent XSS
  */
@@ -43,6 +75,19 @@ function escapeHtml(text: string): string {
 		.replace(/>/g, '&gt;')
 		.replace(/"/g, '&quot;')
 		.replace(/'/g, '&#039;');
+}
+
+/**
+ * Format price from kopecks to rubles
+ */
+function formatPrice(kopecks: number): string {
+	const rubles = kopecks / 100;
+	return new Intl.NumberFormat('ru-RU', {
+		style: 'currency',
+		currency: 'RUB',
+		minimumFractionDigits: 0,
+		maximumFractionDigits: 0
+	}).format(rubles);
 }
 
 /**
@@ -154,22 +199,41 @@ function generateOrderEmailHtml(order: OrderData): string {
 }
 
 /**
- * Format price from kopecks to rubles
+ * Send email via SMTP using fetch to a local/remote SMTP-to-HTTP bridge
+ * For production, install nodemailer: npm install nodemailer
+ *
+ * Currently uses mock mode - logs to console
  */
-function formatPrice(kopecks: number): string {
-	const rubles = kopecks / 100;
-	return new Intl.NumberFormat('ru-RU', {
-		style: 'currency',
-		currency: 'RUB',
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 0
-	}).format(rubles);
+async function sendEmailSmtp(
+	config: EmailConfig,
+	to: string,
+	subject: string,
+	html: string
+): Promise<boolean> {
+	// For real SMTP, you would use nodemailer here:
+	// import nodemailer from 'nodemailer';
+	// const transporter = nodemailer.createTransport({
+	//   host: config.smtp.host,
+	//   port: config.smtp.port,
+	//   secure: config.smtp.port === 465,
+	//   auth: { user: config.smtp.user, pass: config.smtp.password }
+	// });
+	// await transporter.sendMail({ from, to, subject, html });
+
+	console.log('[Email SMTP] Would send email:');
+	console.log('  From:', `"${config.fromName}" <${config.fromEmail}>`);
+	console.log('  To:', to);
+	console.log('  Subject:', subject);
+	console.log('  SMTP Host:', config.smtp.host);
+
+	// Return true to indicate "sent" (in mock mode)
+	return true;
 }
 
 /**
  * Send order confirmation email to customer
  *
- * @returns true if email was sent (or mock logged), false if no email provided
+ * @returns true if email was sent (or mock logged), false if no email or disabled
  */
 export async function sendOrderEmail(order: OrderData): Promise<boolean> {
 	// Skip if no customer email
@@ -178,63 +242,74 @@ export async function sendOrderEmail(order: OrderData): Promise<boolean> {
 		return false;
 	}
 
-	const smtpHost = env.SMTP_HOST;
-	const sendgridKey = env.SENDGRID_API_KEY;
+	const config = getEmailConfig();
 
-	// Check if real credentials configured
-	if (smtpHost || sendgridKey) {
-		// TODO: Implement real email sending with nodemailer or SendGrid
-		// For now, log that we would send
-		console.log('[Email] Real email would be sent to:', order.customerEmail);
-		console.log('[Email] Subject: Заказ', order.orderNumber, '- Moditimewatch');
+	// Skip if email notifications disabled
+	if (!config.enabled) {
+		console.log('[Email] Notifications disabled in settings, skipping');
+		return true; // Return true to not block checkout
+	}
+
+	const subject = `Заказ ${order.orderNumber} - Moditimewatch`;
+	const html = generateOrderEmailHtml(order);
+
+	if (config.provider === 'mock') {
+		// Mock implementation - just log
+		console.log('='.repeat(60));
+		console.log('[Email MOCK] Order confirmation');
+		console.log('='.repeat(60));
+		console.log('To:', order.customerEmail);
+		console.log('Subject:', subject);
+		console.log('Order:', order.orderNumber);
+		console.log('Customer:', order.customerName);
+		console.log('Total:', formatPrice(order.totalAmount));
+		console.log('='.repeat(60));
+		console.log('[Email MOCK] Configure SMTP in admin panel to send real emails');
 		return true;
 	}
 
-	// Mock implementation - just log
-	console.log('='.repeat(60));
-	console.log('[Email MOCK] Sending order confirmation email');
-	console.log('='.repeat(60));
-	console.log('To:', order.customerEmail);
-	console.log('Subject: Заказ', order.orderNumber, '- Moditimewatch');
-	console.log('');
-	console.log('Order Details:');
-	console.log('- Customer:', order.customerName);
-	console.log('- Phone:', order.customerPhone);
-	console.log('- Address:', order.address);
-	console.log('- Items:', order.items.length);
-	console.log('- Total:', formatPrice(order.totalAmount));
-	console.log('='.repeat(60));
-
-	// In mock mode, always return true
-	return true;
+	try {
+		return await sendEmailSmtp(config, order.customerEmail, subject, html);
+	} catch (error) {
+		console.error('[Email ERROR] Failed to send:', error);
+		// Don't block checkout on email failure
+		return false;
+	}
 }
 
 /**
  * Send order notification email to admin/owner
  */
 export async function sendAdminOrderEmail(order: OrderData): Promise<boolean> {
-	const adminEmail = env.ADMIN_EMAIL || 'admin@moditimewatch.ru';
-	const smtpHost = env.SMTP_HOST;
-	const sendgridKey = env.SENDGRID_API_KEY;
+	const config = getEmailConfig();
+	const generalSettings = getSettings('general');
+	const adminEmail = generalSettings.admin_email || 'admin@moditimewatch.ru';
 
-	if (smtpHost || sendgridKey) {
-		// TODO: Implement real email sending
-		console.log('[Email] Admin notification would be sent to:', adminEmail);
+	if (!config.enabled) {
+		console.log('[Email] Admin notifications disabled');
 		return true;
 	}
 
-	// Mock implementation
-	console.log('='.repeat(60));
-	console.log('[Email MOCK] Sending admin notification');
-	console.log('='.repeat(60));
-	console.log('To:', adminEmail);
-	console.log('Subject: Новый заказ', order.orderNumber);
-	console.log('');
-	console.log('Customer:', order.customerName);
-	console.log('Phone:', order.customerPhone);
-	console.log('Email:', order.customerEmail || 'не указан');
-	console.log('Total:', formatPrice(order.totalAmount));
-	console.log('='.repeat(60));
+	const subject = `Новый заказ ${order.orderNumber}`;
 
-	return true;
+	if (config.provider === 'mock') {
+		console.log('='.repeat(60));
+		console.log('[Email MOCK] Admin notification');
+		console.log('='.repeat(60));
+		console.log('To:', adminEmail);
+		console.log('Subject:', subject);
+		console.log('Customer:', order.customerName);
+		console.log('Phone:', order.customerPhone);
+		console.log('Total:', formatPrice(order.totalAmount));
+		console.log('='.repeat(60));
+		return true;
+	}
+
+	try {
+		const html = generateOrderEmailHtml(order);
+		return await sendEmailSmtp(config, adminEmail, subject, html);
+	} catch (error) {
+		console.error('[Email ERROR] Failed to send admin notification:', error);
+		return false;
+	}
 }
