@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { Product, CatalogProduct } from '$lib/types/product';
 
+	// Default placeholder image for products without images
+	const PLACEHOLDER_IMAGE = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="360" height="440" viewBox="0 0 360 440"%3E%3Crect fill="%23f0f4f8" width="360" height="440"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%238896a6" font-family="system-ui" font-size="14"%3EФото скоро%3C/text%3E%3C/svg%3E';
+
 	// Props
 	let {
 		product,
@@ -13,6 +16,24 @@
 		onAddToCart?: () => void;
 		onViewDetails?: () => void;
 	} = $props();
+
+	// State for image loading error
+	let imageError = $state(false);
+
+	// Computed safe values with fallbacks
+	const safeImage = $derived(
+		imageError || !product.image
+			? PLACEHOLDER_IMAGE
+			: product.image
+	);
+
+	const safeBrand = $derived(product.brand || 'Бренд');
+	const safeName = $derived(product.name || 'Модель часов');
+	const safePrice = $derived(
+		typeof product.price === 'number' && !isNaN(product.price)
+			? product.price
+			: 0
+	);
 
 	// Helper to check if product is CatalogProduct
 	function isCatalogProduct(p: Product | CatalogProduct): p is CatalogProduct {
@@ -31,11 +52,22 @@
 			onViewDetails();
 		}
 	}
+
+	function handleImageError() {
+		imageError = true;
+	}
 </script>
 
 <article class="product-card {variant === 'catalog' ? 'catalog-card' : ''}">
 	<div class="product-card__media">
-		<img src={product.image} alt={`${product.brand} ${product.name}`} width="360" height="440" />
+		<img
+			src={safeImage}
+			alt={`${safeBrand} ${safeName}`}
+			width="360"
+			height="440"
+			loading="lazy"
+			onerror={handleImageError}
+		/>
 		{#if product.badge}
 			<span
 				class="product-card__badge {product.badgeType === 'gold'
@@ -48,9 +80,15 @@
 	</div>
 
 	<div class="product-card__meta">
-		<p class="product-card__brand">{product.brand}</p>
-		<h3 class="product-card__name">{product.name}</h3>
-		<p class="product-card__price">{product.price.toLocaleString('ru-RU')} ₽</p>
+		<p class="product-card__brand">{safeBrand}</p>
+		<h3 class="product-card__name">{safeName}</h3>
+		<p class="product-card__price">
+			{#if safePrice > 0}
+				{safePrice.toLocaleString('ru-RU')} ₽
+			{:else}
+				Цена по запросу
+			{/if}
+		</p>
 	</div>
 
 	<div class="product-card__cta">

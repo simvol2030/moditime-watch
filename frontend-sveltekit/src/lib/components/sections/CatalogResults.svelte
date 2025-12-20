@@ -62,16 +62,32 @@
 		{/if}
 	</div>
 
-	<div class="catalog-results__grid">
-		{#each products as product (product.id)}
-			<ProductCard
-				{product}
-				variant="catalog"
-				onAddToCart={onAddToCart ? () => onAddToCart(product) : undefined}
-				onViewDetails={onViewDetails ? () => onViewDetails(product.id) : undefined}
-			/>
-		{/each}
-	</div>
+	{#if products.length > 0}
+		<div class="catalog-results__grid">
+			{#each products as product (product.id)}
+				<ProductCard
+					{product}
+					variant="catalog"
+					onAddToCart={onAddToCart ? () => onAddToCart(product) : undefined}
+					onViewDetails={onViewDetails ? () => onViewDetails(product.id) : undefined}
+				/>
+			{/each}
+		</div>
+	{:else}
+		<div class="catalog-empty">
+			<div class="catalog-empty__icon">
+				<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+					<circle cx="11" cy="11" r="8"></circle>
+					<path d="m21 21-4.35-4.35"></path>
+				</svg>
+			</div>
+			<h3 class="catalog-empty__title">Товары не найдены</h3>
+			<p class="catalog-empty__text">
+				Попробуйте изменить параметры фильтров или сбросить их для просмотра всех товаров
+			</p>
+			<a href="/catalog" class="btn btn-primary">Сбросить фильтры</a>
+		</div>
+	{/if}
 
 	{#if currentPage < totalPages}
 		<div class="catalog-pagination">
@@ -140,6 +156,34 @@
 	/* List view */
 	.catalog-results.is-list .catalog-results__grid {
 		grid-template-columns: 1fr;
+	}
+
+	/* Empty state */
+	.catalog-empty {
+		padding: var(--space-3xl) var(--space-xl);
+		text-align: center;
+		display: grid;
+		gap: var(--space-md);
+		justify-items: center;
+		background-color: var(--color-background);
+		border-radius: var(--radius-xl);
+	}
+
+	.catalog-empty__icon {
+		color: var(--color-text-muted);
+		opacity: 0.5;
+	}
+
+	.catalog-empty__title {
+		font-size: var(--font-size-h3);
+		color: var(--color-text);
+		margin: 0;
+	}
+
+	.catalog-empty__text {
+		color: var(--color-text-muted);
+		max-width: 400px;
+		margin: 0;
 	}
 
 	/* Pagination */
