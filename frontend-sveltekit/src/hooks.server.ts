@@ -5,6 +5,29 @@ import { randomBytes } from 'crypto';
 // Импортируем database для инициализации при старте сервера
 import '$lib/server/db/database';
 
+// Reserved subdomains that should not be treated as city slugs
+const RESERVED_SUBDOMAINS = new Set(['www', 'quiz', 'admin', 'api', 'cdn', 'static', 'mail']);
+
+/**
+ * Subdomain Handler Hook
+ * Detects city subdomains like moscow.moditime-watch.ru
+ * and stores the citySlug in event.locals for personalization
+ */
+const subdomainHandler: Handle = async ({ event, resolve }) => {
+	const host = event.request.headers.get('host') || '';
+
+	// Pattern: {city}.moditime-watch.ru
+	const match = host.match(/^([a-z0-9-]+)\.moditime-watch\.ru$/);
+
+	if (match && match[1] && !RESERVED_SUBDOMAINS.has(match[1])) {
+		const citySlug = match[1];
+		// Store in locals for use in layouts and pages
+		event.locals.citySlug = citySlug;
+	}
+
+	return resolve(event);
+};
+
 /**
  * Security Headers Hook
  * Adds important security headers to all responses
@@ -147,7 +170,8 @@ const requestLogger: Handle = async ({ event, resolve }) => {
  * Комбинируем все hooks в правильном порядке
  */
 export const handle = sequence(
-	requestLogger,      // 1. Логирование (первым, чтобы замерить всё)
-	securityHeaders,    // 2. Security headers (рано, чтобы защитить всё)
-	csrfProtection      // 3. CSRF защита (после headers)
+	subdomainHandler,   // 1. Определение города по поддомену (первым!)
+	requestLogger,      // 2. Логирование (чтобы замерить всё)
+	securityHeaders,    // 3. Security headers (рано, чтобы защитить всё)
+	csrfProtection      // 4. CSRF защита (после headers)
 );
