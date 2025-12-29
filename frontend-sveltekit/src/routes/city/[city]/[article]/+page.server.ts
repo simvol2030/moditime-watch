@@ -73,30 +73,33 @@ export const load: PageServerLoad = async ({ params }) => {
 		{ label: article.title, href: `/city/${article.city_slug}/${article.slug}` }
 	];
 
-	// Build SEO props
+	// Build SEO props (title without suffix - SeoManager adds " | Moditimewatch")
 	const canonicalUrl = `https://moditime-watch.ru/city/${article.city_slug}/${article.slug}`;
-	const seo: SeoProps = {
-		title: article.meta_title || `${article.title} | Часы в ${article.name_prepositional || article.city_name} | Moditimewatch`,
-		description: article.meta_description || article.excerpt || `${article.title} - полезная информация о премиальных часах для жителей ${article.name_genitive || article.city_name}`,
-		canonical: canonicalUrl,
-		openGraph: {
-			title: article.title,
-			description: article.excerpt || undefined,
-			image: article.image_url || undefined
-		}
-	};
+	const articleImage = article.image_url || 'https://moditime-watch.ru/og-default.jpg';
 
-	// Generate JSON-LD schema
+	// Generate JSON-LD Article schema
 	const jsonLd = generateArticleSchema({
 		headline: article.title,
 		description: article.excerpt || '',
-		image: article.image_url || 'https://moditime-watch.ru/og-default.jpg',
+		image: articleImage,
 		datePublished: article.published_at || new Date().toISOString(),
 		dateModified: article.updated_at || article.published_at || new Date().toISOString(),
 		author: 'Moditimewatch',
 		publisherName: 'Moditimewatch',
 		url: canonicalUrl
 	});
+
+	const seo: SeoProps = {
+		title: article.meta_title || `${article.title} | Часы в ${article.name_prepositional || article.city_name}`,
+		description: article.meta_description || article.excerpt || `${article.title} - полезная информация о премиальных часах для жителей ${article.name_genitive || article.city_name}`,
+		canonical: canonicalUrl,
+		openGraph: {
+			title: article.title,
+			description: article.excerpt || undefined,
+			image: articleImage
+		},
+		jsonLd // Pass JSON-LD through seo prop for SeoManager to render
+	};
 
 	return {
 		article: {
@@ -121,7 +124,6 @@ export const load: PageServerLoad = async ({ params }) => {
 			namePrepositional: article.name_prepositional || article.city_name
 		},
 		seo,
-		jsonLd,
 		breadcrumbs,
 		relatedArticles
 	};

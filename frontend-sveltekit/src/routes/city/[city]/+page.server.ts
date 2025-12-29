@@ -69,14 +69,14 @@ export const load: PageServerLoad = async ({ params }) => {
 	// Get SEO meta (optional)
 	const seoMeta = queries.getSeoMetaBySlug.get('city', citySlug) as SeoMetaRow | undefined;
 
-	// Build SEO props
+	// Build SEO props (title without suffix - SeoManager adds " | Moditimewatch")
 	const seo: SeoProps = {
 		title:
-			seoMeta?.title || `Купить швейцарские часы в ${city.name_prepositional || city.name} | Moditimewatch`,
+			seoMeta?.title || `Купить швейцарские часы в ${city.name_prepositional || city.name}`,
 		description:
 			seoMeta?.description ||
 			`Оригинальные швейцарские часы с доставкой в ${city.name}. Консьерж-сервис, примерка перед покупкой, официальная гарантия.`,
-		canonical: seoMeta?.canonical_url || `https://moditimewatch.com/city/${city.slug}`,
+		canonical: seoMeta?.canonical_url || `https://moditime-watch.ru/city/${city.slug}`,
 		openGraph: {
 			title: seoMeta?.og_title || `Премиальные часы в ${city.name_prepositional || city.name}`,
 			description:
