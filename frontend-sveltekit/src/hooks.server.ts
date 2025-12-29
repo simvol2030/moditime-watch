@@ -1,4 +1,4 @@
-import type { Handle } from '@sveltejs/kit';
+import { type Handle, redirect } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { randomBytes } from 'crypto';
 
@@ -11,7 +11,8 @@ const RESERVED_SUBDOMAINS = new Set(['www', 'quiz', 'admin', 'api', 'cdn', 'stat
 /**
  * Subdomain Handler Hook
  * Detects city subdomains like moscow.moditime-watch.ru
- * and rewrites URL to /city/{slug} internally (no visible redirect)
+ * Sets citySlug in locals for use in layouts and pages
+ * Note: URL rerouting is handled by reroute hook in hooks.ts
  */
 const subdomainHandler: Handle = async ({ event, resolve }) => {
 	const host = event.request.headers.get('host') || '';
@@ -24,22 +25,6 @@ const subdomainHandler: Handle = async ({ event, resolve }) => {
 
 		// Store in locals for use in layouts and pages
 		event.locals.citySlug = citySlug;
-
-		// Rewrite homepage to city page (internal, no visible redirect)
-		if (event.url.pathname === '/') {
-			// Create new URL with /city/{slug} path
-			const newUrl = new URL(event.url);
-			newUrl.pathname = `/city/${citySlug}`;
-
-			// Create new request with rewritten URL
-			const newRequest = new Request(newUrl.toString(), event.request);
-
-			// Update event.url for routing
-			Object.defineProperty(event, 'url', {
-				value: newUrl,
-				writable: false
-			});
-		}
 	}
 
 	return resolve(event);
