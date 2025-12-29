@@ -5,10 +5,6 @@
 	let { data }: { data: PageData } = $props();
 </script>
 
-<svelte:head>
-	{@html `<script type="application/ld+json">${JSON.stringify(data.jsonLd)}</script>`}
-</svelte:head>
-
 <SeoManager seo={data.seo} />
 
 <main class="page-main article-page">

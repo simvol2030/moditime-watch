@@ -12,13 +12,21 @@
 
 	// Default values
 	const siteName = 'Moditimewatch';
-	const defaultImage = '/og-image.jpg';
+	const siteUrl = 'https://moditime-watch.ru';
+	const defaultImage = `${siteUrl}/og-image.jpg`;
+
+	// Convert relative URLs to absolute
+	function toAbsoluteUrl(url: string | undefined, fallback: string): string {
+		if (!url) return fallback;
+		if (url.startsWith('http://') || url.startsWith('https://')) return url;
+		return `${siteUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+	}
 
 	// Derived values
 	const title = $derived(seo.title ? `${seo.title} | ${siteName}` : siteName);
 	const description = $derived(seo.description);
 	const canonical = $derived(seo.canonical || $page.url.href);
-	const ogImage = $derived(seo.openGraph?.image || defaultImage);
+	const ogImage = $derived(toAbsoluteUrl(seo.openGraph?.image, defaultImage));
 	const ogUrl = $derived(seo.openGraph?.url || $page.url.href);
 
 	/**

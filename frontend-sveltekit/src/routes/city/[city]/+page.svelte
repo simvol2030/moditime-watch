@@ -58,7 +58,7 @@
 			<div class="articles-grid">
 				{#each data.articles as article}
 					<article class="article-card">
-						<a href="/journal/{article.slug}" class="article-card__link">
+						<a href="/city/{data.city.slug}/{article.slug}" class="article-card__link">
 							<div class="article-card__image">
 								<img src={article.image} alt={article.title} />
 							</div>
