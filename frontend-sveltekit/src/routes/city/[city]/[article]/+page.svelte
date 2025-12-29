@@ -76,7 +76,7 @@
 					<h3 class="selection-cta-card__title">Подберите идеальные часы</h3>
 					<p class="selection-cta-card__text">
 						Наши эксперты помогут выбрать модель, соответствующую вашему стилю и бюджету.
-						Доставка в {data.city.name} с примеркой.
+						Доставка в {data.city.nameAccusative} с примеркой.
 					</p>
 				</div>
 				<div class="selection-cta-card__widget">

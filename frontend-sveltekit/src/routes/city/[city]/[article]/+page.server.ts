@@ -22,6 +22,7 @@ interface CityArticleRow {
 	city_slug: string;
 	name_genitive: string | null;
 	name_prepositional: string | null;
+	name_accusative: string | null;
 }
 
 interface RelatedArticleRow {
@@ -121,7 +122,8 @@ export const load: PageServerLoad = async ({ params }) => {
 			slug: article.city_slug,
 			name: article.city_name,
 			nameGenitive: article.name_genitive || article.city_name,
-			namePrepositional: article.name_prepositional || article.city_name
+			namePrepositional: article.name_prepositional || article.city_name,
+			nameAccusative: article.name_accusative || article.city_name
 		},
 		seo,
 		breadcrumbs,
