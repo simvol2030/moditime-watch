@@ -11,6 +11,9 @@ const RESERVED_SUBDOMAINS = new Set(['www', 'quiz', 'admin', 'api', 'cdn', 'stat
 export const reroute: Reroute = ({ url }) => {
 	const host = url.host;
 
+	// Debug: log what host we're receiving
+	console.log('[reroute] host:', host, 'pathname:', url.pathname);
+
 	// Pattern: {city}.moditime-watch.ru
 	const match = host.match(/^([a-z0-9-]+)\.moditime-watch\.ru$/);
 
