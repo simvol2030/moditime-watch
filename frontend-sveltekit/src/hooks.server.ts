@@ -1,19 +1,9 @@
-import { type Handle, redirect } from '@sveltejs/kit';
+import { type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { randomBytes } from 'crypto';
-import { appendFileSync } from 'fs';
 
 // Импортируем database для инициализации при старте сервера
 import '$lib/server/db/database';
-
-// Debug helper - write to file since PM2 might not show console.log
-function debugLog(msg: string) {
-	const timestamp = new Date().toISOString();
-	try {
-		appendFileSync('/tmp/sveltekit-debug.log', `[${timestamp}] ${msg}\n`);
-	} catch {}
-	console.log(msg);
-}
 
 // Reserved subdomains that should not be treated as city slugs
 const RESERVED_SUBDOMAINS = new Set(['www', 'quiz', 'admin', 'api', 'cdn', 'static', 'mail', 'twa']);
@@ -27,15 +17,11 @@ const RESERVED_SUBDOMAINS = new Set(['www', 'quiz', 'admin', 'api', 'cdn', 'stat
 const subdomainHandler: Handle = async ({ event, resolve }) => {
 	const host = event.request.headers.get('host') || '';
 
-	// Debug: log incoming request info
-	debugLog(`[handle] host: ${host}, url: ${event.url.toString()}, pathname: ${event.url.pathname}`);
-
 	// Pattern: {city}.moditime-watch.ru
 	const match = host.match(/^([a-z0-9-]+)\.moditime-watch\.ru$/);
 
 	if (match && match[1] && !RESERVED_SUBDOMAINS.has(match[1])) {
 		const citySlug = match[1];
-		debugLog(`[handle] detected city subdomain: ${citySlug}`);
 
 		// Store in locals for use in layouts and pages
 		event.locals.citySlug = citySlug;
