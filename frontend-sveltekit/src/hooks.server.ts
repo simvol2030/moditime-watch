@@ -1,4 +1,4 @@
-import { type Handle } from '@sveltejs/kit';
+import { type Handle, redirect } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { randomBytes } from 'crypto';
 
@@ -6,21 +6,28 @@ import { randomBytes } from 'crypto';
 import '$lib/server/db/database';
 
 // Reserved subdomains that should not be treated as city slugs
-const RESERVED_SUBDOMAINS = new Set(['www', 'quiz', 'admin', 'api', 'cdn', 'static', 'mail']);
+const RESERVED_SUBDOMAINS = new Set(['www', 'quiz', 'admin', 'api', 'cdn', 'static', 'mail', 'twa']);
 
 /**
  * Subdomain Handler Hook
  * Detects city subdomains like moscow.moditime-watch.ru
- * and stores the citySlug in event.locals for personalization
+ * and redirects to /city/{slug} for the homepage
  */
 const subdomainHandler: Handle = async ({ event, resolve }) => {
 	const host = event.request.headers.get('host') || '';
+	const pathname = event.url.pathname;
 
 	// Pattern: {city}.moditime-watch.ru
 	const match = host.match(/^([a-z0-9-]+)\.moditime-watch\.ru$/);
 
 	if (match && match[1] && !RESERVED_SUBDOMAINS.has(match[1])) {
 		const citySlug = match[1];
+
+		// Redirect homepage to city page
+		if (pathname === '/') {
+			throw redirect(302, `/city/${citySlug}`);
+		}
+
 		// Store in locals for use in layouts and pages
 		event.locals.citySlug = citySlug;
 	}
