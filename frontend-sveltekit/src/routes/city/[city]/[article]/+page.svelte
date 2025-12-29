@@ -1,5 +1,6 @@
 <script lang="ts">
 	import SeoManager from '$lib/components/seo/SeoManager.svelte';
+	import WatchSearchWidget from '$lib/components/widgets/WatchSearchWidget.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -49,6 +50,15 @@
 		</div>
 	</section>
 
+	<!-- Watch Search Widget -->
+	<section class="article-widget">
+		<div class="container">
+			<div class="article-widget__inner">
+				<WatchSearchWidget />
+			</div>
+		</div>
+	</section>
+
 	<!-- Article Content -->
 	<article class="article-content">
 		<div class="container">
@@ -58,11 +68,29 @@
 		</div>
 	</article>
 
-	<!-- Back to City -->
-	<section class="article-cta">
+	<!-- CTA: Watch Selection -->
+	<section class="article-selection-cta">
 		<div class="container">
-			<a href="/city/{data.city.slug}" class="article-cta__link">
-				<span class="article-cta__arrow">←</span>
+			<div class="selection-cta-card">
+				<div class="selection-cta-card__content">
+					<h3 class="selection-cta-card__title">Подберите идеальные часы</h3>
+					<p class="selection-cta-card__text">
+						Наши эксперты помогут выбрать модель, соответствующую вашему стилю и бюджету.
+						Доставка в {data.city.name} с примеркой.
+					</p>
+				</div>
+				<div class="selection-cta-card__widget">
+					<WatchSearchWidget />
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Back to City -->
+	<section class="article-back">
+		<div class="container">
+			<a href="/city/{data.city.slug}" class="article-back__link">
+				<span class="article-back__arrow">←</span>
 				Все статьи о часах в {data.city.namePrepositional}
 			</a>
 		</div>
@@ -259,13 +287,60 @@
 		margin: var(--space-lg) 0;
 	}
 
-	/* Article CTA */
-	.article-cta {
-		padding-bottom: var(--space-2xl);
+	/* Article Widget (after image) */
+	.article-widget {
+		padding: var(--space-xl) 0;
+		background: var(--color-surface);
+	}
+
+	.article-widget__inner {
+		max-width: 500px;
+		margin: 0 auto;
+	}
+
+	/* Selection CTA Card */
+	.article-selection-cta {
+		padding: var(--space-2xl) 0;
+		background: linear-gradient(135deg, var(--color-primary) 0%, #1a4a8a 100%);
+	}
+
+	.selection-cta-card {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-2xl);
+		align-items: center;
+		max-width: 1000px;
+		margin: 0 auto;
+	}
+
+	.selection-cta-card__content {
+		color: var(--color-white);
+	}
+
+	.selection-cta-card__title {
+		font-size: var(--font-size-h2);
+		margin-bottom: var(--space-md);
+	}
+
+	.selection-cta-card__text {
+		font-size: var(--font-size-body);
+		opacity: 0.9;
+		line-height: var(--line-height-relaxed);
+	}
+
+	.selection-cta-card__widget {
+		background: var(--color-white);
+		border-radius: var(--radius-lg);
+		padding: var(--space-lg);
+	}
+
+	/* Back to City */
+	.article-back {
+		padding: var(--space-xl) 0;
 		text-align: center;
 	}
 
-	.article-cta__link {
+	.article-back__link {
 		display: inline-flex;
 		align-items: center;
 		gap: var(--space-sm);
@@ -275,11 +350,11 @@
 		transition: gap var(--transition-fast);
 	}
 
-	.article-cta__link:hover {
+	.article-back__link:hover {
 		gap: var(--space-md);
 	}
 
-	.article-cta__arrow {
+	.article-back__arrow {
 		font-size: var(--font-size-h3);
 	}
 
@@ -372,6 +447,16 @@
 
 		.article-header__excerpt {
 			font-size: var(--font-size-body);
+		}
+
+		.selection-cta-card {
+			grid-template-columns: 1fr;
+			gap: var(--space-lg);
+			text-align: center;
+		}
+
+		.selection-cta-card__title {
+			font-size: var(--font-size-h3);
 		}
 	}
 </style>
