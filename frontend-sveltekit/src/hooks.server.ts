@@ -17,11 +17,15 @@ const RESERVED_SUBDOMAINS = new Set(['www', 'quiz', 'admin', 'api', 'cdn', 'stat
 const subdomainHandler: Handle = async ({ event, resolve }) => {
 	const host = event.request.headers.get('host') || '';
 
+	// Debug: log incoming request info
+	console.log('[handle] host:', host, 'url:', event.url.toString(), 'pathname:', event.url.pathname);
+
 	// Pattern: {city}.moditime-watch.ru
 	const match = host.match(/^([a-z0-9-]+)\.moditime-watch\.ru$/);
 
 	if (match && match[1] && !RESERVED_SUBDOMAINS.has(match[1])) {
 		const citySlug = match[1];
+		console.log('[handle] detected city subdomain:', citySlug);
 
 		// Store in locals for use in layouts and pages
 		event.locals.citySlug = citySlug;
