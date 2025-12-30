@@ -141,7 +141,7 @@ function generateOrderEmailHtml(order: OrderData): string {
 			Наш менеджер свяжется с вами в ближайшее время для подтверждения заказа.
 		</p>
 		<p style="margin: 0; color: #666;">
-			Телефон: <a href="tel:+74951234567" style="color: #1a1a1a;">+7 (495) 123-45-67</a>
+			Телефон: <a href="tel:+79999604322" style="color: #1a1a1a;">+7 (999) 960-43-22</a>
 		</p>
 	</div>
 

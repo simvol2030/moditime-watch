@@ -284,7 +284,7 @@ export function seedDatabase() {
 
 		insertConfig.run('site_name', 'Moditimewatch', 'string', 'Название сайта');
 		insertConfig.run('site_tagline', 'Fine Time Delivery', 'string', 'Слоган');
-		insertConfig.run('contact_phone', '+7 (495) 123-45-67', 'string', 'Телефон');
+		insertConfig.run('contact_phone', '+7 (999) 960-43-22', 'string', 'Телефон');
 		insertConfig.run('contact_email', 'concierge@moditimewatch.com', 'string', 'Email');
 		insertConfig.run('office_address', 'г. Москва, Кутузовский проспект, д. 12, офис 501', 'string', 'Адрес офиса');
 

@@ -22,9 +22,9 @@
 				<span class="site-logo__wordmark">Moditimewatch</span>
 				<span class="site-logo__tagline">Fine Time Delivery</span>
 			</a>
-			<p>Премиальный сервис доставки часов с персональными консультациями, Programmatic SEO-поддоменами для городов и сервисом европейского уровня.</p>
+			<p>Сервис доставки оригинальных часов из-за рубежа с гарантией подлинности и персональными консультациями.</p>
 			<div class="site-footer__contact">
-				<a href="tel:+74951234567">+7 (495) 123-45-67</a>
+				<a href="tel:+79999604322">+7 (999) 960-43-22</a>
 				<a href="mailto:info@moditimewatch.com">info@moditimewatch.com</a>
 			</div>
 		</div>

@@ -89,7 +89,7 @@
 	<div class="mobile-drawer__footer">
 		<div>
 			<span class="mobile-drawer__label">Контакты</span>
-			<a href="tel:+74951234567">+7 (495) 123-45-67</a>
+			<a href="tel:+79999604322">+7 (999) 960-43-22</a>
 			<a href="mailto:info@moditimewatch.com">info@moditimewatch.com</a>
 		</div>
 		<div>

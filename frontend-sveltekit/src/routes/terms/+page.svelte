@@ -167,7 +167,7 @@
 					<li>ИНН: 1234567890</li>
 					<li>Адрес: 119034, г. Москва, Кутузовский проспект, д. 12, офис 501</li>
 					<li>Email: <a href="mailto:legal@moditimewatch.com">legal@moditimewatch.com</a></li>
-					<li>Телефон: <a href="tel:+74951234567">+7 (495) 123-45-67</a></li>
+					<li>Телефон: <a href="tel:+79999604322">+7 (999) 960-43-22</a></li>
 				</ul>
 			</section>
 		</div>

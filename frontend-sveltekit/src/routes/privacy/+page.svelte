@@ -155,7 +155,7 @@
 					<li>
 						Email: <a href="mailto:privacy@moditimewatch.com">privacy@moditimewatch.com</a>
 					</li>
-					<li>Телефон: <a href="tel:+74951234567">+7 (495) 123-45-67</a></li>
+					<li>Телефон: <a href="tel:+79999604322">+7 (999) 960-43-22</a></li>
 					<li>Адрес: г. Москва, Кутузовский проспект, д. 12, офис 501</li>
 				</ul>
 			</section>

@@ -77,7 +77,7 @@
 					<strong>Нужна помощь?</strong> Свяжитесь с нами через
 					<a href="https://t.me/moditimewatch">Telegram</a>
 					или по телефону
-					<a href="tel:+74951234567">+7 (495) 123-45-67</a>
+					<a href="tel:+79999604322">+7 (999) 960-43-22</a>
 				</p>
 			</div>
 		</div>

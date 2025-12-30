@@ -65,7 +65,7 @@
 				<span>Доставка премиальных часов по России и СНГ</span>
 			</div>
 			<div class="topbar__contacts">
-				<a href="tel:+74951234567" class="topbar__link">+7 (495) 123-45-67</a>
+				<a href="tel:+79999604322" class="topbar__link">+7 (999) 960-43-22</a>
 				<a href="mailto:info@moditimewatch.com" class="topbar__link">info@moditimewatch.com</a>
 			</div>
 		</div>
