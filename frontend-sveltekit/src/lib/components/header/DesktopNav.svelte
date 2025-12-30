@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { tick, onMount } from 'svelte';
 	import type { NavigationLink } from '$lib/types/navigation';
+	import { getNavigationHref } from '$lib/types/navigation';
 
 	let { items = [] }: { items: NavigationLink[] } = $props();
 
@@ -133,8 +134,9 @@
 						<div class="desktop-nav__dropdown" onclick={(e) => e.stopPropagation()}>
 							<div class="desktop-nav__dropdown-content">
 								{#each item.submenu as child}
+									{@const href = getNavigationHref(child)}
 									<a
-										href={child.href}
+										{href}
 										class="desktop-nav__dropdown-link"
 										onclick={() => (activeDropdown = null)}
 									>
@@ -145,7 +147,8 @@
 						</div>
 					{/if}
 				{:else}
-					<a href={item.href} class="desktop-nav__link">
+					{@const href = getNavigationHref(item)}
+					<a {href} class="desktop-nav__link">
 						{item.label}
 					</a>
 				{/if}
@@ -180,8 +183,9 @@
 									<div class="desktop-nav__dropdown-group">
 										<div class="desktop-nav__dropdown-group-title">{item.label}</div>
 										{#each item.submenu as child}
+											{@const href = getNavigationHref(child)}
 											<a
-												href={child.href}
+												{href}
 												class="desktop-nav__dropdown-link desktop-nav__dropdown-link--nested"
 												onclick={() => (isOverflowOpen = false)}
 											>
@@ -190,8 +194,9 @@
 										{/each}
 									</div>
 								{:else}
+									{@const href = getNavigationHref(item)}
 									<a
-										href={item.href}
+										{href}
 										class="desktop-nav__dropdown-link"
 										onclick={() => (isOverflowOpen = false)}
 									>

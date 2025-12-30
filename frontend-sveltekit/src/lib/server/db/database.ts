@@ -167,41 +167,42 @@ export function seedDatabase() {
     insertServiceStat.run('Trade-in аудит', '24 часа', 2);
 
     // Navigation Items (Header Menu) - ВАЖНО для Admin.js!
-    const insertNavItem = db.prepare('INSERT INTO navigation_items (label, href, parent_id, position, menu_type, is_active) VALUES (?, ?, ?, ?, ?, ?)');
+    // is_main_domain_only: 1 = абсолютная ссылка на главный домен для pSEO поддоменов
+    const insertNavItem = db.prepare('INSERT INTO navigation_items (label, href, parent_id, position, menu_type, is_active, is_main_domain_only) VALUES (?, ?, ?, ?, ?, ?, ?)');
 
-    // Top-level items (parent_id = NULL)
-    insertNavItem.run('Каталог', '/catalog', null, 1, 'header_desktop', 1);
+    // Top-level items (parent_id = NULL) — все ведут на главный домен
+    insertNavItem.run('Каталог', '/catalog', null, 1, 'header_desktop', 1, 1);
     const catalogId = db.prepare('SELECT last_insert_rowid() as id').get() as { id: number };
 
-    insertNavItem.run('Коллекции', '/catalog?view=collections', null, 2, 'header_desktop', 1);
+    insertNavItem.run('Коллекции', '/catalog?view=collections', null, 2, 'header_desktop', 1, 1);
     const collectionsMenuId = db.prepare('SELECT last_insert_rowid() as id').get() as { id: number };
 
-    insertNavItem.run('Бестселлеры', '/catalog?featured=1', null, 3, 'header_desktop', 1);
+    insertNavItem.run('Бестселлеры', '/catalog?featured=1', null, 3, 'header_desktop', 1, 1);
     const bestsellersId = db.prepare('SELECT last_insert_rowid() as id').get() as { id: number };
 
-    insertNavItem.run('Сервис', '/warranty', null, 4, 'header_desktop', 1);
+    insertNavItem.run('Сервис', '/warranty', null, 4, 'header_desktop', 1, 1);
     const serviceId = db.prepare('SELECT last_insert_rowid() as id').get() as { id: number };
 
-    insertNavItem.run('Журнал', '/journal', null, 5, 'header_desktop', 1);
+    insertNavItem.run('Журнал', '/journal', null, 5, 'header_desktop', 1, 1);
 
-    // Submenu для Каталог
-    insertNavItem.run('Мужские часы', '/catalog?category=mens', catalogId.id, 1, 'header_desktop', 1);
-    insertNavItem.run('Женские часы', '/catalog?category=womens', catalogId.id, 2, 'header_desktop', 1);
-    insertNavItem.run('Спортивные', '/catalog?category=sport', catalogId.id, 3, 'header_desktop', 1);
-    insertNavItem.run('Деловые', '/catalog?category=business', catalogId.id, 4, 'header_desktop', 1);
-    insertNavItem.run('Rolex', '/catalog?brand=rolex', catalogId.id, 5, 'header_desktop', 1);
-    insertNavItem.run('Patek Philippe', '/catalog?brand=patek-philippe', catalogId.id, 6, 'header_desktop', 1);
-    insertNavItem.run('Omega', '/catalog?brand=omega', catalogId.id, 7, 'header_desktop', 1);
+    // Submenu для Каталог — все ведут на главный домен
+    insertNavItem.run('Мужские часы', '/catalog?category=mens', catalogId.id, 1, 'header_desktop', 1, 1);
+    insertNavItem.run('Женские часы', '/catalog?category=womens', catalogId.id, 2, 'header_desktop', 1, 1);
+    insertNavItem.run('Спортивные', '/catalog?category=sport', catalogId.id, 3, 'header_desktop', 1, 1);
+    insertNavItem.run('Деловые', '/catalog?category=business', catalogId.id, 4, 'header_desktop', 1, 1);
+    insertNavItem.run('Rolex', '/catalog?brand=rolex', catalogId.id, 5, 'header_desktop', 1, 1);
+    insertNavItem.run('Patek Philippe', '/catalog?brand=patek-philippe', catalogId.id, 6, 'header_desktop', 1, 1);
+    insertNavItem.run('Omega', '/catalog?brand=omega', catalogId.id, 7, 'header_desktop', 1, 1);
 
-    // Submenu для Коллекции
-    insertNavItem.run('Executive Collection', '/catalog?collection=executive', collectionsMenuId.id, 1, 'header_desktop', 1);
-    insertNavItem.run('Travel & Sport', '/catalog?collection=travel-sport', collectionsMenuId.id, 2, 'header_desktop', 1);
-    insertNavItem.run('Investment Vault', '/catalog?collection=investment', collectionsMenuId.id, 3, 'header_desktop', 1);
+    // Submenu для Коллекции — все ведут на главный домен
+    insertNavItem.run('Executive Collection', '/catalog?collection=executive', collectionsMenuId.id, 1, 'header_desktop', 1, 1);
+    insertNavItem.run('Travel & Sport', '/catalog?collection=travel-sport', collectionsMenuId.id, 2, 'header_desktop', 1, 1);
+    insertNavItem.run('Investment Vault', '/catalog?collection=investment', collectionsMenuId.id, 3, 'header_desktop', 1, 1);
 
-    // Submenu для Сервис
-    insertNavItem.run('Консьерж-сервис', '/contacts', serviceId.id, 1, 'header_desktop', 1);
-    insertNavItem.run('Доставка и оплата', '/delivery', serviceId.id, 2, 'header_desktop', 1);
-    insertNavItem.run('Гарантии', '/warranty', serviceId.id, 3, 'header_desktop', 1);
+    // Submenu для Сервис — все ведут на главный домен
+    insertNavItem.run('Консьерж-сервис', '/contacts', serviceId.id, 1, 'header_desktop', 1, 1);
+    insertNavItem.run('Доставка и оплата', '/delivery', serviceId.id, 2, 'header_desktop', 1, 1);
+    insertNavItem.run('Гарантии', '/warranty', serviceId.id, 3, 'header_desktop', 1, 1);
 
     // Footer Sections
     const insertFooterSection = db.prepare('INSERT INTO footer_sections (title, position, column_number, is_active) VALUES (?, ?, ?, ?)');
@@ -214,20 +215,28 @@ export function seedDatabase() {
     insertFooterSection.run('Офис', 3, 3, 1);
     const footerOfficeId = db.prepare('SELECT last_insert_rowid() as id').get() as { id: number };
 
+    insertFooterSection.run('Правовая информация', 4, 4, 1);
+    const footerLegalId = db.prepare('SELECT last_insert_rowid() as id').get() as { id: number };
+
     // Footer Links
-    const insertFooterLink = db.prepare('INSERT INTO footer_links (section_id, label, href, position) VALUES (?, ?, ?, ?)');
+    // is_main_domain_only: 1 = абсолютная ссылка на главный домен для pSEO поддоменов
+    const insertFooterLink = db.prepare('INSERT INTO footer_links (section_id, label, href, position, is_main_domain_only) VALUES (?, ?, ?, ?, ?)');
 
-    // Магазин
-    insertFooterLink.run(footerShopId.id, 'Каталог часов', '/catalog', 1);
-    insertFooterLink.run(footerShopId.id, 'Журнал', '/journal', 2);
-    insertFooterLink.run(footerShopId.id, 'Поиск', '/search', 3);
-    insertFooterLink.run(footerShopId.id, 'О компании', '/about', 4);
+    // Магазин — все ведут на главный домен
+    insertFooterLink.run(footerShopId.id, 'Каталог часов', '/catalog', 1, 1);
+    insertFooterLink.run(footerShopId.id, 'Журнал', '/journal', 2, 1);
+    insertFooterLink.run(footerShopId.id, 'Поиск', '/search', 3, 1);
+    insertFooterLink.run(footerShopId.id, 'О компании', '/about', 4, 1);
 
-    // Сервис
-    insertFooterLink.run(footerServiceId.id, 'Доставка и оплата', '/delivery', 1);
-    insertFooterLink.run(footerServiceId.id, 'Гарантии и возврат', '/warranty', 2);
-    insertFooterLink.run(footerServiceId.id, 'Контакты', '/contacts', 3);
-    insertFooterLink.run(footerServiceId.id, 'Telegram', 'https://t.me/moditimewatch', 4);
+    // Сервис — все ведут на главный домен
+    insertFooterLink.run(footerServiceId.id, 'Доставка и оплата', '/delivery', 1, 1);
+    insertFooterLink.run(footerServiceId.id, 'Гарантии и возврат', '/warranty', 2, 1);
+    insertFooterLink.run(footerServiceId.id, 'Контакты', '/contacts', 3, 1);
+    insertFooterLink.run(footerServiceId.id, 'Telegram', 'https://t.me/moditimewatch', 4, 0);
+
+    // Правовая информация — все ведут на главный домен
+    insertFooterLink.run(footerLegalId.id, 'Политика конфиденциальности', '/privacy', 1, 1);
+    insertFooterLink.run(footerLegalId.id, 'Правила обработки данных', '/terms', 2, 1);
 
     console.log('✅ Database seeded successfully (с Hero, Experience, Navigation, Footer)');
   });

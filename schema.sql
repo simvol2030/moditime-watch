@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS navigation_items (
   position INTEGER DEFAULT 0,
   menu_type TEXT NOT NULL, -- 'header_desktop', 'header_mobile', 'footer'
   is_active INTEGER DEFAULT 1,
+  is_main_domain_only INTEGER DEFAULT 0, -- 1 = абсолютная ссылка на главный домен
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (parent_id) REFERENCES navigation_items(id) ON DELETE CASCADE
@@ -74,6 +75,7 @@ CREATE TABLE IF NOT EXISTS footer_links (
   label TEXT NOT NULL,
   href TEXT NOT NULL,
   position INTEGER DEFAULT 0,
+  is_main_domain_only INTEGER DEFAULT 0, -- 1 = абсолютная ссылка на главный домен
 
   FOREIGN KEY (section_id) REFERENCES footer_sections(id) ON DELETE CASCADE
 );
