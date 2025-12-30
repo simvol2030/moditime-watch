@@ -126,7 +126,15 @@ export async function setupAdmin() {
 
 	const Components = {
 		Dashboard: componentLoader.add('Dashboard', path.join(__dirname, '../components/Dashboard')),
-		Login: componentLoader.add('Login', path.join(__dirname, '../components/Login'))
+		Login: componentLoader.add('Login', path.join(__dirname, '../components/Login')),
+		PageMetaEditor: componentLoader.add(
+			'PageMetaEditor',
+			path.join(__dirname, '../components/PageMetaEditor')
+		),
+		ContactsEditor: componentLoader.add(
+			'ContactsEditor',
+			path.join(__dirname, '../components/ContactsEditor')
+		)
 	};
 
 	const admin = new AdminJS({
@@ -512,7 +520,22 @@ export async function setupAdmin() {
 					properties: {
 						...commonProps,
 						content: { type: 'richtext' },
-						meta_json: { type: 'textarea' },
+						meta_json: {
+							type: 'mixed',
+							components: {
+								edit: Components.ContactsEditor,
+								show: Components.ContactsEditor
+							}
+						},
+						template: {
+							availableValues: [
+								{ value: 'about', label: 'About' },
+								{ value: 'delivery', label: 'Delivery' },
+								{ value: 'warranty', label: 'Warranty' },
+								{ value: 'contacts', label: 'Contacts' },
+								{ value: 'legal', label: 'Legal' }
+							]
+						},
 						...booleanProps('is_published')
 					},
 					actions: standardActions
