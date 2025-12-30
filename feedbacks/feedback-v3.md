@@ -1,7 +1,7 @@
-# Task: SEO-оптимизация навигации для поддоменов
+# Feedback v3 - SEO-оптимизация навигации для поддоменов
 
-**Дата:** 2024-12-30
-**Branch to create:** `claude/seo-navigation-v1`
+**Дата:** 2025-12-30
+**Branch to create:** `claude/seo-navigation-v3`
 **Score:** 10 (БД + компоненты + логика)
 
 ---
