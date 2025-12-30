@@ -8,20 +8,38 @@ import '$lib/server/db/database';
 // Reserved subdomains that should not be treated as city slugs
 const RESERVED_SUBDOMAINS = new Set(['www', 'quiz', 'admin', 'api', 'cdn', 'static', 'mail', 'twa']);
 
+// Paths that should redirect from subdomains to main domain (SEO: avoid duplicate content)
+const MAIN_DOMAIN_ONLY_PATHS = ['/catalog', '/product/', '/cart', '/checkout', '/search'];
+
 /**
  * Subdomain Handler Hook
  * Detects city subdomains like moscow.moditime-watch.ru
  * Sets citySlug in locals for use in layouts and pages
+ * Redirects catalog/product pages to main domain (SEO best practice)
  * Note: URL rerouting is handled by reroute hook in hooks.ts
  */
 const subdomainHandler: Handle = async ({ event, resolve }) => {
 	const host = event.request.headers.get('host') || '';
+	const pathname = event.url.pathname;
 
 	// Pattern: {city}.moditime-watch.ru
 	const match = host.match(/^([a-z0-9-]+)\.moditime-watch\.ru$/);
 
 	if (match && match[1] && !RESERVED_SUBDOMAINS.has(match[1])) {
 		const citySlug = match[1];
+
+		// SEO: Redirect catalog/product/cart pages to main domain (avoid duplicate content)
+		const shouldRedirectToMain = MAIN_DOMAIN_ONLY_PATHS.some(
+			(path) => pathname === path || pathname.startsWith(path)
+		);
+
+		if (shouldRedirectToMain) {
+			const mainDomainUrl = `https://moditime-watch.ru${pathname}${event.url.search}`;
+			return new Response(null, {
+				status: 301,
+				headers: { Location: mainDomainUrl }
+			});
+		}
 
 		// Store in locals for use in layouts and pages
 		event.locals.citySlug = citySlug;
