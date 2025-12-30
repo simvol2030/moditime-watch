@@ -1,18 +1,18 @@
 <script lang="ts">
 	import type { HTMLAttributes } from 'svelte/elements';
-
-	interface FooterSection {
-		id: number;
-		title: string;
-		column: number;
-		links: { label: string; href: string }[];
-	}
+	import type { FooterSection } from '$lib/types/navigation';
+	import { getNavigationHref } from '$lib/types/navigation';
 
 	interface Props extends HTMLAttributes<HTMLElement> {
 		footerSections: FooterSection[];
 	}
 
 	let { footerSections, class: className, ...rest }: Props = $props();
+
+	// Найти секцию "Правовая информация" для отображения в футере (bottom)
+	const legalSection = $derived(footerSections.find((s) => s.title === 'Правовая информация'));
+	// Все секции кроме правовой информации
+	const mainSections = $derived(footerSections.filter((s) => s.title !== 'Правовая информация'));
 </script>
 
 <footer class="site-footer" {...rest}>
@@ -28,17 +28,18 @@
 				<a href="mailto:info@moditimewatch.com">info@moditimewatch.com</a>
 			</div>
 		</div>
-		{#each footerSections as section}
+		{#each mainSections as section}
 			<div class="site-footer__col">
 				<h3>{section.title}</h3>
 				{#if section.links.length > 0}
 					<ul>
 						{#each section.links as link}
+							{@const href = getNavigationHref(link)}
 							<li>
 								<a
-									href={link.href}
-									target={link.href.startsWith('http') ? '_blank' : undefined}
-									rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+									{href}
+									target={href.startsWith('http') ? '_blank' : undefined}
+									rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
 								>
 									{link.label}
 								</a>
@@ -58,10 +59,14 @@
 	</div>
 	<div class="container site-footer__bottom">
 		<p>&copy; 2024 Moditimewatch. Все права защищены.</p>
-		<div class="site-footer__links">
-			<a href="/privacy">Политика конфиденциальности</a>
-			<a href="/terms">Правила обработки данных</a>
-		</div>
+		{#if legalSection && legalSection.links.length > 0}
+			<div class="site-footer__links">
+				{#each legalSection.links as link}
+					{@const href = getNavigationHref(link)}
+					<a {href}>{link.label}</a>
+				{/each}
+			</div>
+		{/if}
 	</div>
 </footer>
 
@@ -155,6 +160,15 @@
 	.site-footer__links {
 		display: flex;
 		gap: var(--space-md);
+	}
+
+	.site-footer__links a {
+		color: var(--color-text-soft);
+		transition: color 0.2s ease;
+	}
+
+	.site-footer__links a:hover {
+		color: var(--color-primary);
 	}
 
 	/* Mobile responsive */

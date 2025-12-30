@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { NavigationLink } from '$lib/types/navigation';
+	import { getNavigationHref } from '$lib/types/navigation';
 	import { closeMobileMenu } from '$lib/stores/ui.svelte';
 
 	let { items = [], isOpen = false }: { items: NavigationLink[]; isOpen: boolean } = $props();
@@ -86,8 +87,9 @@
 							{#if activeDropdown === item.label}
 								<ul class="mobile-nav__submenu">
 									{#each item.submenu as child}
+										{@const href = getNavigationHref(child)}
 										<li class="mobile-nav__submenu-item">
-											<a href={child.href} class="mobile-nav__submenu-link" onclick={handleLinkClick}>
+											<a {href} class="mobile-nav__submenu-link" onclick={handleLinkClick}>
 												{child.label}
 											</a>
 										</li>
@@ -95,7 +97,8 @@
 								</ul>
 							{/if}
 						{:else}
-							<a href={item.href} class="mobile-nav__link" onclick={handleLinkClick}>
+							{@const href = getNavigationHref(item)}
+							<a {href} class="mobile-nav__link" onclick={handleLinkClick}>
 								{item.label}
 							</a>
 						{/if}

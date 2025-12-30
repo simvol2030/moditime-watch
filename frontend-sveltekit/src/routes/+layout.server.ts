@@ -1,14 +1,12 @@
 import type { LayoutServerLoad } from './$types';
 import { queries } from '$lib/server/db/database';
-import type { NavigationLink } from '$lib/types/navigation';
+import type { NavigationLink, FooterSection } from '$lib/types/navigation';
 
 export const load: LayoutServerLoad = async () => {
 	// ============================================
 	// NAVIGATION (Header Menu) - из БД для Admin.js!
 	// ============================================
 	const topLevelItems = queries.getNavigationItems.all('header_desktop') as any[];
-	console.log('🔍 DEBUG: topLevelItems count =', topLevelItems.length);
-	console.log('🔍 DEBUG: topLevelItems =', topLevelItems);
 
 	const navigationItems: NavigationLink[] = topLevelItems.map((item) => {
 		// Получаем submenu для каждого top-level элемента
@@ -17,11 +15,13 @@ export const load: LayoutServerLoad = async () => {
 		return {
 			label: item.label,
 			href: item.href,
+			isMainDomainOnly: item.is_main_domain_only === 1,
 			submenu:
 				submenuItems.length > 0
 					? submenuItems.map((sub) => ({
 							label: sub.label,
-							href: sub.href
+							href: sub.href,
+							isMainDomainOnly: sub.is_main_domain_only === 1
 						}))
 					: undefined
 		};
@@ -32,7 +32,7 @@ export const load: LayoutServerLoad = async () => {
 	// ============================================
 	const footerSectionsFromDb = queries.getFooterSections.all() as any[];
 
-	const footerSections = footerSectionsFromDb.map((section) => {
+	const footerSections: FooterSection[] = footerSectionsFromDb.map((section) => {
 		const links = queries.getFooterLinks.all(section.id) as any[];
 
 		return {
@@ -41,13 +41,11 @@ export const load: LayoutServerLoad = async () => {
 			column: section.column_number,
 			links: links.map((link) => ({
 				label: link.label,
-				href: link.href
+				href: link.href,
+				isMainDomainOnly: link.is_main_domain_only === 1
 			}))
 		};
 	});
-
-	console.log('🔍 DEBUG: Final navigationItems count =', navigationItems.length);
-	console.log('🔍 DEBUG: Final footerSections count =', footerSections.length);
 
 	return {
 		navigationItems,
