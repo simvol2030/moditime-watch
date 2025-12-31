@@ -136,7 +136,7 @@
 								{:else if item.type === 'json'}
 									<code class="json-preview">{item.value?.substring(0, 50)}{(item.value?.length ?? 0) > 50 ? '...' : ''}</code>
 								{:else}
-									{item.value || <span class="empty">-</span>}
+									{#if item.value}{item.value}{:else}<span class="empty">-</span>{/if}
 								{/if}
 							</td>
 							<td class="type-cell">
