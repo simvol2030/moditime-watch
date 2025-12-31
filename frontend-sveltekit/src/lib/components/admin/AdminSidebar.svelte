@@ -18,6 +18,7 @@
 		{ label: 'Categories', href: '/admin/categories', icon: '📁', group: 'E-commerce' },
 		{ label: 'Orders', href: '/admin/orders', icon: '📦', group: 'Operations' },
 		{ label: 'Pages', href: '/admin/pages', icon: '📄', group: 'Content' },
+		{ label: 'Navigation', href: '/admin/navigation', icon: '🔗', group: 'Content' },
 		{ label: 'Admins', href: '/admin/system/admins', icon: '👤', group: 'System' },
 		{ label: 'Config', href: '/admin/system/config', icon: '⚙️', group: 'System' }
 	];
