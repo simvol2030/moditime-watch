@@ -131,8 +131,8 @@ const csrfProtection: Handle = async ({ event, resolve }) => {
 	if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
 		const cookieToken = cookies.get('csrf_token');
 
-		// Логин endpoint - особый случай, там нет токена до первого GET
-		const isLoginEndpoint = event.url.pathname === '/login';
+		// Логин endpoints - особый случай, там нет токена до первого GET
+		const isLoginEndpoint = event.url.pathname === '/login' || event.url.pathname === '/admin/login';
 
 		if (!isLoginEndpoint) {
 			// Получаем токен из заголовка или из формы
