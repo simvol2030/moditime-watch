@@ -1,7 +1,5 @@
 import 'dotenv/config';
 import express from 'express';
-import path from 'path';
-import { setupAdmin } from './admin';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,57 +7,25 @@ const PORT = process.env.PORT || 3000;
 // Trust proxy for correct HTTPS detection behind Nginx
 app.set('trust proxy', 1);
 
-// Basic API route (before AdminJS middleware)
+// Body parsing middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Health check / API info
 app.get('/', (req, res) => {
 	res.json({
-		message: 'Project Box Backend API',
-		endpoints: {
-			admin: '/admin',
-			api: '/api'
-		}
+		status: 'ok',
+		service: 'moditime-backend',
+		version: '1.0.0',
+		message: 'Backend API is running. Admin panel moved to SvelteKit at /admin'
 	});
 });
 
-// Setup and start server
-async function start() {
-	try {
-		// Setup AdminJS
-		const { admin, adminRouter } = await setupAdmin();
+// API routes placeholder (for future use)
+// app.use('/api', apiRouter);
 
-		// Serve AdminJS bundled components from .adminjs directory
-		// This must be BEFORE the adminRouter mount
-		const adminJsAssetsPath = path.join(__dirname, '../.adminjs');
-		app.use('/admin/frontend/assets', express.static(adminJsAssetsPath, {
-			// Serve bundle.js as components.bundle.js
-			index: false,
-			setHeaders: (res, filePath) => {
-				if (filePath.endsWith('.js')) {
-					res.setHeader('Content-Type', 'application/javascript');
-				}
-			}
-		}));
-
-		// Also serve the bundle directly with the expected filename
-		app.get('/admin/frontend/assets/components.bundle.js', (req, res) => {
-			res.sendFile(path.join(adminJsAssetsPath, 'bundle.js'));
-		});
-
-		// Mount AdminJS router - it has its own body parsing middleware
-		app.use(admin.options.rootPath, adminRouter);
-
-		// Body parsing middleware for your own API routes (after AdminJS)
-		app.use(express.json());
-		app.use(express.urlencoded({ extended: true }));
-
-		// Start server
-		app.listen(PORT, () => {
-			console.log(`\n✅ Server running on http://localhost:${PORT}`);
-			console.log(`✅ AdminJS available at http://localhost:${PORT}/admin\n`);
-		});
-	} catch (error) {
-		console.error('Failed to start server:', error);
-		process.exit(1);
-	}
-}
-
-start();
+// Start server
+app.listen(PORT, () => {
+	console.log(`\n✅ Backend API running on http://localhost:${PORT}`);
+	console.log(`   Admin panel is now at SvelteKit frontend: /admin\n`);
+});
