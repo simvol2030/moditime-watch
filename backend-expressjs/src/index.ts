@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import path from 'path';
 import { setupAdmin } from './admin';
 
 const app = express();
@@ -24,6 +25,16 @@ async function start() {
 	try {
 		// Setup AdminJS
 		const { admin, adminRouter } = await setupAdmin();
+
+		// Serve AdminJS bundled components
+		// AdminJS expects components at /admin/frontend/assets/components.bundle.js
+		const adminJsDir = path.join(__dirname, '../.adminjs');
+		app.use('/admin/frontend/assets', express.static(adminJsDir));
+		
+		// Explicit route for components.bundle.js (maps to bundle.js)
+		app.get('/admin/frontend/assets/components.bundle.js', (req, res) => {
+			res.sendFile(path.join(adminJsDir, 'bundle.js'));
+		});
 
 		// Mount AdminJS router - it has its own body parsing middleware
 		app.use(admin.options.rootPath, adminRouter);

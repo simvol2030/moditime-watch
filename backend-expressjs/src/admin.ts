@@ -705,6 +705,9 @@ export async function setupAdmin() {
 		}
 	});
 
+	// Initialize AdminJS to ensure components are bundled
+	await admin.initialize();
+
 	// Build authenticated router
 	const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
 		admin,
