@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend-sveltekit
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - ORIGIN=http://localhost:3000
+      - PORT=3000
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  backend:
+    build: ./backend-expressjs
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - ADMIN_EMAIL=admin@moditime-watch.ru
+      - ADMIN_PASSWORD=ModitimeAdmin2024!SecurePass
+      - COOKIE_SECRET=moditime-cookie-secret-32-chars-min
+      - SESSION_SECRET=moditime-session-secret-32-chars-min
+    volumes:
+      - ./data:/app/data
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
