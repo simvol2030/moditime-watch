@@ -2,7 +2,7 @@
 
 **URL:** https://moditime-watch.ru
 **Тип:** SvelteKit E-commerce + AdminJS панель
-**Workflow:** см. `CLAUDE.local.md`
+**Workflow Developer:** см. `CLAUDE.web.md`
 
 ---
 
