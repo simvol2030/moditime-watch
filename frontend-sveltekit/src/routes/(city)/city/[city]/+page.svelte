@@ -244,6 +244,28 @@
 		background-color: var(--color-border);
 	}
 
+	/* Section Intro */
+	.section-intro {
+		text-align: center;
+		margin-bottom: var(--space-2xl);
+	}
+
+	.section-eyebrow {
+		display: block;
+		font-size: var(--font-size-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-primary);
+		font-weight: 600;
+		margin-bottom: var(--space-xs);
+	}
+
+	.section-title {
+		font-size: var(--font-size-h2);
+		color: var(--color-text);
+		line-height: var(--line-height-tight);
+	}
+
 	/* Articles Grid */
 	.section {
 		padding: var(--space-3xl) 0;
