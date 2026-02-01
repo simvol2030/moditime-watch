@@ -28,8 +28,8 @@
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| Task 1 | Collections CRUD | ⏳ PENDING | - |
-| Task 2 | Cities CRUD | ⏳ PENDING | - |
+| Task 1 | Collections CRUD | ✅ DONE | - |
+| Task 2 | Cities CRUD | ✅ DONE | - |
 | Task 3 | City Articles CRUD | ⏳ PENDING | - |
 | Task 4 | Testimonials CRUD | ⏳ PENDING | - |
 | Task 5 | Journal Articles CRUD | ⏳ PENDING | - |
