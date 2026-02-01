@@ -67,11 +67,13 @@
 	{#snippet actions(item)}
 		<div class="action-buttons">
 			<ActionButton href="/admin/cities/{item.id}" variant="ghost" size="sm">Edit</ActionButton>
-			<form method="POST" action="?/delete" use:enhance={() => {
+			<form method="POST" action="?/delete" use:enhance={({ cancel }) => {
+				if (!confirm('Are you sure you want to delete this city?')) {
+					cancel();
+					return;
+				}
 				return async ({ update }) => {
-					if (confirm('Are you sure you want to delete this city?')) {
-						await update();
-					}
+					await update();
 				};
 			}}>
 				<input type="hidden" name="id" value={item.id} />
