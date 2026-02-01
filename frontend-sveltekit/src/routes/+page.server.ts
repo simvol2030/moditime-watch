@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { queries, formatPrice } from '$lib/server/db/database';
+import { queries, db, formatPrice } from '$lib/server/db/database';
 import type { HeroContent } from '$lib/types/hero';
 import type { CollectionsSectionProps } from '$lib/types/collections';
 import type { ShowcaseSectionProps } from '$lib/types/showcase';
@@ -23,7 +23,7 @@ export const load: PageServerLoad = async () => {
 			text: heroFromDb.secondary_cta_text,
 			href: heroFromDb.secondary_cta_href
 		},
-		stats: JSON.parse(heroFromDb.stats_json),
+		stats: buildDynamicStats(),
 		image: {
 			src: heroFromDb.image_url,
 			alt: heroFromDb.image_alt,
@@ -175,3 +175,14 @@ export const load: PageServerLoad = async () => {
 		telegramCtaContent
 	};
 };
+
+function buildDynamicStats(): { value: string; label: string }[] {
+	const productCount = (db.prepare('SELECT COUNT(*) as count FROM products WHERE is_active = 1').get() as { count: number }).count;
+	const brandCount = (db.prepare('SELECT COUNT(*) as count FROM brands WHERE is_active = 1').get() as { count: number }).count;
+
+	return [
+		{ value: `${productCount}+`, label: 'моделей в каталоге' },
+		{ value: String(brandCount), label: 'премиальных брендов' },
+		{ value: '24ч', label: 'консьерж-подбор' }
+	];
+}
