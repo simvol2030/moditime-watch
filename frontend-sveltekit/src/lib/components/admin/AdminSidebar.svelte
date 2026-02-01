@@ -33,6 +33,7 @@
 		{ label: 'Footer', href: '/admin/footer', icon: '🦶', group: 'Content' },
 		{ label: 'Homepage', href: '/admin/homepage', icon: '🏠', group: 'Content' },
 		{ label: 'Import', href: '/admin/import', icon: '📥', group: 'Data' },
+		{ label: 'Notifications', href: '/admin/system/notifications', icon: '🔔', group: 'System' },
 		{ label: 'Config', href: '/admin/system/config', icon: '⚙️', group: 'System' }
 	];
 

@@ -2,8 +2,8 @@ import type { Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
 import { queries, db } from '$lib/server/db/database';
 import {
-	sendOrderEmail,
-	sendAdminOrderEmail,
+	sendOrderConfirmation,
+	sendOrderAdminNotification,
 	sendTelegramNotification,
 	type OrderData
 } from '$lib/server/notifications';
@@ -136,8 +136,8 @@ export const actions: Actions = {
 			// Send notifications (don't block order creation on failure)
 			try {
 				await Promise.all([
-					sendOrderEmail(orderData),
-					sendAdminOrderEmail(orderData),
+					sendOrderConfirmation(orderData),
+					sendOrderAdminNotification(orderData),
 					sendTelegramNotification(orderData)
 				]);
 			} catch (notificationError) {

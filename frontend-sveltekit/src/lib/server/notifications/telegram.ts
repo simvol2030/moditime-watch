@@ -1,12 +1,13 @@
 /**
  * Telegram notifications module
  *
- * TODO: Configure with real Telegram credentials in .env:
- * - TELEGRAM_BOT_TOKEN - token from @BotFather
- * - TELEGRAM_CHAT_ID - chat/channel ID to send notifications
+ * Settings from site_config:
+ * - telegram_enabled: 'true' / 'false'
+ * - telegram_bot_token: Bot API token from @BotFather
+ * - telegram_chat_id: Chat/channel ID to send notifications
  */
 
-import { env } from '$env/dynamic/private';
+import { getConfigValue } from '$lib/server/db/database';
 
 export interface OrderItem {
 	name: string;
@@ -27,7 +28,7 @@ export interface OrderData {
 }
 
 /**
- * Format price from kopecks to rubles (for Telegram message)
+ * Format price from kopecks to rubles
  */
 function formatPrice(kopecks: number): string {
 	const rubles = kopecks / 100;
@@ -39,111 +40,119 @@ function formatPrice(kopecks: number): string {
 }
 
 /**
- * Escape special characters for Telegram MarkdownV2
+ * Escape HTML special characters for Telegram HTML parse_mode
  */
-function escapeMarkdown(text: string): string {
-	return text.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
+function escapeHtml(text: string): string {
+	return text
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;');
 }
 
 /**
- * Generate Telegram message for new order notification
+ * Generate Telegram message for new order notification (HTML format)
  */
 function generateOrderMessage(order: OrderData): string {
 	const itemsList = order.items
 		.map(
 			(item, i) =>
-				`${i + 1}\\. *${escapeMarkdown(item.brand)}* \\- ${escapeMarkdown(item.name)}\n   ${item.quantity} x ${formatPrice(item.price)}`
+				`${i + 1}. <b>${escapeHtml(item.brand)}</b> — ${escapeHtml(item.name)}\n   ${item.quantity} x ${formatPrice(item.price)}`
 		)
 		.join('\n');
 
-	const message = `
-\u{1F6D2} *НОВЫЙ ЗАКАЗ*
+	const lines: string[] = [
+		'\u{1F6D2} <b>НОВЫЙ ЗАКАЗ</b>',
+		'',
+		`\u{1F4CB} <b>Номер:</b> <code>${order.orderNumber}</code>`,
+		'',
+		`\u{1F464} <b>Клиент:</b> ${escapeHtml(order.customerName)}`,
+		`\u{1F4DE} <b>Телефон:</b> ${escapeHtml(order.customerPhone)}`
+	];
 
-\u{1F4CB} *Номер:* \`${order.orderNumber}\`
+	if (order.customerEmail) {
+		lines.push(`\u{1F4E7} <b>Email:</b> ${escapeHtml(order.customerEmail)}`);
+	}
 
-\u{1F464} *Клиент:* ${escapeMarkdown(order.customerName)}
-\u{1F4DE} *Телефон:* ${escapeMarkdown(order.customerPhone)}
-${order.customerEmail ? `\u{1F4E7} *Email:* ${escapeMarkdown(order.customerEmail)}` : ''}
-\u{1F4CD} *Адрес:* ${escapeMarkdown(order.address)}
-${order.comment ? `\u{1F4AC} *Комментарий:* ${escapeMarkdown(order.comment)}` : ''}
+	lines.push(`\u{1F4CD} <b>Адрес:</b> ${escapeHtml(order.address)}`);
 
-\u{1F4E6} *Товары:*
-${itemsList}
+	if (order.comment) {
+		lines.push(`\u{1F4AC} <b>Комментарий:</b> ${escapeHtml(order.comment)}`);
+	}
 
-\u{1F4B0} *ИТОГО: ${formatPrice(order.totalAmount)}*
-`.trim();
+	lines.push('', '\u{1F4E6} <b>Товары:</b>', itemsList, '', `\u{1F4B0} <b>ИТОГО: ${formatPrice(order.totalAmount)}</b>`);
 
-	return message;
+	return lines.join('\n');
+}
+
+/**
+ * Send a message via Telegram Bot API
+ *
+ * @returns true if sent, false on error or not configured
+ */
+export async function sendTelegramMessage(text: string, botToken?: string, chatId?: string): Promise<boolean> {
+	const token = botToken ?? getConfigValue('telegram_bot_token');
+	const chat = chatId ?? getConfigValue('telegram_chat_id');
+
+	if (!token || !chat) {
+		console.log('[Telegram] Not configured (missing token or chat_id), skipping');
+		return false;
+	}
+
+	try {
+		const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+		const response = await fetch(url, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				chat_id: chat,
+				text,
+				parse_mode: 'HTML'
+			})
+		});
+
+		if (!response.ok) {
+			const errorBody = await response.text();
+			console.error('[Telegram] API error:', errorBody);
+			return false;
+		}
+
+		console.log('[Telegram] Message sent successfully');
+		return true;
+	} catch (err) {
+		console.error('[Telegram] Failed to send message:', err);
+		return false;
+	}
 }
 
 /**
  * Send order notification to Telegram
  *
- * @returns true if message was sent (or mock logged), false on error
+ * Reads telegram_enabled, telegram_bot_token, telegram_chat_id from site_config.
+ * If not enabled or not configured → silently skips.
+ * Errors are logged but never thrown (order must not be blocked).
+ *
+ * @returns true if sent, false otherwise
  */
 export async function sendTelegramNotification(order: OrderData): Promise<boolean> {
-	const botToken = env.TELEGRAM_BOT_TOKEN;
-	const chatId = env.TELEGRAM_CHAT_ID;
-
-	// Check if real credentials configured
-	if (botToken && chatId) {
-		try {
-			const message = generateOrderMessage(order);
-			const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
-			const response = await fetch(url, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					chat_id: chatId,
-					text: message,
-					parse_mode: 'MarkdownV2'
-				})
-			});
-
-			if (!response.ok) {
-				const error = await response.text();
-				console.error('[Telegram] API error:', error);
-				return false;
-			}
-
-			console.log('[Telegram] Notification sent successfully');
-			return true;
-		} catch (error) {
-			console.error('[Telegram] Failed to send notification:', error);
-			return false;
-		}
+	const enabled = getConfigValue('telegram_enabled');
+	if (enabled !== 'true') {
+		console.log('[Telegram] Notifications disabled, skipping');
+		return false;
 	}
 
-	// Mock implementation - just log
-	console.log('='.repeat(60));
-	console.log('[Telegram MOCK] Sending order notification');
-	console.log('='.repeat(60));
-	console.log('');
-	console.log('\u{1F6D2} НОВЫЙ ЗАКАЗ');
-	console.log('');
-	console.log('\u{1F4CB} Номер:', order.orderNumber);
-	console.log('\u{1F464} Клиент:', order.customerName);
-	console.log('\u{1F4DE} Телефон:', order.customerPhone);
-	if (order.customerEmail) {
-		console.log('\u{1F4E7} Email:', order.customerEmail);
-	}
-	console.log('\u{1F4CD} Адрес:', order.address);
-	if (order.comment) {
-		console.log('\u{1F4AC} Комментарий:', order.comment);
-	}
-	console.log('');
-	console.log('\u{1F4E6} Товары:');
-	order.items.forEach((item, i) => {
-		console.log(`  ${i + 1}. ${item.brand} - ${item.name}`);
-		console.log(`     ${item.quantity} x ${formatPrice(item.price)}`);
-	});
-	console.log('');
-	console.log('\u{1F4B0} ИТОГО:', formatPrice(order.totalAmount));
-	console.log('='.repeat(60));
+	const message = generateOrderMessage(order);
+	return sendTelegramMessage(message);
+}
 
-	// In mock mode, always return true
-	return true;
+/**
+ * Send a plain-text Telegram notification (e.g. for cancelled orders)
+ */
+export async function sendTelegramText(text: string): Promise<boolean> {
+	const enabled = getConfigValue('telegram_enabled');
+	if (enabled !== 'true') {
+		return false;
+	}
+
+	return sendTelegramMessage(text);
 }

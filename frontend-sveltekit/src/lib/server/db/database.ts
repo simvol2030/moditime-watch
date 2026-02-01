@@ -331,7 +331,108 @@ export function seedDatabase() {
     insertConfig.run('social_telegram', 'https://t.me/moditimewatch', 'string', 'Ссылка на Telegram');
     insertConfig.run('copyright_text', '© 2025 Moditimewatch. Все права защищены.', 'string', 'Текст копирайта в футере');
 
-    console.log('✅ Database seeded successfully (с Hero, Experience, Navigation, Footer, Filters, Config)');
+    // Notification Config (Session-5)
+    insertConfig.run('telegram_enabled', 'false', 'boolean', 'Telegram уведомления включены');
+    insertConfig.run('telegram_bot_token', '', 'string', 'Telegram Bot Token от @BotFather');
+    insertConfig.run('telegram_chat_id', '', 'string', 'Telegram Chat ID для уведомлений');
+    insertConfig.run('email_enabled', 'false', 'boolean', 'Email уведомления включены');
+    insertConfig.run('smtp_host', '', 'string', 'SMTP сервер (например: smtp.gmail.com)');
+    insertConfig.run('smtp_port', '587', 'string', 'SMTP порт (587 или 465)');
+    insertConfig.run('smtp_user', '', 'string', 'SMTP пользователь (email)');
+    insertConfig.run('smtp_password', '', 'string', 'SMTP пароль');
+    insertConfig.run('email_from', '', 'string', 'Email отправителя (From)');
+    insertConfig.run('admin_email', 'admin@moditime-watch.ru', 'string', 'Email администратора для уведомлений');
+
+    // Email Templates (Session-5)
+    const insertTemplate = db.prepare('INSERT INTO email_templates (template_key, subject, body_html, body_text, is_active) VALUES (?, ?, ?, ?, 1)');
+
+    insertTemplate.run(
+      'order_confirmation',
+      'Заказ #{{order_number}} принят — Moditimewatch',
+      `<div style="background: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+  <h2 style="color: #1a1a1a; margin: 0 0 10px;">Спасибо за заказ!</h2>
+  <p style="margin: 0; color: #666;">Номер заказа: <strong style="color: #1a1a1a;">{{order_number}}</strong></p>
+</div>
+<p>Уважаемый(-ая) {{customer_name}},</p>
+<p>Ваш заказ принят в обработку. Наш менеджер свяжется с вами в ближайшее время для подтверждения.</p>
+<h3 style="color: #1a1a1a; border-bottom: 2px solid #1a1a1a; padding-bottom: 10px;">Детали заказа</h3>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+  <thead><tr style="background: #f8f8f8;"><th style="padding: 12px; text-align: left;">Товар</th><th style="padding: 12px; text-align: center;">Кол-во</th><th style="padding: 12px; text-align: right;">Сумма</th></tr></thead>
+  <tbody>{{items}}</tbody>
+  <tfoot><tr><td colspan="2" style="padding: 12px; text-align: right; font-weight: bold;">Итого:</td><td style="padding: 12px; text-align: right; font-weight: bold; font-size: 18px; color: #1a1a1a;">{{total}}</td></tr></tfoot>
+</table>
+<div style="background: #f8f8f8; padding: 20px; border-radius: 8px; text-align: center;">
+  <p style="margin: 0 0 10px; color: #666;">Телефон: <a href="tel:+79999604322" style="color: #1a1a1a;">+7 (999) 960-43-22</a></p>
+</div>`,
+      'Заказ #{{order_number}} принят. Спасибо за покупку!'
+    );
+
+    insertTemplate.run(
+      'order_admin_notification',
+      'Новый заказ #{{order_number}}',
+      `<div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+  <h2 style="color: #92400e; margin: 0 0 10px;">Новый заказ!</h2>
+  <p style="margin: 0; color: #92400e;">Номер: <strong>{{order_number}}</strong> | Сумма: <strong>{{total}}</strong></p>
+</div>
+<table style="width: 100%; margin-bottom: 20px;">
+  <tr><td style="padding: 8px 0; color: #666; width: 120px;">Клиент:</td><td>{{customer_name}}</td></tr>
+  <tr><td style="padding: 8px 0; color: #666;">Телефон:</td><td>{{customer_phone}}</td></tr>
+  <tr><td style="padding: 8px 0; color: #666;">Email:</td><td>{{customer_email}}</td></tr>
+  <tr><td style="padding: 8px 0; color: #666;">Адрес:</td><td>{{address}}</td></tr>
+</table>
+<h3 style="color: #1a1a1a; border-bottom: 2px solid #1a1a1a; padding-bottom: 10px;">Товары</h3>
+<table style="width: 100%; border-collapse: collapse;">
+  <thead><tr style="background: #f8f8f8;"><th style="padding: 12px; text-align: left;">Товар</th><th style="padding: 12px; text-align: center;">Кол-во</th><th style="padding: 12px; text-align: right;">Сумма</th></tr></thead>
+  <tbody>{{items}}</tbody>
+  <tfoot><tr><td colspan="2" style="padding: 12px; text-align: right; font-weight: bold;">Итого:</td><td style="padding: 12px; text-align: right; font-weight: bold; font-size: 18px;">{{total}}</td></tr></tfoot>
+</table>`,
+      'Новый заказ #{{order_number}} от {{customer_name}} на сумму {{total}}'
+    );
+
+    insertTemplate.run(
+      'order_status_confirmed',
+      'Заказ #{{order_number}} подтверждён — Moditimewatch',
+      `<div style="background: #dcfce7; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+  <h2 style="color: #16a34a; margin: 0 0 10px;">Заказ подтверждён</h2>
+  <p style="margin: 0; color: #166534;">Номер заказа: <strong>{{order_number}}</strong></p>
+</div>
+<p>Уважаемый(-ая) {{customer_name}},</p>
+<p>Ваш заказ <strong>#{{order_number}}</strong> подтверждён и передан в обработку.</p>
+<p>Мы сообщим вам, когда заказ будет отправлен.</p>
+<p style="color: #666;">Если у вас есть вопросы, звоните: <a href="tel:+79999604322">+7 (999) 960-43-22</a></p>`,
+      'Заказ #{{order_number}} подтверждён и передан в обработку.'
+    );
+
+    insertTemplate.run(
+      'order_status_shipped',
+      'Заказ #{{order_number}} отправлен — Moditimewatch',
+      `<div style="background: #e0e7ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+  <h2 style="color: #4338ca; margin: 0 0 10px;">Заказ отправлен</h2>
+  <p style="margin: 0; color: #3730a3;">Номер заказа: <strong>{{order_number}}</strong></p>
+</div>
+<p>Уважаемый(-ая) {{customer_name}},</p>
+<p>Ваш заказ <strong>#{{order_number}}</strong> отправлен!</p>
+<p>Адрес доставки: {{address}}</p>
+<p>Мы сообщим вам, когда заказ будет доставлен.</p>
+<p style="color: #666;">Если у вас есть вопросы, звоните: <a href="tel:+79999604322">+7 (999) 960-43-22</a></p>`,
+      'Заказ #{{order_number}} отправлен на адрес {{address}}.'
+    );
+
+    insertTemplate.run(
+      'order_status_delivered',
+      'Заказ #{{order_number}} доставлен — Moditimewatch',
+      `<div style="background: #dcfce7; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+  <h2 style="color: #16a34a; margin: 0 0 10px;">Заказ доставлен</h2>
+  <p style="margin: 0; color: #166534;">Номер заказа: <strong>{{order_number}}</strong></p>
+</div>
+<p>Уважаемый(-ая) {{customer_name}},</p>
+<p>Ваш заказ <strong>#{{order_number}}</strong> доставлен!</p>
+<p>Спасибо за покупку в Moditimewatch. Мы ценим ваше доверие.</p>
+<p style="color: #666;">Если у вас есть вопросы, звоните: <a href="tel:+79999604322">+7 (999) 960-43-22</a></p>`,
+      'Заказ #{{order_number}} доставлен. Спасибо за покупку!'
+    );
+
+    console.log('✅ Database seeded successfully (с Hero, Experience, Navigation, Footer, Filters, Config, Email Templates)');
   });
   seed();
 }
@@ -712,7 +813,22 @@ const createQueries = () => ({
   // Products queries (missing)
   adminGetProduct: db.prepare('SELECT * FROM products WHERE id = ?'),
   adminSelectActiveBrands: db.prepare('SELECT id, name FROM brands WHERE is_active = 1 ORDER BY position, name'),
-  adminSelectActiveCategories: db.prepare('SELECT id, name FROM categories WHERE is_active = 1 ORDER BY position, name')
+  adminSelectActiveCategories: db.prepare('SELECT id, name FROM categories WHERE is_active = 1 ORDER BY position, name'),
+
+  // ============================================
+  // SESSION-5: NOTIFICATIONS
+  // ============================================
+
+  // Site Config — get single value by key
+  getConfigByKey: db.prepare('SELECT value FROM site_config WHERE key = ?'),
+
+  // Email Templates
+  getEmailTemplate: db.prepare('SELECT * FROM email_templates WHERE template_key = ? AND is_active = 1'),
+  adminListEmailTemplates: db.prepare('SELECT * FROM email_templates ORDER BY template_key'),
+
+  // Email Log
+  insertEmailLog: db.prepare('INSERT INTO email_log (template_key, recipient_email, subject, status, error_message) VALUES (?, ?, ?, ?, ?)'),
+  adminListEmailLogs: db.prepare('SELECT * FROM email_log ORDER BY sent_at DESC LIMIT 50')
 });
 
 // Lazy queries cache
@@ -748,6 +864,12 @@ export function getProductComplete(slug: string): (Product & { brand_name: strin
   const images = queries.getProductImages.all(product.id);
   const specs = product.specs_json ? JSON.parse(product.specs_json) : null;
   return { ...product, images, specs };
+}
+
+// Config helper — read a single site_config value by key
+export function getConfigValue(key: string): string | null {
+  const row = queries.getConfigByKey.get(key) as { value: string } | undefined;
+  return row?.value ?? null;
 }
 
 console.log('✅ Moditimewatch database ready');
