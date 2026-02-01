@@ -705,7 +705,16 @@ let queriesCache: any = null;
 export const queries = new Proxy({} as any, {
   get(_target, prop) {
     if (!queriesCache) {
-      queriesCache = createQueries();
+      console.log('🔧 Creating queries for the first time...');
+      try {
+        queriesCache = createQueries();
+        console.log(`✅ Queries created, testing access to ${String(prop)}...`);
+        console.log(`   queriesCache type: ${typeof queriesCache}`);
+        console.log(`   queriesCache[${String(prop)}]: ${typeof queriesCache[prop]}`);
+      } catch (err) {
+        console.error('❌ Error creating queries:', err);
+        throw err;
+      }
     }
     return queriesCache[prop];
   }
