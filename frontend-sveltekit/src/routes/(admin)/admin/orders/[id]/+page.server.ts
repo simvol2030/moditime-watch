@@ -1,6 +1,6 @@
 import { fail, error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 
 interface Order {
 	id: number;
@@ -35,26 +35,15 @@ interface StatusHistory {
 	changed_at: string;
 }
 
-const getOrder = db.prepare('SELECT * FROM orders WHERE id = ?');
-const getOrderItems = db.prepare('SELECT * FROM order_items WHERE order_id = ?');
-const getStatusHistory = db.prepare('SELECT * FROM order_status_history WHERE order_id = ? ORDER BY changed_at DESC');
-const updateOrderStatus = db.prepare(`
-	UPDATE orders SET status = ?, updated_at = datetime('now') WHERE id = ?
-`);
-const insertStatusHistory = db.prepare(`
-	INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, comment)
-	VALUES (?, ?, ?, ?, ?)
-`);
-
 export const load: PageServerLoad = async ({ params }) => {
-	const order = getOrder.get(Number(params.id)) as Order | undefined;
+	const order = queries.adminGetOrder.get(Number(params.id)) as Order | undefined;
 
 	if (!order) {
 		throw error(404, 'Order not found');
 	}
 
-	const items = getOrderItems.all(order.id) as OrderItem[];
-	const history = getStatusHistory.all(order.id) as StatusHistory[];
+	const items = queries.adminGetOrderItems.all(order.id) as OrderItem[];
+	const history = queries.adminGetOrderStatusHistory.all(order.id) as StatusHistory[];
 
 	return { order, items, history };
 };
@@ -70,7 +59,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Status is required' });
 		}
 
-		const order = getOrder.get(orderId) as Order | undefined;
+		const order = queries.adminGetOrder.get(orderId) as Order | undefined;
 		if (!order) {
 			return fail(404, { error: 'Order not found' });
 		}
@@ -82,8 +71,8 @@ export const actions: Actions = {
 		}
 
 		try {
-			updateOrderStatus.run(newStatus, orderId);
-			insertStatusHistory.run(orderId, oldStatus, newStatus, 'admin', comment || null);
+			queries.adminUpdateOrderStatus.run(newStatus, orderId);
+			queries.adminInsertOrderStatusHistory.run(orderId, oldStatus, newStatus, 'admin', comment || null);
 			return { success: true };
 		} catch (err) {
 			return fail(500, { error: 'Failed to update status' });

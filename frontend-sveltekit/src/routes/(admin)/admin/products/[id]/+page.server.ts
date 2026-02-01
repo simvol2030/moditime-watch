@@ -1,6 +1,6 @@
 import { fail, redirect, error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 
 interface Product {
 	id: number;
@@ -20,38 +20,15 @@ interface Product {
 	position: number;
 }
 
-const getProduct = db.prepare('SELECT * FROM products WHERE id = ?');
-const listBrands = db.prepare('SELECT id, name FROM brands WHERE is_active = 1 ORDER BY name');
-const listCategories = db.prepare('SELECT id, name FROM categories WHERE is_active = 1 ORDER BY name');
-const updateProduct = db.prepare(`
-	UPDATE products SET
-		slug = @slug,
-		name = @name,
-		brand_id = @brand_id,
-		category_id = @category_id,
-		sku = @sku,
-		price = @price,
-		price_note = @price_note,
-		availability_status = @availability_status,
-		description = @description,
-		is_active = @is_active,
-		is_featured = @is_featured,
-		is_new = @is_new,
-		is_limited = @is_limited,
-		position = @position,
-		updated_at = datetime('now')
-	WHERE id = @id
-`);
-
 export const load: PageServerLoad = async ({ params }) => {
-	const product = getProduct.get(Number(params.id)) as Product | undefined;
+	const product = queries.adminGetProduct.get(Number(params.id)) as Product | undefined;
 
 	if (!product) {
 		throw error(404, 'Product not found');
 	}
 
-	const brands = listBrands.all() as { id: number; name: string }[];
-	const categories = listCategories.all() as { id: number; name: string }[];
+	const brands = queries.adminSelectActiveBrands.all() as { id: number; name: string }[];
+	const categories = queries.adminSelectActiveCategories.all() as { id: number; name: string }[];
 
 	return { product, brands, categories };
 };
@@ -87,7 +64,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			updateProduct.run({
+			queries.adminUpdateProduct.run({
 				id,
 				slug,
 				name,

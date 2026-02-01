@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 import { canDelete } from '$lib/server/auth';
 
 interface Brand {
@@ -14,11 +14,8 @@ interface Brand {
 	created_at: string;
 }
 
-const listBrands = db.prepare('SELECT * FROM brands ORDER BY position, name');
-const deleteBrand = db.prepare('DELETE FROM brands WHERE id = ?');
-
 export const load: PageServerLoad = async () => {
-	const brands = listBrands.all() as Brand[];
+	const brands = queries.adminListBrands.all() as Brand[];
 	return { brands };
 };
 
@@ -32,7 +29,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			deleteBrand.run(Number(id));
+			queries.adminDeleteBrand.run(Number(id));
 			return { success: true };
 		} catch (error) {
 			return fail(500, { error: 'Failed to delete brand' });

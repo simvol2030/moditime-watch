@@ -1,6 +1,6 @@
 import { fail, redirect, error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 
 interface Brand {
 	id: number;
@@ -15,24 +15,8 @@ interface Brand {
 	position: number;
 }
 
-const getBrand = db.prepare('SELECT * FROM brands WHERE id = ?');
-const updateBrand = db.prepare(`
-	UPDATE brands SET
-		slug = @slug,
-		name = @name,
-		description = @description,
-		logo_url = @logo_url,
-		country = @country,
-		founded_year = @founded_year,
-		website_url = @website_url,
-		is_active = @is_active,
-		position = @position,
-		updated_at = datetime('now')
-	WHERE id = @id
-`);
-
 export const load: PageServerLoad = async ({ params }) => {
-	const brand = getBrand.get(Number(params.id)) as Brand | undefined;
+	const brand = queries.adminGetBrand.get(Number(params.id)) as Brand | undefined;
 
 	if (!brand) {
 		throw error(404, 'Brand not found');
@@ -65,7 +49,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			updateBrand.run({
+			queries.adminUpdateBrand.run({
 				id,
 				slug,
 				name,

@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 
 interface Product {
 	id: number;
@@ -16,17 +16,8 @@ interface Product {
 	position: number;
 }
 
-const listProducts = db.prepare(`
-	SELECT p.*, b.name as brand_name, c.name as category_name
-	FROM products p
-	JOIN brands b ON p.brand_id = b.id
-	LEFT JOIN categories c ON p.category_id = c.id
-	ORDER BY p.position, p.name
-`);
-const deleteProduct = db.prepare('DELETE FROM products WHERE id = ?');
-
 export const load: PageServerLoad = async () => {
-	const products = listProducts.all() as Product[];
+	const products = queries.adminListProducts.all() as Product[];
 	return { products };
 };
 
@@ -40,7 +31,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			deleteProduct.run(Number(id));
+			queries.adminDeleteProduct.run(Number(id));
 			return { success: true };
 		} catch (error) {
 			return fail(500, { error: 'Failed to delete product' });

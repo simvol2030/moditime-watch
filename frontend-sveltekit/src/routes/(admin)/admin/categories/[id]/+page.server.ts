@@ -1,6 +1,6 @@
 import { fail, redirect, error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 
 interface Category {
 	id: number;
@@ -13,30 +13,15 @@ interface Category {
 	position: number;
 }
 
-const getCategory = db.prepare('SELECT * FROM categories WHERE id = ?');
-const listCategories = db.prepare('SELECT id, name FROM categories ORDER BY name');
-const updateCategory = db.prepare(`
-	UPDATE categories SET
-		slug = @slug,
-		name = @name,
-		description = @description,
-		parent_id = @parent_id,
-		image_url = @image_url,
-		is_active = @is_active,
-		position = @position,
-		updated_at = datetime('now')
-	WHERE id = @id
-`);
-
 export const load: PageServerLoad = async ({ params }) => {
-	const category = getCategory.get(Number(params.id)) as Category | undefined;
+	const category = queries.adminGetCategory.get(Number(params.id)) as Category | undefined;
 
 	if (!category) {
 		throw error(404, 'Category not found');
 	}
 
 	// Get all categories except current one for parent selection
-	const categories = (listCategories.all() as { id: number; name: string }[])
+	const categories = (queries.adminSelectCategoriesAll.all() as { id: number; name: string }[])
 		.filter(c => c.id !== category.id);
 
 	return { category, categories };
@@ -63,7 +48,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			updateCategory.run({
+			queries.adminUpdateCategory.run({
 				id,
 				slug,
 				name,
