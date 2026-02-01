@@ -1,17 +1,18 @@
 # Developer Start Instructions
 
-> **ПРОЧИТАЙ ПЕРВЫМ!** Инструкция для запуска Session-6
+> **ПРОЧИТАЙ ПЕРВЫМ!** Инструкция для запуска Session-8 (ФИНАЛ!)
 
 ---
 
 ## ⚠️ КРИТИЧЕСКИ ВАЖНО
 
-1. **Работай ТОЛЬКО с Session-7** — НЕ делай Session-8 сейчас!
-2. **После завершения Session-7 — ОБЯЗАТЕЛЬНО:**
+1. **Работай ТОЛЬКО с Session-8** — ЭТО ФИНАЛЬНАЯ СЕССИЯ!
+2. **После завершения Session-8 — ОБЯЗАТЕЛЬНО:**
    - `git add .`
    - `git commit -m "..."`
-   - `git push origin claude/session-7-pseo-admin`
+   - `git push origin claude/session-8-pseo-frontend`
 3. **Уведоми CLI о завершении**
+4. **ПРОЕКТ БУДЕТ ЗАВЕРШЁН НА 100%!**
 
 ---
 
@@ -21,40 +22,41 @@
 
 ```
 project-doc/SESSIONS_ROADMAP.md        — общий roadmap всех сессий
-project-doc/COMPLETED.md               — что уже сделано (Sessions 1-5 = DONE)
-project-doc/session-6-pseo-schema/roadmap.md  — твоя сессия
+project-doc/COMPLETED.md               — что уже сделано (Sessions 1-7 = DONE)
+project-doc/session-8-pseo-frontend/roadmap.md  — твоя сессия
 CLAUDE.md                              — контекст проекта
 CLAUDE.web.md                          — workflow Developer
 ```
 
 **Ключевые факты:**
-- Sessions 1-6 = ✅ DONE (42 задачи выполнено)
-- Session-7 = ⏳ PENDING (8 задач) ← **ТВОЯ СЕССИЯ**
-- Session-8 = ⏳ PENDING (НЕ ТРОГАЙ ЕГО СЕЙЧАС!)
-- **Ветка main:** актуальная с Session-6 (commit 17e6397)
+- Sessions 1-7 = ✅ DONE (50 задач выполнено)
+- Session-8 = ⏳ PENDING (9 задач) ← **ТВОЯ СЕССИЯ — ФИНАЛ!**
+- **Ветка main:** актуальная с Session-7 (commit 666f4f8)
 - **ВАЖНО:** Сделай `git pull origin main` ПЕРЕД началом!
+- **После Session-8 → проект готов на 100%!**
 
 ---
 
-## Шаг 2: Твоя задача — Session-7
+## Шаг 2: Твоя задача — Session-8 (ФИНАЛ!)
 
 **Что делать:**
 
-1. Прочитай `project-doc/session-7-pseo-admin/roadmap.md`
-2. Выполни **ТОЛЬКО 8 задач Session-7:**
-   1. /admin/pseo Dashboard (Medium) — выбор города + список статей
-   2. Форма создания/редактирования статьи (High) — all fields + media + related + tags
-   3. Категории CRUD (Low) — /admin/pseo/categories
-   4. Теги CRUD (Low) — /admin/pseo/tags
-   5. SEO настройки города (Low) — hero_title, meta_description
-   6. Импорт/Экспорт (Medium) — Markdown import, CSV export
-   7. AdminSidebar — секция pSEO (Low) — добавить в sidebar
-   8. Компоненты (CitySelector, MediaEditor, RelatedEditor) (Medium) — reusable components
+1. Прочитай `project-doc/session-8-pseo-frontend/roadmap.md`
+2. Выполни **ТОЛЬКО 9 задач Session-8:**
+   1. City Layout Group (Medium) — (city)/+layout с CityHeader/Footer
+   2. CityHeader + CityFooter (Medium) — отдельные header/footer для городов
+   3. Главная города (High) — категории + пагинация + hero
+   4. Страница статьи (High) — медиа + видео + виджет + перелинковка
+   5. Reroute article paths на поддоменах (Low) — hooks.ts расширение
+   6. Sitemap Index (Medium) — sitemap index + sub-sitemaps
+   7. robots.txt (Low) — добавить Sitemap:
+   8. JSON-LD schemas (Medium) — LocalBusiness, BreadcrumbList, WebSite
+   9. Cache-Control headers (Low) — setHeaders для city pages
 
 **Что НЕ делать:**
-- ❌ НЕ начинай Session-8
 - ❌ НЕ работай с несколькими сессиями одновременно
-- ❌ НЕ переписывай уже готовый код из Sessions 1-6
+- ❌ НЕ переписывай уже готовый код из Sessions 1-7
+- ✅ Это ПОСЛЕДНЯЯ сессия — после неё проект готов!
 
 ---
 
@@ -62,12 +64,13 @@ CLAUDE.web.md                          — workflow Developer
 
 **Следуй CLAUDE.web.md:**
 
-1. **Research** → изучи существующий код (AdminSidebar, существующие CRUD, database.ts prepared statements для pSEO)
+1. **Research** → изучи существующий код (city layouts, CityHeader/Footer, schema-helpers, sitemap)
 2. **Tech-spec** → создай tech-spec.md
 3. **Plan** → создай plan.md
 4. **Roadmap-final** → roadmap-final.md
-5. **Implementation** → реализация 8 задач
+5. **Implementation** → реализация 9 задач
 6. **Commit + Push** → git commit + git push ← **ОБЯЗАТЕЛЬНО!**
+7. **ФИНИШ** → проект готов на 100%!
 
 ---
 
@@ -79,19 +82,19 @@ CLAUDE.web.md                          — workflow Developer
 # 1. Перейди на main
 git checkout main
 
-# 2. Получи последние изменения (Session-6 уже в main!)
+# 2. Получи последние изменения (Session-7 уже в main!)
 git pull origin main
 
 # 3. Проверь что ты на актуальном коммите
 git log --oneline -1
-# Должен быть коммит 17e6397 или новее
-# Если старше — повтори git pull!
+# Должен быть коммит 666f4f8 или новее
+# Если старее — повтори git pull!
 ```
 
 **Только после этого создай ветку:**
 
 ```bash
-git checkout -b claude/session-7-pseo-admin
+git checkout -b claude/session-8-pseo-frontend
 ```
 
 **Работай в этой ветке** — НЕ коммить в main напрямую.
@@ -110,24 +113,27 @@ git checkout -b claude/session-7-pseo-admin
 2. **Commit + Push:**
    ```bash
    git add .
-   git commit -m "feat: session-7 pseo admin ui complete
+   git commit -m "feat: session-8 pseo frontend & seo complete
 
-   - /admin/pseo Dashboard (city selector + articles list)
-   - Article form (all fields + media + related + tags)
-   - Categories CRUD
-   - Tags CRUD
-   - SEO настройки города
-   - Import/Export (Markdown + CSV)
-   - AdminSidebar pSEO section
-   - Components (CitySelector, MediaEditor, RelatedEditor)
+   - City Layout Group ((city)/+layout)
+   - CityHeader + CityFooter (отдельные header/footer)
+   - Главная города (категории + пагинация + hero)
+   - Страница статьи (rich content + медиа + видео + перелинковка)
+   - Reroute на поддоменах (hooks.ts)
+   - Sitemap Index (масштабируемый sitemap)
+   - robots.txt (Sitemap directive)
+   - JSON-LD schemas (LocalBusiness, BreadcrumbList, WebSite)
+   - Cache-Control headers
+
+   🎉 PROJECT COMPLETE 100%
 
    Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
-   git push origin claude/session-7-pseo-admin
+   git push origin claude/session-8-pseo-frontend
    ```
 
 3. **Уведоми CLI:**
-   - Напиши: "Session-7 завершена, ветка `claude/session-7-pseo-admin` запушена"
+   - Напиши: "Session-8 завершена, ветка `claude/session-8-pseo-frontend` запушена. 🎉 ПРОЕКТ ГОТОВ НА 100%!"
 
 ---
 
@@ -135,54 +141,76 @@ git checkout -b claude/session-7-pseo-admin
 
 **Перед push проверь:**
 
+**Desktop:**
 - [ ] `npm run build` — frontend без ошибок
 - [ ] Типы корректны
-- [ ] Все CRUD операции сохраняют данные в БД
-- [ ] /admin/pseo — выбор города работает (102 города)
-- [ ] Форма статьи: все поля сохраняются (включая media, tags, related)
-- [ ] Categories CRUD работает
-- [ ] Tags CRUD работает
-- [ ] SEO настройки города сохраняются
-- [ ] Импорт markdown → статья создаётся
-- [ ] Sidebar показывает секцию pSEO
+- [ ] /city/moscow — отдельный CityHeader, CityFooter
+- [ ] /city/moscow — статьи по категориям + hero
+- [ ] /city/moscow/article — rich content (изображения + видео)
+- [ ] /city/moscow/article — перелинковка работает
+- [ ] /city/moscow/article — breadcrumbs корректны
+- [ ] moscow.moditime-watch.ru/article — reroute работает
+- [ ] /catalog — стандартный layout не затронут
+
+**Mobile:**
+- [ ] /city/moscow — mobile responsive
+- [ ] /city/moscow/article — mobile responsive
 - [ ] Консоль браузера чистая
+
+**SEO:**
+- [ ] /sitemap.xml — sitemap index
+- [ ] /sitemap-cities.xml — 102 города
+- [ ] /sitemap-city-articles-1.xml — статьи городов
+- [ ] robots.txt содержит `Sitemap:`
+- [ ] /city/moscow — LocalBusiness JSON-LD
+- [ ] /city/moscow/article — BreadcrumbList JSON-LD
+- [ ] / — WebSite JSON-LD с SearchAction
+- [ ] Cache-Control headers на city pages
 
 ---
 
 ## Файлы для чтения (контекст)
 
 **Существующий код (НЕ переписывай!):**
-- `src/lib/server/db/database.ts` — pSEO prepared statements (Session-6, используй их!)
-- `schema.sql` — таблицы pSEO уже созданы (Session-6)
-- `src/routes/(admin)/admin/city-articles/` — существующая админка (использовать как пример)
-- `src/lib/components/admin/AdminSidebar.svelte` — расширить секцией pSEO
+- `src/lib/server/db/database.ts` — pSEO prepared statements (Session-6)
+- `src/routes/(admin)/admin/pseo/` — admin UI (Session-7)
+- `src/lib/components/layout/Header.svelte` — использовать как пример для CityHeader
+- `src/lib/components/layout/Footer.svelte` — использовать как пример для CityFooter
+- `src/lib/utils/schema-helpers.ts` — JSON-LD хелперы
+- `src/routes/sitemap.xml/+server.ts` — существующий sitemap (переработать)
 
-**Файлы для создания:**
-- `src/routes/(admin)/admin/pseo/` — новая админка для pSEO
-- `src/lib/components/admin/CitySelector.svelte` — компонент выбора города
-- `src/lib/components/admin/ArticleMediaEditor.svelte` — редактор медиа
-- `src/lib/components/admin/ArticleRelatedEditor.svelte` — редактор перелинковки
+**Файлы для создания/модификации:**
+- `src/routes/(city)/+layout.server.ts` — новый layout для городов
+- `src/routes/(city)/+layout.svelte` — новый layout с CityHeader/Footer
+- `src/lib/components/layout/CityHeader.svelte` — новый компонент
+- `src/lib/components/layout/CityFooter.svelte` — новый компонент
+- `src/routes/sitemap-*.xml/+server.ts` — новые sitemap endpoints
+- `static/robots.txt` — добавить Sitemap directive
+- `src/hooks.ts` — расширить reroute для поддоменов
 
 ---
 
 ## Напоминание
 
-**Session-7 — это про pSEO Admin UI:**
-- Админка для управления статьями городов (/admin/pseo)
-- Форма статьи (все поля + медиа + теги + перелинковка)
-- CRUD для категорий и тегов
-- SEO настройки города
-- Импорт/Экспорт (Markdown + CSV)
-- Компоненты: CitySelector, MediaEditor, RelatedEditor
+**Session-8 — это про pSEO Frontend & SEO:**
+- Отдельные layouts для городов (CityHeader + CityFooter)
+- Главная города с листингами по категориям
+- Страницы статей с rich content, медиа, перелинковкой
+- Reroute для поддоменов
+- Масштабируемый sitemap (index + sub-sitemaps)
+- JSON-LD structured data
+- Cache-Control headers
 
-**НЕ про Frontend страницы городов!** (это Session-8, делать позже)
-**НЕ про sitemap/JSON-LD!** (это Session-8, делать позже)
+**НЕ про Admin!** (это Session-7, уже сделано)
+**НЕ про Backend!** (это Session-6, уже сделано)
+
+**ЭТО ФИНАЛ — после этой сессии проект готов на 100%!**
 
 ---
 
-**Версия:** 3.0
+**Версия:** 4.0
 **Создано:** 2025-02-01
 **Обновлено:** 2025-02-02
-**Для:** Session-7 start
-**Предыдущая сессия:** Session-6 (уже в main, commit 17e6397)
-**Следующая сессия:** Session-8 (после завершения Session-7)
+**Для:** Session-8 start (ФИНАЛ!)
+**Предыдущая сессия:** Session-7 (уже в main, commit 666f4f8)
+**Следующая сессия:** НЕТ — это последняя сессия!
