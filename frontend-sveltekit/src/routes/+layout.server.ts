@@ -2,6 +2,8 @@ import type { LayoutServerLoad } from './$types';
 import { queries } from '$lib/server/db/database';
 import type { NavigationLink, FooterSection } from '$lib/types/navigation';
 
+// Disable prerendering to avoid better-sqlite3 worker thread issues during build
+export const prerender = false;
 
 export const load: LayoutServerLoad = async () => {
 	// ============================================

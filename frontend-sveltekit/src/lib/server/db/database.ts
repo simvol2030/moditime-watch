@@ -2,18 +2,36 @@
 import Database from 'better-sqlite3';
 import { join } from 'path';
 import { readFileSync, existsSync } from 'fs';
+import { isMainThread } from 'worker_threads';
 
+// Skip database initialization in worker threads (Vite SSR build)
 const DB_PATH = join(process.cwd(), '..', 'data', 'db', 'sqlite', 'app.db');
-export const db = new Database(DB_PATH, {
-  verbose: process.env.NODE_ENV === 'development' ? console.log : undefined
-});
 
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-db.pragma('synchronous = NORMAL');
-db.pragma('cache_size = -64000');
-db.pragma('temp_store = MEMORY');
-db.pragma('mmap_size = 30000000000');
+let dbInstance: Database.Database | null = null;
+
+function getDb() {
+	if (!isMainThread) {
+		throw new Error('Database cannot be accessed from worker threads');
+	}
+	if (!dbInstance) {
+		dbInstance = new Database(DB_PATH, {
+			verbose: process.env.NODE_ENV === 'development' ? console.log : undefined
+		});
+		dbInstance.pragma('journal_mode = WAL');
+		dbInstance.pragma('foreign_keys = ON');
+		dbInstance.pragma('synchronous = NORMAL');
+		dbInstance.pragma('cache_size = -64000');
+		dbInstance.pragma('temp_store = MEMORY');
+		dbInstance.pragma('mmap_size = 30000000000');
+	}
+	return dbInstance;
+}
+
+export const db = new Proxy({} as Database.Database, {
+	get(_target, prop) {
+		return (getDb() as any)[prop];
+	}
+});
 
 // INTERFACES - All 37 tables
 export interface Product { id: number; slug: string; brand_id: number; name: string; price: number; specs_json: string | null; is_active: number; }
@@ -318,12 +336,14 @@ export function seedDatabase() {
   seed();
 }
 
-// INITIALIZE DATABASE BEFORE CREATING QUERIES!
-initializeDatabase();
-seedDatabase();
+// INITIALIZE DATABASE BEFORE CREATING QUERIES! (only in main thread)
+if (isMainThread) {
+	initializeDatabase();
+	seedDatabase();
+}
 
-// QUERIES (создаются ПОСЛЕ инициализации таблиц)
-export const queries = {
+// QUERIES (создаются ПОСЛЕ инициализации таблиц, only in main thread)
+export const queries = !isMainThread ? {} as any : {
   // Products - Basic
   getProductBySlug: db.prepare('SELECT p.*, b.name as brand_name, b.slug as brand_slug FROM products p JOIN brands b ON b.id = p.brand_id WHERE p.slug = ? AND p.is_active = 1'),
   getAllActiveProducts: db.prepare('SELECT p.*, b.name as brand_name FROM products p JOIN brands b ON b.id = p.brand_id WHERE p.is_active = 1 ORDER BY p.position'),
