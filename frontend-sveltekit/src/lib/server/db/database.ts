@@ -695,7 +695,24 @@ const createQueries = () => ({
 
   // City Layout (Session-4, Task 4)
   getCityNavItems: db.prepare(`SELECT * FROM navigation_items WHERE menu_type = 'city_header' AND is_active = 1 AND parent_id IS NULL ORDER BY position`),
-  getFooterLegalLinks: db.prepare(`SELECT fl.* FROM footer_links fl JOIN footer_sections fs ON fs.id = fl.section_id WHERE fs.title = 'Правовая информация' ORDER BY fl.position`)
+  getFooterLegalLinks: db.prepare(`SELECT fl.* FROM footer_links fl JOIN footer_sections fs ON fs.id = fl.section_id WHERE fs.title = 'Правовая информация' ORDER BY fl.position`),
+
+  // === MISSING QUERIES FIX === //
+  // Aliases for articles (compatibility with code without admin prefix)
+  getAllArticleCategories: db.prepare('SELECT id, name FROM article_categories ORDER BY position'),
+  listArticlesByCategory: db.prepare(`SELECT a.*, ac.name as category_name FROM articles a LEFT JOIN article_categories ac ON ac.id = a.category_id WHERE a.category_id = ? ORDER BY a.published_at DESC, a.title`),
+  listAllArticles: db.prepare(`SELECT a.*, ac.name as category_name FROM articles a LEFT JOIN article_categories ac ON ac.id = a.category_id ORDER BY a.published_at DESC, a.title`),
+  deleteArticle: db.prepare('DELETE FROM articles WHERE id = ?'),
+
+  // Aliases for city articles
+  getAllCities: db.prepare('SELECT id, name, slug FROM cities WHERE is_active = 1 ORDER BY priority DESC, name'),
+  listArticles: db.prepare(`SELECT ca.*, c.name as city_name FROM city_articles ca LEFT JOIN cities c ON c.id = ca.city_id ORDER BY ca.published_at DESC, ca.title`),
+  listArticlesByCity: db.prepare(`SELECT ca.*, c.name as city_name FROM city_articles ca LEFT JOIN cities c ON c.id = ca.city_id WHERE ca.city_id = ? ORDER BY ca.published_at DESC, ca.title`),
+
+  // Products queries (missing)
+  adminGetProduct: db.prepare('SELECT * FROM products WHERE id = ?'),
+  adminSelectActiveBrands: db.prepare('SELECT id, name FROM brands WHERE is_active = 1 ORDER BY position, name'),
+  adminSelectActiveCategories: db.prepare('SELECT id, name FROM categories WHERE is_active = 1 ORDER BY position, name')
 });
 
 // Lazy queries cache
