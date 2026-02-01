@@ -303,7 +303,17 @@ export function seedDatabase() {
     insertPF.run(3, fvSportId);
     insertPF.run(3, fvCasualId);
 
-    console.log('✅ Database seeded successfully (с Hero, Experience, Navigation, Footer, Filters)');
+    // Site Config
+    const insertConfig = db.prepare('INSERT INTO site_config (key, value, type, description) VALUES (?, ?, ?, ?)');
+    insertConfig.run('site_name', 'Moditimewatch', 'string', 'Название сайта');
+    insertConfig.run('contact_phone', '+7 (495) 120-00-00', 'string', 'Контактный телефон');
+    insertConfig.run('contact_email', 'info@moditime-watch.ru', 'string', 'Контактный email');
+    insertConfig.run('contact_address', 'Москва, Столешников переулок, д. 7/5', 'string', 'Адрес офиса');
+    insertConfig.run('working_hours', 'Пн-Пт: 10:00-20:00, Сб: 11:00-18:00', 'string', 'Часы работы');
+    insertConfig.run('social_telegram', 'https://t.me/moditimewatch', 'string', 'Ссылка на Telegram');
+    insertConfig.run('copyright_text', '© 2025 Moditimewatch. Все права защищены.', 'string', 'Текст копирайта в футере');
+
+    console.log('✅ Database seeded successfully (с Hero, Experience, Navigation, Footer, Filters, Config)');
   });
   seed();
 }
