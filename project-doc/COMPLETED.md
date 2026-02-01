@@ -18,11 +18,11 @@
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| Task 1 | Заполнить фильтры каталога | ⏳ PENDING | - |
-| Task 2 | Image fallback для 404 | ⏳ PENDING | - |
-| Task 3 | Исправить CSP для Google Fonts | ⏳ PENDING | - |
-| Task 4 | Seed тестовых city articles | ⏳ PENDING | - |
-| Task 5 | Корректировка Homepage stats | ⏳ PENDING | - |
+| Task 1 | Заполнить фильтры каталога | ✅ DONE | - |
+| Task 2 | Image fallback для 404 | ✅ DONE | - |
+| Task 3 | Исправить CSP для Google Fonts | ✅ DONE | - |
+| Task 4 | Seed тестовых city articles | ✅ DONE | - |
+| Task 5 | Корректировка Homepage stats | ✅ DONE | - |
 
 ### Session-2: Admin Panel E-commerce
 
