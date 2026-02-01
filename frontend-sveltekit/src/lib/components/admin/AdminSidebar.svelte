@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import type { AdminUser } from '$lib/server/auth';
+
+	interface AdminUser {
+		id: number;
+		email: string;
+		name: string;
+		role: 'super-admin' | 'editor' | 'viewer';
+	}
 
 	interface NavItem {
 		label: string;
@@ -27,7 +33,6 @@
 		{ label: 'Footer', href: '/admin/footer', icon: '🦶', group: 'Content' },
 		{ label: 'Homepage', href: '/admin/homepage', icon: '🏠', group: 'Content' },
 		{ label: 'Import', href: '/admin/import', icon: '📥', group: 'Data' },
-		{ label: 'Admins', href: '/admin/system/admins', icon: '👤', group: 'System' },
 		{ label: 'Config', href: '/admin/system/config', icon: '⚙️', group: 'System' }
 	];
 

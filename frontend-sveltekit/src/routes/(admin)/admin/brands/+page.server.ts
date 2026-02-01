@@ -1,7 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { queries } from '$lib/server/db/database';
-import { canDelete } from '$lib/server/auth';
 
 interface Brand {
 	id: number;

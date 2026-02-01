@@ -460,7 +460,6 @@ export const queries = !isMainThread ? {} as any : {
   // ============================================
   // AUTH
   // ============================================
-  getAdminByEmail: db.prepare('SELECT * FROM admins WHERE email = ?'),
 
   // ============================================
   // ADMIN DASHBOARD
@@ -603,12 +602,6 @@ export const queries = !isMainThread ? {} as any : {
   // ============================================
   // ADMIN - SYSTEM (ADMINS)
   // ============================================
-  adminListAdmins: db.prepare('SELECT id, email, name, role, created_at FROM admins ORDER BY id'),
-  adminGetAdmin: db.prepare('SELECT id, email, name, role FROM admins WHERE id = ?'),
-  adminCreateAdmin: db.prepare('INSERT INTO admins (email, password, name, role) VALUES (@email, @password, @name, @role)'),
-  adminUpdateAdmin: db.prepare('UPDATE admins SET email = @email, name = @name, role = @role WHERE id = @id'),
-  adminUpdateAdminWithPassword: db.prepare('UPDATE admins SET email = @email, name = @name, role = @role, password = @password WHERE id = @id'),
-  adminDeleteAdmin: db.prepare('DELETE FROM admins WHERE id = ?'),
 
   // ============================================
   // ADMIN - SITE CONFIG

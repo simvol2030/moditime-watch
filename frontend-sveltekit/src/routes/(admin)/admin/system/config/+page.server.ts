@@ -1,7 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { queries } from '$lib/server/db/database';
-import { isSuperAdmin } from '$lib/server/auth';
 
 interface ConfigItem {
 	id: number;
@@ -11,13 +10,7 @@ interface ConfigItem {
 	description: string | null;
 }
 
-export const load: PageServerLoad = async ({ parent }) => {
-	const { admin: currentAdmin } = await parent();
-
-	if (!currentAdmin || !isSuperAdmin(currentAdmin.role)) {
-		return { config: [], canManage: false };
-	}
-
+export const load: PageServerLoad = async () => {
 	const config = queries.adminListConfig.all() as ConfigItem[];
 	return { config, canManage: true };
 };
