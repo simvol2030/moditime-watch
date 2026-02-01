@@ -12,7 +12,10 @@
 	import { PUBLIC_GTM_ID, PUBLIC_GA_ID, PUBLIC_YM_ID } from '$env/static/public';
 
 	// ИСПРАВЛЕНИЕ: Получаем data из load функции!
-	let { children, data }: { children: any; data: LayoutData } = $props();
+	let { children, data }: { children, any; data: LayoutData } = $props();
+
+	// Check if current page is admin page
+	const isAdminPage = $derived($page.url.pathname.startsWith('/admin'));
 
 	// Analytics config from environment variables (for production)
 	const analyticsConfig: AnalyticsConfig | undefined =
@@ -43,12 +46,16 @@
 	analytics={analyticsConfig}
 />
 
-<!-- Передаем данные из БД -->
-<SiteHeader navigationItems={data.navigationItems} siteConfig={data.siteConfig} />
+{#if !isAdminPage}
+	<!-- Передаем данные из БД -->
+	<SiteHeader navigationItems={data.navigationItems} siteConfig={data.siteConfig} />
+{/if}
 
 <main>
 	{@render children?.()}
 </main>
 
-<!-- Передаем данные из БД -->
-<SiteFooter footerSections={data.footerSections} siteConfig={data.siteConfig} />
+{#if !isAdminPage}
+	<!-- Передаем данные из БД -->
+	<SiteFooter footerSections={data.footerSections} siteConfig={data.siteConfig} />
+{/if}
