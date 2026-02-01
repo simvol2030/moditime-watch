@@ -2,7 +2,7 @@
 
 > **Developer:** НЕ делай задачи со статусом DONE!
 > **Полный roadmap всех сессий:** см. `SESSIONS_ROADMAP.md`
-> **Текущая сессия:** Session-5 (6 задач)
+> **Текущая сессия:** Session-7 (8 задач)
 
 ---
 
@@ -11,10 +11,10 @@
 | Метрика | Значение |
 |---------|----------|
 | **Всего задач** | 58 |
-| **Выполнено** | 34 (59%) |
-| **Осталось** | 24 (41%) |
+| **Выполнено** | 42 (72%) |
+| **Осталось** | 16 (28%) |
 | **Всего сессий** | 8 |
-| **Завершено сессий** | 5 (62%) |
+| **Завершено сессий** | 6 (75%) |
 
 ---
 
@@ -22,82 +22,17 @@
 
 | Session | Summary | Deployed | Commit |
 |---------|---------|----------|--------|
+| Session-1 | Fix Pages (5 tasks) | 2025-02-01 | - |
+| Session-2 | Admin Panel E-commerce (9 tasks) | 2025-02-01 | - |
+| Session-3 | Import/Export (9 tasks) | 2025-02-01 | - |
+| Session-4 | Layout Management (5 tasks) | 2025-02-01 | - |
+| Session-5 | Notifications & Order Flow (6 tasks) | 2025-02-01 | 453f938 |
+| Session-6 | pSEO Schema & Backend (8 tasks) | 2025-02-02 | 17e6397 |
 
 ---
 
 ## Активные сессии
 
-### Session-1: Fix Pages
-
-| Task | Summary | Status | Deployed |
-|------|---------|--------|----------|
-| Task 1 | Заполнить фильтры каталога | ✅ DONE | - |
-| Task 2 | Image fallback для 404 | ✅ DONE | - |
-| Task 3 | Исправить CSP для Google Fonts | ✅ DONE | - |
-| Task 4 | Seed тестовых city articles | ✅ DONE | - |
-| Task 5 | Корректировка Homepage stats | ✅ DONE | - |
-
-### Session-2: Admin Panel E-commerce
-
-| Task | Summary | Status | Deployed |
-|------|---------|--------|----------|
-| Task 1 | Collections CRUD | ✅ DONE | - |
-| Task 2 | Cities CRUD | ✅ DONE | - |
-| Task 3 | City Articles CRUD | ✅ DONE | - |
-| Task 4 | Testimonials CRUD | ✅ DONE | - |
-| Task 5 | Journal Articles CRUD | ✅ DONE | - |
-| Task 6 | Product Options UI | ✅ DONE | - |
-| Task 7 | Config seed + UI | ✅ DONE | - |
-| Task 8 | Orders improve | ✅ DONE | - |
-| Task 9 | Sidebar update | ✅ DONE | - |
-
-### Session-3: Import/Export (depends on Session-2)
-
-| Task | Summary | Status | Deployed |
-|------|---------|--------|----------|
-| Task 1 | CSV Parser | ✅ DONE | - |
-| Task 2 | Products Importer | ✅ DONE | - |
-| Task 3 | Brands/Categories Importer | ✅ DONE | - |
-| Task 4 | Cities Importer | ✅ DONE | - |
-| Task 5 | City Articles Importer | ✅ DONE | - |
-| Task 6 | Filter Values Importer | ✅ DONE | - |
-| Task 7 | Import UI page | ✅ DONE | - |
-| Task 8 | Export endpoints | ✅ DONE | - |
-| Task 9 | Template downloads | ✅ DONE | - |
-
-### Session-4: Layout Management (depends on Session-2)
-
-| Task | Summary | Status | Deployed |
-|------|---------|--------|----------|
-| Task 1 | Footer Management UI | ✅ DONE | - |
-| Task 2 | Config → Layout интеграция | ✅ DONE | - |
-| Task 3 | Homepage Management UI | ✅ DONE | - |
-| Task 4 | City Layout (layout group) | ✅ DONE | - |
-| Task 5 | Navigation extend | ✅ DONE | - |
-
-### Session-5: Notifications & Order Flow (depends on Session-2)
-
-| Task | Summary | Status | Deployed |
-|------|---------|--------|----------|
-| Task 1 | Telegram Bot | ✅ DONE | 2025-02-01 |
-| Task 2 | Email Service | ✅ DONE | 2025-02-01 |
-| Task 3 | Email Templates seed | ✅ DONE | 2025-02-01 |
-| Task 4 | Notifications Admin UI | ✅ DONE | 2025-02-01 |
-| Task 5 | Order Flow интеграция | ✅ DONE | 2025-02-01 |
-| Task 6 | Order Status уведомления | ✅ DONE | 2025-02-01 |
-
-### Session-6: pSEO Schema & Backend (depends on Session-2)
-
-| Task | Summary | Status | Deployed |
-|------|---------|--------|----------|
-| Task 1 | ALTER city_articles | ⏳ PENDING | - |
-| Task 2 | Таблица city_article_categories | ⏳ PENDING | - |
-| Task 3 | Таблицы city_article_tags + relations | ⏳ PENDING | - |
-| Task 4 | Таблица city_article_related | ⏳ PENDING | - |
-| Task 5 | Таблица city_article_media | ⏳ PENDING | - |
-| Task 6 | Prepared statements city_article_products | ⏳ PENDING | - |
-| Task 7 | FTS5 для city_articles | ⏳ PENDING | - |
-| Task 8 | Seed данных (Москва) | ⏳ PENDING | - |
 
 ### Session-7: pSEO Admin UI (depends on Session-6)
 
