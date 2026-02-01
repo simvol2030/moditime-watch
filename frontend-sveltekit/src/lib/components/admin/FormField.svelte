@@ -8,6 +8,7 @@
 		required?: boolean;
 		error?: string;
 		hint?: string;
+		oninput?: (e: Event & { currentTarget: HTMLInputElement }) => void;
 	}
 
 	let {
@@ -18,7 +19,8 @@
 		placeholder = '',
 		required = false,
 		error = '',
-		hint = ''
+		hint = '',
+		oninput
 	}: Props = $props();
 </script>
 
@@ -27,7 +29,7 @@
 		{label}
 		{#if required}<span class="required">*</span>{/if}
 	</label>
-	<input {type} id={name} {name} {value} {placeholder} {required} />
+	<input {type} id={name} {name} {value} {placeholder} {required} {oninput} />
 	{#if hint && !error}
 		<span class="hint">{hint}</span>
 	{/if}

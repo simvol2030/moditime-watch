@@ -43,12 +43,12 @@
 	analytics={analyticsConfig}
 />
 
-<!-- ИСПРАВЛЕНИЕ: Передаем данные из БД -->
-<SiteHeader navigationItems={data.navigationItems} />
+<!-- Передаем данные из БД -->
+<SiteHeader navigationItems={data.navigationItems} siteConfig={data.siteConfig} />
 
 <main>
 	{@render children?.()}
 </main>
 
-<!-- ИСПРАВЛЕНИЕ: Передаем данные из БД -->
-<SiteFooter footerSections={data.footerSections} />
+<!-- Передаем данные из БД -->
+<SiteFooter footerSections={data.footerSections} siteConfig={data.siteConfig} />

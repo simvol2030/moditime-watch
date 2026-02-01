@@ -18,49 +18,49 @@
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| Task 1 | Заполнить фильтры каталога | ⏳ PENDING | - |
-| Task 2 | Image fallback для 404 | ⏳ PENDING | - |
-| Task 3 | Исправить CSP для Google Fonts | ⏳ PENDING | - |
-| Task 4 | Seed тестовых city articles | ⏳ PENDING | - |
-| Task 5 | Корректировка Homepage stats | ⏳ PENDING | - |
+| Task 1 | Заполнить фильтры каталога | ✅ DONE | - |
+| Task 2 | Image fallback для 404 | ✅ DONE | - |
+| Task 3 | Исправить CSP для Google Fonts | ✅ DONE | - |
+| Task 4 | Seed тестовых city articles | ✅ DONE | - |
+| Task 5 | Корректировка Homepage stats | ✅ DONE | - |
 
 ### Session-2: Admin Panel E-commerce
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| Task 1 | Collections CRUD | ⏳ PENDING | - |
-| Task 2 | Cities CRUD | ⏳ PENDING | - |
-| Task 3 | City Articles CRUD | ⏳ PENDING | - |
-| Task 4 | Testimonials CRUD | ⏳ PENDING | - |
-| Task 5 | Journal Articles CRUD | ⏳ PENDING | - |
-| Task 6 | Product Options UI | ⏳ PENDING | - |
-| Task 7 | Config seed + UI | ⏳ PENDING | - |
-| Task 8 | Orders improve | ⏳ PENDING | - |
-| Task 9 | Sidebar update | ⏳ PENDING | - |
+| Task 1 | Collections CRUD | ✅ DONE | - |
+| Task 2 | Cities CRUD | ✅ DONE | - |
+| Task 3 | City Articles CRUD | ✅ DONE | - |
+| Task 4 | Testimonials CRUD | ✅ DONE | - |
+| Task 5 | Journal Articles CRUD | ✅ DONE | - |
+| Task 6 | Product Options UI | ✅ DONE | - |
+| Task 7 | Config seed + UI | ✅ DONE | - |
+| Task 8 | Orders improve | ✅ DONE | - |
+| Task 9 | Sidebar update | ✅ DONE | - |
 
 ### Session-3: Import/Export (depends on Session-2)
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| Task 1 | CSV Parser | ⏳ PENDING | - |
-| Task 2 | Products Importer | ⏳ PENDING | - |
-| Task 3 | Brands/Categories Importer | ⏳ PENDING | - |
-| Task 4 | Cities Importer | ⏳ PENDING | - |
-| Task 5 | City Articles Importer | ⏳ PENDING | - |
-| Task 6 | Filter Values Importer | ⏳ PENDING | - |
-| Task 7 | Import UI page | ⏳ PENDING | - |
-| Task 8 | Export endpoints | ⏳ PENDING | - |
-| Task 9 | Template downloads | ⏳ PENDING | - |
+| Task 1 | CSV Parser | ✅ DONE | - |
+| Task 2 | Products Importer | ✅ DONE | - |
+| Task 3 | Brands/Categories Importer | ✅ DONE | - |
+| Task 4 | Cities Importer | ✅ DONE | - |
+| Task 5 | City Articles Importer | ✅ DONE | - |
+| Task 6 | Filter Values Importer | ✅ DONE | - |
+| Task 7 | Import UI page | ✅ DONE | - |
+| Task 8 | Export endpoints | ✅ DONE | - |
+| Task 9 | Template downloads | ✅ DONE | - |
 
 ### Session-4: Layout Management (depends on Session-2)
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| Task 1 | Footer Management UI | ⏳ PENDING | - |
-| Task 2 | Config → Layout интеграция | ⏳ PENDING | - |
-| Task 3 | Homepage Management UI | ⏳ PENDING | - |
-| Task 4 | City Layout (layout group) | ⏳ PENDING | - |
-| Task 5 | Navigation extend | ⏳ PENDING | - |
+| Task 1 | Footer Management UI | ✅ DONE | - |
+| Task 2 | Config → Layout интеграция | ✅ DONE | - |
+| Task 3 | Homepage Management UI | ✅ DONE | - |
+| Task 4 | City Layout (layout group) | ✅ DONE | - |
+| Task 5 | Navigation extend | ✅ DONE | - |
 
 ### Session-5: Notifications & Order Flow (depends on Session-2)
 

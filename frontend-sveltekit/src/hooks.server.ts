@@ -61,9 +61,9 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 		"default-src 'self'",
 		// Analytics: GTM, GA, Yandex Metrika
 		"script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://mc.yandex.ru",
-		"style-src 'self' 'unsafe-inline'", // unsafe-inline для inline стилей Svelte
+		"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // unsafe-inline для inline стилей Svelte + Google Fonts
 		"img-src 'self' data: https: https://mc.yandex.ru https://www.google-analytics.com",
-		"font-src 'self' data:",
+		"font-src 'self' data: https://fonts.gstatic.com",
 		// Analytics connections
 		"connect-src 'self' https://www.google-analytics.com https://mc.yandex.ru https://region1.google-analytics.com",
 		"frame-src https://www.googletagmanager.com", // GTM может использовать iframe

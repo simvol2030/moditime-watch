@@ -16,9 +16,17 @@
 		{ label: 'Products', href: '/admin/products', icon: '⌚', group: 'E-commerce' },
 		{ label: 'Brands', href: '/admin/brands', icon: '🏷️', group: 'E-commerce' },
 		{ label: 'Categories', href: '/admin/categories', icon: '📁', group: 'E-commerce' },
+		{ label: 'Collections', href: '/admin/collections', icon: '🎁', group: 'E-commerce' },
 		{ label: 'Orders', href: '/admin/orders', icon: '📦', group: 'Operations' },
+		{ label: 'Cities', href: '/admin/cities', icon: '🏙️', group: 'pSEO' },
+		{ label: 'City Articles', href: '/admin/city-articles', icon: '📰', group: 'pSEO' },
+		{ label: 'Articles', href: '/admin/articles', icon: '✏️', group: 'Content' },
+		{ label: 'Testimonials', href: '/admin/testimonials', icon: '💬', group: 'Content' },
 		{ label: 'Pages', href: '/admin/pages', icon: '📄', group: 'Content' },
 		{ label: 'Navigation', href: '/admin/navigation', icon: '🔗', group: 'Content' },
+		{ label: 'Footer', href: '/admin/footer', icon: '🦶', group: 'Content' },
+		{ label: 'Homepage', href: '/admin/homepage', icon: '🏠', group: 'Content' },
+		{ label: 'Import', href: '/admin/import', icon: '📥', group: 'Data' },
 		{ label: 'Admins', href: '/admin/system/admins', icon: '👤', group: 'System' },
 		{ label: 'Config', href: '/admin/system/config', icon: '⚙️', group: 'System' }
 	];

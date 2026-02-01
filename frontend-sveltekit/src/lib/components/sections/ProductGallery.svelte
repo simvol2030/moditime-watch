@@ -71,6 +71,15 @@
 		currentX = e.clientX;
 	}
 
+	const FALLBACK_IMAGE = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="720" height="720" viewBox="0 0 720 720"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0a2463" stop-opacity="0.08"/><stop offset="100%" stop-color="#0a2463" stop-opacity="0.03"/></linearGradient></defs><rect width="720" height="720" fill="url(#bg)"/><circle cx="360" cy="330" r="90" stroke="#0a2463" stroke-opacity="0.15" stroke-width="4" fill="none"/><line x1="360" y1="330" x2="360" y2="280" stroke="#0a2463" stroke-opacity="0.2" stroke-width="3" stroke-linecap="round"/><line x1="360" y1="330" x2="395" y2="345" stroke="#0a2463" stroke-opacity="0.15" stroke-width="2" stroke-linecap="round"/><text x="360" y="460" text-anchor="middle" font-family="system-ui" font-size="16" fill="#0a2463" opacity="0.25">Изображение недоступно</text></svg>')}`;
+
+	function handleImageError(e: Event) {
+		const img = e.currentTarget as HTMLImageElement;
+		if (!img.src.startsWith('data:')) {
+			img.src = FALLBACK_IMAGE;
+		}
+	}
+
 	function handleMouseUp() {
 		if (!isDragging) return;
 		isDragging = false;
@@ -110,6 +119,7 @@
 			height="720"
 			data-gallery-main
 			draggable="false"
+			onerror={handleImageError}
 		/>
 		{#if badge}
 			<span class="product-gallery__badge product-gallery__badge--{badgeType}">{badge}</span>
@@ -177,7 +187,7 @@
 				aria-label="Изображение {index + 1}"
 				onclick={() => selectImage(index)}
 			>
-				<img src={image.thumbnail} alt={image.alt} width="120" height="120" draggable="false" />
+				<img src={image.thumbnail} alt={image.alt} width="120" height="120" draggable="false" onerror={handleImageError} />
 			</button>
 		{/each}
 	</div>

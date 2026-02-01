@@ -9,7 +9,11 @@
 	import { toggleMobileMenu, getMobileMenuState, toggleTheme, initializeTheme } from '$lib/stores/ui.svelte';
 
 	// Props - navigation из БД!
-	let { navigationItems }: { navigationItems: NavigationLink[] } = $props();
+	let { navigationItems, siteConfig = {} }: { navigationItems: NavigationLink[]; siteConfig?: Record<string, string> } = $props();
+
+	const phone = $derived(siteConfig.contact_phone || '+7 (495) 120-00-00');
+	const email = $derived(siteConfig.contact_email || 'info@moditime-watch.ru');
+	const phoneHref = $derived('tel:' + phone.replace(/[\s()-]/g, ''));
 
 	let scrolled = $state(false);
 	let isMobileMenuOpen = $state(false);
@@ -65,8 +69,8 @@
 				<span>Доставка премиальных часов по России и СНГ</span>
 			</div>
 			<div class="topbar__contacts">
-				<a href="tel:+79999604322" class="topbar__link">+7 (999) 960-43-22</a>
-				<a href="mailto:info@moditimewatch.com" class="topbar__link">info@moditimewatch.com</a>
+				<a href={phoneHref} class="topbar__link">{phone}</a>
+				<a href="mailto:{email}" class="topbar__link">{email}</a>
 			</div>
 		</div>
 	</div>

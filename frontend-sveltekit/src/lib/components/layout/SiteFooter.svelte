@@ -5,9 +5,17 @@
 
 	interface Props extends HTMLAttributes<HTMLElement> {
 		footerSections: FooterSection[];
+		siteConfig?: Record<string, string>;
 	}
 
-	let { footerSections, class: className, ...rest }: Props = $props();
+	let { footerSections, siteConfig = {}, class: className, ...rest }: Props = $props();
+
+	const phone = $derived(siteConfig.contact_phone || '+7 (495) 120-00-00');
+	const email = $derived(siteConfig.contact_email || 'info@moditime-watch.ru');
+	const address = $derived(siteConfig.contact_address || 'Москва, Столешников переулок, д. 7/5');
+	const workingHours = $derived(siteConfig.working_hours || 'Пн-Пт: 10:00-20:00, Сб: 11:00-18:00');
+	const copyright = $derived(siteConfig.copyright_text || `\u00A9 ${new Date().getFullYear()} Moditimewatch. Все права защищены.`);
+	const phoneHref = $derived('tel:' + phone.replace(/[\s()-]/g, ''));
 
 	// Найти секцию "Правовая информация" для отображения в футере (bottom)
 	const legalSection = $derived(footerSections.find((s) => s.title === 'Правовая информация'));
@@ -24,8 +32,8 @@
 			</a>
 			<p>Сервис доставки оригинальных часов из-за рубежа с гарантией подлинности и персональными консультациями.</p>
 			<div class="site-footer__contact">
-				<a href="tel:+79999604322">+7 (999) 960-43-22</a>
-				<a href="mailto:info@moditimewatch.com">info@moditimewatch.com</a>
+				<a href={phoneHref}>{phone}</a>
+				<a href="mailto:{email}">{email}</a>
 			</div>
 		</div>
 		{#each mainSections as section}
@@ -47,10 +55,9 @@
 						{/each}
 					</ul>
 				{:else}
-					<!-- Офис - статичный контент (TODO: перенести в site_config) -->
 					{#if section.title === 'Офис'}
-						<p>Москва, Кутузовский пр-т, д. 12</p>
-						<p>Пн–Вс: 10:00 — 22:00</p>
+						<p>{address}</p>
+						<p>{workingHours}</p>
 						<p>Посещение по записи</p>
 					{/if}
 				{/if}
@@ -58,7 +65,7 @@
 		{/each}
 	</div>
 	<div class="container site-footer__bottom">
-		<p>&copy; 2024 Moditimewatch. Все права защищены.</p>
+		<p>{copyright}</p>
 		{#if legalSection && legalSection.links.length > 0}
 			<div class="site-footer__links">
 				{#each legalSection.links as link}
