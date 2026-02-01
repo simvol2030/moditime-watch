@@ -238,7 +238,60 @@ export function seedDatabase() {
     insertFooterLink.run(footerLegalId.id, 'Политика конфиденциальности', '/privacy', 1, 1);
     insertFooterLink.run(footerLegalId.id, 'Правила обработки данных', '/terms', 2, 1);
 
-    console.log('✅ Database seeded successfully (с Hero, Experience, Navigation, Footer)');
+    // Filter Attributes
+    const insertFilterAttr = db.prepare('INSERT INTO filter_attributes (slug, name, type, is_active, position) VALUES (?, ?, ?, ?, ?)');
+    insertFilterAttr.run('material', 'Материал корпуса', 'checkbox', 1, 1);
+    const materialAttrId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertFilterAttr.run('mechanism', 'Механизм', 'checkbox', 1, 2);
+    const mechanismAttrId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertFilterAttr.run('scenario', 'Сценарий использования', 'checkbox', 1, 3);
+    const scenarioAttrId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+
+    // Filter Values — Material
+    const insertFilterVal = db.prepare('INSERT INTO filter_values (attribute_id, value, label, position) VALUES (?, ?, ?, ?)');
+    insertFilterVal.run(materialAttrId, 'steel', 'Steel', 1);
+    const fvSteelId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertFilterVal.run(materialAttrId, 'gold-18k', 'Gold 18K', 2);
+    const fvGoldId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertFilterVal.run(materialAttrId, 'titanium', 'Titanium', 3);
+    insertFilterVal.run(materialAttrId, 'platinum', 'Platinum', 4);
+    insertFilterVal.run(materialAttrId, 'ceramic', 'Ceramic', 5);
+
+    // Filter Values — Mechanism
+    insertFilterVal.run(mechanismAttrId, 'automatic', 'Automatic', 1);
+    const fvAutoId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertFilterVal.run(mechanismAttrId, 'manual', 'Manual', 2);
+    insertFilterVal.run(mechanismAttrId, 'quartz', 'Quartz', 3);
+
+    // Filter Values — Scenario
+    insertFilterVal.run(scenarioAttrId, 'investment', 'Investment', 1);
+    const fvInvestId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertFilterVal.run(scenarioAttrId, 'sport', 'Sport', 2);
+    const fvSportId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertFilterVal.run(scenarioAttrId, 'business', 'Business', 3);
+    const fvBusinessId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertFilterVal.run(scenarioAttrId, 'casual', 'Casual', 4);
+    const fvCasualId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertFilterVal.run(scenarioAttrId, 'gift', 'Gift', 5);
+
+    // Product Filters — link products to filter values
+    const insertPF = db.prepare('INSERT INTO product_filters (product_id, filter_value_id) VALUES (?, ?)');
+    // Rolex Submariner (id=1): steel, automatic, sport
+    insertPF.run(1, fvSteelId);
+    insertPF.run(1, fvAutoId);
+    insertPF.run(1, fvSportId);
+    // Patek Philippe Nautilus (id=2): steel, automatic, investment, business
+    insertPF.run(2, fvSteelId);
+    insertPF.run(2, fvAutoId);
+    insertPF.run(2, fvInvestId);
+    insertPF.run(2, fvBusinessId);
+    // Omega Speedmaster (id=3): steel, automatic, sport, casual
+    insertPF.run(3, fvSteelId);
+    insertPF.run(3, fvAutoId);
+    insertPF.run(3, fvSportId);
+    insertPF.run(3, fvCasualId);
+
+    console.log('✅ Database seeded successfully (с Hero, Experience, Navigation, Footer, Filters)');
   });
   seed();
 }
@@ -346,6 +399,17 @@ export const queries = {
   getHomeServices: db.prepare('SELECT * FROM home_services WHERE is_active = 1 ORDER BY position'),
   getHomeServiceStats: db.prepare('SELECT * FROM home_service_stats ORDER BY position'),
   getTelegramWidget: db.prepare("SELECT * FROM widgets WHERE type = 'telegram_cta' AND is_active = 1 LIMIT 1"),
+
+  // Filters
+  getFilterAttributes: db.prepare('SELECT * FROM filter_attributes WHERE is_active = 1 ORDER BY position'),
+  getFilterValues: db.prepare('SELECT * FROM filter_values WHERE attribute_id = ? ORDER BY position'),
+  getAllFilterValues: db.prepare(`
+    SELECT fv.*, fa.slug as attribute_slug, fa.name as attribute_name
+    FROM filter_values fv
+    JOIN filter_attributes fa ON fa.id = fv.attribute_id
+    WHERE fa.is_active = 1
+    ORDER BY fa.position, fv.position
+  `),
 
   // Static pages
   getPageBySlug: db.prepare('SELECT * FROM pages WHERE slug = ? AND is_published = 1'),

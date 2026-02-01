@@ -68,6 +68,19 @@ export const load: PageServerLoad = async ({ url }) => {
 			VALID_AVAILABILITY.includes(status as (typeof VALID_AVAILABILITY)[number])
 		);
 
+	// Parse dynamic filter parameters (material, mechanism, scenario)
+	const materialFilter = (url.searchParams.get('material')?.split(',') || [])
+		.filter((v) => v && VALID_SLUG_PATTERN.test(v))
+		.slice(0, 20);
+
+	const mechanismFilter = (url.searchParams.get('mechanism')?.split(',') || [])
+		.filter((v) => v && VALID_SLUG_PATTERN.test(v))
+		.slice(0, 20);
+
+	const scenarioFilter = (url.searchParams.get('scenario')?.split(',') || [])
+		.filter((v) => v && VALID_SLUG_PATTERN.test(v))
+		.slice(0, 20);
+
 	// Validate price range
 	const rawMinPrice = parseInt(url.searchParams.get('minPrice') || '0');
 	const rawMaxPrice = parseInt(url.searchParams.get('maxPrice') || '0');
@@ -107,6 +120,22 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	if (featured) {
 		conditions.push('p.is_featured = 1');
+	}
+
+	// Dynamic filter conditions (material, mechanism, scenario via product_filters)
+	const dynamicFilters: { slug: string; values: string[] }[] = [];
+	if (materialFilter.length > 0) dynamicFilters.push({ slug: 'material', values: materialFilter });
+	if (mechanismFilter.length > 0) dynamicFilters.push({ slug: 'mechanism', values: mechanismFilter });
+	if (scenarioFilter.length > 0) dynamicFilters.push({ slug: 'scenario', values: scenarioFilter });
+
+	for (const df of dynamicFilters) {
+		conditions.push(`p.id IN (
+			SELECT pf.product_id FROM product_filters pf
+			JOIN filter_values fv ON fv.id = pf.filter_value_id
+			JOIN filter_attributes fa ON fa.id = fv.attribute_id
+			WHERE fa.slug = ? AND fv.value IN (${df.values.map(() => '?').join(', ')})
+		)`);
+		params.push(df.slug, ...df.values);
 	}
 
 	// Build ORDER BY using whitelist (SQL injection safe)
@@ -208,35 +237,51 @@ export const load: PageServerLoad = async ({ url }) => {
 		{ value: 'waitlist', label: 'Лист ожидания', checked: availabilityFilter.includes('waitlist') }
 	];
 
-	const materialOptions: FilterOption[] = [
-		{ value: 'steel', label: 'Сталь', checked: false },
-		{ value: 'gold-18k', label: 'Золото 18К', checked: false },
-		{ value: 'platinum', label: 'Платина', checked: false },
-		{ value: 'titanium', label: 'Титан', checked: false }
-	];
+	// Load filter options from database
+	interface DbFilterValue {
+		id: number;
+		attribute_id: number;
+		value: string;
+		label: string;
+		position: number;
+		attribute_slug: string;
+		attribute_name: string;
+	}
+	const allFilterValues = queries.getAllFilterValues.all() as DbFilterValue[];
 
-	const mechanismOptions: FilterOption[] = [
-		{ value: 'automatic', label: 'Автоматический', checked: false },
-		{ value: 'manual', label: 'Механический', checked: false },
-		{ value: 'quartz', label: 'Кварцевый', checked: false }
-	];
+	const filtersByAttr = new Map<string, DbFilterValue[]>();
+	for (const fv of allFilterValues) {
+		const arr = filtersByAttr.get(fv.attribute_slug) || [];
+		arr.push(fv);
+		filtersByAttr.set(fv.attribute_slug, arr);
+	}
 
-	const scenarioOptions: FilterOption[] = [
-		{ value: 'investment', label: 'Инвестиция', checked: false },
-		{ value: 'gift', label: 'Подарок', checked: false },
-		{ value: 'daily', label: 'Ежедневные', checked: false },
-		{ value: 'sport', label: 'Спорт', checked: false },
-		{ value: 'jewelry', label: 'Ювелирные', checked: false }
-	];
+	const materialOptions: FilterOption[] = (filtersByAttr.get('material') || []).map((fv) => ({
+		value: fv.value,
+		label: fv.label,
+		checked: materialFilter.includes(fv.value)
+	}));
+
+	const mechanismOptions: FilterOption[] = (filtersByAttr.get('mechanism') || []).map((fv) => ({
+		value: fv.value,
+		label: fv.label,
+		checked: mechanismFilter.includes(fv.value)
+	}));
+
+	const scenarioOptions: FilterOption[] = (filtersByAttr.get('scenario') || []).map((fv) => ({
+		value: fv.value,
+		label: fv.label,
+		checked: scenarioFilter.includes(fv.value)
+	}));
 
 	// Current filter state
 	const currentFilters: CatalogFilter = {
 		availability: availabilityFilter,
 		brands: brandFilter,
 		priceRange: { min: minPrice / 100, max: maxPrice / 100 },
-		materials: [],
-		mechanisms: [],
-		scenarios: []
+		materials: materialFilter,
+		mechanisms: mechanismFilter,
+		scenarios: scenarioFilter
 	};
 
 	const controlsContent = {
@@ -276,6 +321,21 @@ export const load: PageServerLoad = async ({ url }) => {
 			label: `${formatPriceShort(minPrice / 100)} — ${formatPriceShort(maxPrice / 100)}`
 		});
 	}
+
+	materialFilter.forEach((val) => {
+		const opt = materialOptions.find((o) => o.value === val);
+		if (opt) activeFilters.push({ id: `material:${val}`, label: opt.label });
+	});
+
+	mechanismFilter.forEach((val) => {
+		const opt = mechanismOptions.find((o) => o.value === val);
+		if (opt) activeFilters.push({ id: `mechanism:${val}`, label: opt.label });
+	});
+
+	scenarioFilter.forEach((val) => {
+		const opt = scenarioOptions.find((o) => o.value === val);
+		if (opt) activeFilters.push({ id: `scenario:${val}`, label: opt.label });
+	});
 
 	return {
 		heroContent,
