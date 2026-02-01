@@ -343,9 +343,8 @@ if (isMainThread) {
 }
 
 // QUERIES (создаются ПОСЛЕ инициализации таблиц, only in main thread)
-// Conditional initialization - empty object in worker threads (Vite SSR build)
-// At runtime in production (main thread), this evaluates to the real queries object
-const createQueries = () => ({
+// Prepared statements - all queries in one centralized object
+export const queries = {
   // Products - Basic
   getProductBySlug: db.prepare('SELECT p.*, b.name as brand_name, b.slug as brand_slug FROM products p JOIN brands b ON b.id = p.brand_id WHERE p.slug = ? AND p.is_active = 1'),
   getAllActiveProducts: db.prepare('SELECT p.*, b.name as brand_name FROM products p JOIN brands b ON b.id = p.brand_id WHERE p.is_active = 1 ORDER BY p.position'),
@@ -697,9 +696,7 @@ const createQueries = () => ({
   // City Layout (Session-4, Task 4)
   getCityNavItems: db.prepare(`SELECT * FROM navigation_items WHERE menu_type = 'city_header' AND is_active = 1 AND parent_id IS NULL ORDER BY position`),
   getFooterLegalLinks: db.prepare(`SELECT fl.* FROM footer_links fl JOIN footer_sections fs ON fs.id = fl.section_id WHERE fs.title = 'Правовая информация' ORDER BY fl.position`)
-});
-
-export const queries = !isMainThread ? {} as any : createQueries();
+};
 
 // Utility
 export function formatPrice(kopecks: number): string {
