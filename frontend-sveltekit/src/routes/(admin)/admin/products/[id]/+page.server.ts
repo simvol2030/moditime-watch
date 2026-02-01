@@ -29,8 +29,9 @@ export const load: PageServerLoad = async ({ params }) => {
 
 	const brands = queries.adminSelectActiveBrands.all() as { id: number; name: string }[];
 	const categories = queries.adminSelectActiveCategories.all() as { id: number; name: string }[];
+	const options = queries.getProductOptions.all(Number(params.id)) as any[];
 
-	return { product, brands, categories };
+	return { product, brands, categories, options };
 };
 
 export const actions: Actions = {
