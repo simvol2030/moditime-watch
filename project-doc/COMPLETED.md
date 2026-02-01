@@ -56,11 +56,11 @@
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| Task 1 | Footer Management UI | ⏳ PENDING | - |
-| Task 2 | Config → Layout интеграция | ⏳ PENDING | - |
-| Task 3 | Homepage Management UI | ⏳ PENDING | - |
-| Task 4 | City Layout (layout group) | ⏳ PENDING | - |
-| Task 5 | Navigation extend | ⏳ PENDING | - |
+| Task 1 | Footer Management UI | ✅ DONE | - |
+| Task 2 | Config → Layout интеграция | ✅ DONE | - |
+| Task 3 | Homepage Management UI | ✅ DONE | - |
+| Task 4 | City Layout (layout group) | ✅ DONE | - |
+| Task 5 | Navigation extend | ✅ DONE | - |
 
 ### Session-5: Notifications & Order Flow (depends on Session-2)
 

@@ -13,6 +13,7 @@
 	const menuTypeLabels: Record<string, string> = {
 		header_desktop: 'Header (Desktop)',
 		header_mobile: 'Header (Mobile)',
+		city_header: 'City Header',
 		footer: 'Footer'
 	};
 
@@ -29,7 +30,11 @@
 	}
 
 	const topLevelItems = $derived(
-		data.allItems.filter(item => item.parent_id === null && item.menu_type === 'header_desktop')
+		data.allItems.filter(item => item.parent_id === null)
+	);
+
+	const parentOptionsForAdd = $derived(
+		data.allItems.filter(item => item.parent_id === null && item.menu_type === selectedMenuType)
 	);
 </script>
 
@@ -68,9 +73,10 @@
 				</div>
 				<div class="form-group">
 					<label for="new-menu-type">Menu Type</label>
-					<select id="new-menu-type" name="menu_type">
+					<select id="new-menu-type" name="menu_type" bind:value={selectedMenuType}>
 						<option value="header_desktop">Header (Desktop)</option>
 						<option value="header_mobile">Header (Mobile)</option>
+						<option value="city_header">City Header</option>
 						<option value="footer">Footer</option>
 					</select>
 				</div>
@@ -78,7 +84,7 @@
 					<label for="new-parent">Parent</label>
 					<select id="new-parent" name="parent_id">
 						<option value="">None (top-level)</option>
-						{#each topLevelItems as item}
+						{#each parentOptionsForAdd as item}
 							<option value={item.id}>{item.label}</option>
 						{/each}
 					</select>

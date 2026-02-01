@@ -24,6 +24,8 @@
 		{ label: 'Testimonials', href: '/admin/testimonials', icon: '💬', group: 'Content' },
 		{ label: 'Pages', href: '/admin/pages', icon: '📄', group: 'Content' },
 		{ label: 'Navigation', href: '/admin/navigation', icon: '🔗', group: 'Content' },
+		{ label: 'Footer', href: '/admin/footer', icon: '🦶', group: 'Content' },
+		{ label: 'Homepage', href: '/admin/homepage', icon: '🏠', group: 'Content' },
 		{ label: 'Import', href: '/admin/import', icon: '📥', group: 'Data' },
 		{ label: 'Admins', href: '/admin/system/admins', icon: '👤', group: 'System' },
 		{ label: 'Config', href: '/admin/system/config', icon: '⚙️', group: 'System' }
