@@ -1,7 +1,9 @@
 <script lang="ts">
+	import '../../../app.css';
 	import type { LayoutData } from './$types';
 	import AdminSidebar from '$lib/components/admin/AdminSidebar.svelte';
 	import { page } from '$app/stores';
+	import favicon from '$lib/assets/favicon.svg';
 
 	let { children, data }: { children: any; data: LayoutData } = $props();
 
@@ -10,6 +12,7 @@
 </script>
 
 <svelte:head>
+	<link rel="icon" href={favicon} />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 	<link
