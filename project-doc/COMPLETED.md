@@ -11,9 +11,10 @@
 | Метрика | Значение |
 |---------|----------|
 | **Всего задач** | 58 |
-| **Выполнено** | 28 (48%) |
-| **Осталось** | 30 (52%) |
+| **Выполнено** | 34 (59%) |
+| **Осталось** | 24 (41%) |
 | **Всего сессий** | 8 |
+| **Завершено сессий** | 5 (62%) |
 
 ---
 
@@ -78,12 +79,12 @@
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| Task 1 | Telegram Bot | ⏳ PENDING | - |
-| Task 2 | Email Service | ⏳ PENDING | - |
-| Task 3 | Email Templates seed | ⏳ PENDING | - |
-| Task 4 | Notifications Admin UI | ⏳ PENDING | - |
-| Task 5 | Order Flow интеграция | ⏳ PENDING | - |
-| Task 6 | Order Status уведомления | ⏳ PENDING | - |
+| Task 1 | Telegram Bot | ✅ DONE | 2025-02-01 |
+| Task 2 | Email Service | ✅ DONE | 2025-02-01 |
+| Task 3 | Email Templates seed | ✅ DONE | 2025-02-01 |
+| Task 4 | Notifications Admin UI | ✅ DONE | 2025-02-01 |
+| Task 5 | Order Flow интеграция | ✅ DONE | 2025-02-01 |
+| Task 6 | Order Status уведомления | ✅ DONE | 2025-02-01 |
 
 ### Session-6: pSEO Schema & Backend (depends on Session-2)
 

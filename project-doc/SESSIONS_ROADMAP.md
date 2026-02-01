@@ -10,10 +10,11 @@
 | Метрика | Значение |
 |---------|----------|
 | **Всего задач** | 58 |
-| **Выполнено** | 28 (48%) |
-| **Осталось** | 30 (52%) |
-| **Текущая сессия** | Session-5 |
+| **Выполнено** | 34 (59%) |
+| **Осталось** | 24 (41%) |
+| **Текущая сессия** | Session-6 |
 | **Всего сессий** | 8 |
+| **Завершено сессий** | 5 (62%) |
 
 ---
 
@@ -91,11 +92,11 @@
 
 ## Текущая сессия
 
-### ⏳ Session-5: Notifications & Order Flow (6 задач)
+### ✅ Session-5: Notifications & Order Flow (6 задач)
 
-**Статус:** PENDING (готова к реализации!)
+**Статус:** DONE
+**Дата завершения:** 2025-02-01
 **Зависит от:** Session-2 (Orders improve, Config)
-**Developer:** НАЧНИ С ЭТОЙ СЕССИИ
 
 **Задачи:**
 1. Telegram Bot (Medium) — реальная отправка в группу
@@ -107,12 +108,13 @@
 
 **Roadmap:** `project-doc/session-5-notifications/roadmap.md`
 
-**План работы:**
-1. Прочитай `project-doc/session-5-notifications/roadmap.md`
-2. Следуй Workflow Developer (CLAUDE.web.md)
-3. Создай ветку `claude/session-5-notifications`
-4. Реализуй 6 задач по roadmap
-5. Commit + push → уведомление CLI
+**Что сделано:**
+- Telegram Bot — реальная отправка через Bot API
+- Email Service — SMTP через Nodemailer
+- Email Templates seed — 5 шаблонов
+- Notifications Admin UI — /admin/system/notifications
+- Order Flow интеграция — checkout → уведомления
+- Order Status уведомления — смена статуса → email
 
 ---
 
@@ -120,9 +122,9 @@
 
 ### ⏳ Session-6: pSEO Schema & Backend (8 задач)
 
-**Статус:** PENDING
+**Статус:** PENDING (готова к реализации!)
 **Зависит от:** Session-2 (Cities CRUD)
-**Developer:** НАЧАТЬ ПОСЛЕ Session-5
+**Developer:** НАЧНИ С ЭТОЙ СЕССИИ
 
 **Задачи:**
 1. ALTER city_articles (Low) — добавить meta_title, meta_description, category_id, read_time
@@ -195,8 +197,8 @@ Session-1 (независимая) → ✅ DONE
 Session-2 (независимая) → ✅ DONE
     ├── Session-3 (после Session-2) → ✅ DONE
     ├── Session-4 (после Session-2) → ✅ DONE
-    ├── Session-5 (после Session-2) → ⏳ PENDING ← **СЕЙЧАС ЗДЕСЬ**
-    └── Session-6 (после Session-2) → ⏳ PENDING
+    ├── Session-5 (после Session-2) → ✅ DONE
+    └── Session-6 (после Session-2) → ⏳ PENDING ← **СЕЙЧАС ЗДЕСЬ**
             ├── Session-7 (после Session-6) → ⏳ PENDING
             └── Session-8 (после Session-6 + Session-7) → ⏳ PENDING
 ```
@@ -222,11 +224,11 @@ Session-2 (независимая) → ✅ DONE
 | Session-2 | 9 | ✅ DONE | 2025-02-01 |
 | Session-3 | 9 | ✅ DONE | 2025-02-01 |
 | Session-4 | 5 | ✅ DONE | 2025-02-01 |
-| **Session-5** | **6** | **⏳ PENDING** | — |
-| Session-6 | 8 | ⏳ PENDING | — |
+| Session-5 | 6 | ✅ DONE | 2025-02-01 |
+| **Session-6** | **8** | **⏳ PENDING** | — |
 | Session-7 | 8 | ⏳ PENDING | — |
 | Session-8 | 9 | ⏳ PENDING | — |
-| **ИТОГО** | **58** | **28 DONE / 30 PENDING** | **48%** |
+| **ИТОГО** | **58** | **34 DONE / 24 PENDING** | **59%** |
 
 ---
 
@@ -238,7 +240,7 @@ Session-2 (независимая) → ✅ DONE
 - Импорт/экспорт данных
 - Управление layout (footer, navigation, homepage)
 
-**Фаза 2: Order Management (Session-5)** → ⏳ В РАБОТЕ
+**Фаза 2: Order Management (Session-5)** → ✅ ЗАВЕРШЕНО
 - Уведомления (Telegram + Email)
 - Интеграция в Order Flow
 - Email шаблоны
@@ -252,8 +254,8 @@ Session-2 (независимая) → ✅ DONE
 
 ---
 
-**Версия:** 2.0
+**Версия:** 2.1
 **Создано:** 2025-02-01
 **Обновлено:** 2025-02-01
-**Для Developer:** Начни с Session-5, затем Sessions 6-8 по порядку!
-**Для Moderator:** 28 из 58 задач выполнено (48%), осталось 30 задач (3 сессии)
+**Для Developer:** Начни с Session-6, затем Sessions 7-8 по порядку!
+**Для Moderator:** 34 из 58 задач выполнено (59%), осталось 24 задачи (3 сессии)
