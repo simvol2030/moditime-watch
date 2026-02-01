@@ -431,7 +431,7 @@ export const queries = !isMainThread ? {} as any : {
     ORDER BY position
   `),
   getFooterSections: db.prepare('SELECT * FROM footer_sections WHERE is_active = 1 ORDER BY position'),
-  getFooterLinks: db.prepare('SELECT * FROM footer_links WHERE section_id = ? ORDER BY position'),
+  adminGetFooterLinks: db.prepare('SELECT * FROM footer_links WHERE section_id = ? ORDER BY position'),
 
   // Homepage data
   getHomeHero: db.prepare('SELECT * FROM home_hero WHERE is_active = 1 LIMIT 1'),
@@ -663,23 +663,24 @@ export const queries = !isMainThread ? {} as any : {
   createCityArticle: db.prepare(`INSERT INTO city_articles (city_id, slug, title, excerpt, content, image_url, template_type, is_published, published_at) VALUES (@city_id, @slug, @title, @excerpt, @content, @image_url, @template_type, @is_published, CASE WHEN @is_published = 1 THEN datetime('now') ELSE NULL END)`),
   deleteCityArticle: db.prepare('DELETE FROM city_articles WHERE id = ?'),
 
-  // Homepage (Session-4, Task 3)
-  getActiveHomeHero: db.prepare('SELECT * FROM home_hero WHERE is_active = 1 LIMIT 1'),
-  getHomeServicesAdmin: db.prepare('SELECT * FROM home_services ORDER BY position'),
-  getHomeStatsAdmin: db.prepare('SELECT * FROM home_service_stats ORDER BY position'),
-  getActiveTelegramWidget: db.prepare("SELECT * FROM widgets WHERE type = 'telegram_cta' AND is_active = 1 LIMIT 1"),
-  updateHomeHero: db.prepare(`UPDATE home_hero SET eyebrow = @eyebrow, title = @title, description = @description, image_url = @image_url, cta_text = @cta_text, cta_link = @cta_link, is_active = @is_active, updated_at = datetime('now') WHERE id = @id`),
-  updateHomeService: db.prepare(`UPDATE home_services SET icon_svg = @icon_svg, title = @title, description = @description, link_text = @link_text, link_href = @link_href, position = @position, is_active = @is_active, updated_at = datetime('now') WHERE id = @id`),
-  createHomeService: db.prepare(`INSERT INTO home_services (icon_svg, title, description, link_text, link_href, position, is_active) VALUES (@icon_svg, @title, @description, @link_text, @link_href, @position, @is_active)`),
-  deleteHomeService: db.prepare('DELETE FROM home_services WHERE id = ?'),
-  updateHomeStat: db.prepare('UPDATE home_service_stats SET label = @label, value = @value, position = @position WHERE id = @id'),
-  createHomeStat: db.prepare('INSERT INTO home_service_stats (label, value, position) VALUES (@label, @value, @position)'),
-  deleteHomeStat: db.prepare('DELETE FROM home_service_stats WHERE id = ?'),
-  updateTelegramWidgetData: db.prepare('UPDATE widgets SET data_json = @data_json, is_active = @is_active WHERE id = @id'),
+  // Homepage (Session-4, Task 3) - Admin queries
+  adminGetHomeHero: db.prepare('SELECT * FROM home_hero WHERE is_active = 1 LIMIT 1'),
+  adminGetHomeServices: db.prepare('SELECT * FROM home_services ORDER BY position'),
+  adminGetHomeStats: db.prepare('SELECT * FROM home_service_stats ORDER BY position'),
+  adminGetTelegramWidget: db.prepare("SELECT * FROM widgets WHERE type = 'telegram_cta' AND is_active = 1 LIMIT 1"),
+  adminUpdateHomeHero: db.prepare(`UPDATE home_hero SET tagline = @tagline, title = @title, description = @description, primary_cta_text = @primary_cta_text, primary_cta_href = @primary_cta_href, secondary_cta_text = @secondary_cta_text, secondary_cta_href = @secondary_cta_href, image_url = @image_url, image_alt = @image_alt, image_badge_label = @image_badge_label, image_badge_title = @image_badge_title, stats_json = @stats_json, quick_links_json = @quick_links_json, brands_json = @brands_json, updated_at = datetime('now') WHERE id = @id`),
+  adminUpdateHomeService: db.prepare(`UPDATE home_services SET icon_svg = @icon_svg, title = @title, description = @description, link_text = @link_text, link_href = @link_href, position = @position, is_active = @is_active WHERE id = @id`),
+  adminCreateHomeService: db.prepare(`INSERT INTO home_services (icon_svg, title, description, link_text, link_href, position, is_active) VALUES (@icon_svg, @title, @description, @link_text, @link_href, @position, @is_active)`),
+  adminDeleteHomeService: db.prepare('DELETE FROM home_services WHERE id = ?'),
+  adminUpdateHomeStat: db.prepare('UPDATE home_service_stats SET label = @label, value = @value, position = @position WHERE id = @id'),
+  adminCreateHomeStat: db.prepare('INSERT INTO home_service_stats (label, value, position) VALUES (@label, @value, @position)'),
+  adminDeleteHomeStat: db.prepare('DELETE FROM home_service_stats WHERE id = ?'),
+  adminUpdateWidget: db.prepare('UPDATE widgets SET data_json = @data_json, is_active = @is_active WHERE id = @id'),
+
 
   // Footer (Session-4, Task 1)
-  getFooterSections: db.prepare('SELECT * FROM footer_sections ORDER BY position'),
-  getFooterLinks: db.prepare('SELECT * FROM footer_links WHERE section_id = ? ORDER BY position'),
+  adminGetFooterSections: db.prepare('SELECT * FROM footer_sections ORDER BY position'),
+  adminGetFooterLinks: db.prepare('SELECT * FROM footer_links WHERE section_id = ? ORDER BY position'),
   createFooterSection: db.prepare(`INSERT INTO footer_sections (title, position, column_number, is_active) VALUES (@title, @position, @column_number, @is_active)`),
   updateFooterSection: db.prepare(`UPDATE footer_sections SET title = @title, position = @position, column_number = @column_number, is_active = @is_active WHERE id = @id`),
   deleteFooterSection: db.prepare('DELETE FROM footer_sections WHERE id = ?'),

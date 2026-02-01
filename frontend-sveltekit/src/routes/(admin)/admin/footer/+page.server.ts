@@ -21,10 +21,10 @@ interface FooterLink {
 
 
 export const load: PageServerLoad = async () => {
-	const sections = queries.getFooterSections.all() as FooterSection[];
+	const sections = queries.adminGetFooterSections.all() as FooterSection[];
 
 	const sectionsWithLinks = sections.map((section) => {
-		const links = queries.getFooterLinks.all(section.id) as FooterLink[];
+		const links = queries.adminGetFooterLinks.all(section.id) as FooterLink[];
 		return { ...section, links };
 	});
 
