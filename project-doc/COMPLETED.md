@@ -35,8 +35,8 @@
 | Task 5 | Journal Articles CRUD | ✅ DONE | - |
 | Task 6 | Product Options UI | ✅ DONE | - |
 | Task 7 | Config seed + UI | ✅ DONE | - |
-| Task 8 | Orders improve | ⏳ PENDING | - |
-| Task 9 | Sidebar update | ⏳ PENDING | - |
+| Task 8 | Orders improve | ✅ DONE | - |
+| Task 9 | Sidebar update | ✅ DONE | - |
 
 ### Session-3: Import/Export (depends on Session-2)
 
