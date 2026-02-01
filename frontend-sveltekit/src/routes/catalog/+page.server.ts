@@ -84,8 +84,9 @@ export const load: PageServerLoad = async ({ url }) => {
 	// Validate price range
 	const rawMinPrice = parseInt(url.searchParams.get('minPrice') || '0');
 	const rawMaxPrice = parseInt(url.searchParams.get('maxPrice') || '0');
+	const hasExplicitMaxPrice = url.searchParams.has('maxPrice') && rawMaxPrice > 0;
 	const minPrice = (Number.isFinite(rawMinPrice) && rawMinPrice >= 0 ? rawMinPrice : 0) * 100;
-	const maxPrice = (Number.isFinite(rawMaxPrice) && rawMaxPrice > 0 ? rawMaxPrice : 9999999) * 100;
+	const maxPrice = hasExplicitMaxPrice ? rawMaxPrice * 100 : 0;
 
 	// Validate sort parameter against whitelist
 	const sortByRaw = url.searchParams.get('sort') || 'popular';
@@ -113,7 +114,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		params.push(minPrice);
 	}
 
-	if (maxPrice > 0 && maxPrice < 999999999) {
+	if (hasExplicitMaxPrice && maxPrice > 0) {
 		conditions.push('p.price <= ?');
 		params.push(maxPrice);
 	}
@@ -278,7 +279,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const currentFilters: CatalogFilter = {
 		availability: availabilityFilter,
 		brands: brandFilter,
-		priceRange: { min: minPrice / 100, max: maxPrice / 100 },
+		priceRange: { min: minPrice / 100, max: hasExplicitMaxPrice ? maxPrice / 100 : 10000000 },
 		materials: materialFilter,
 		mechanisms: mechanismFilter,
 		scenarios: scenarioFilter
@@ -315,7 +316,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		}
 	});
 
-	if (minPrice > 0 || (maxPrice > 0 && maxPrice < 999999999)) {
+	if (minPrice > 0 || hasExplicitMaxPrice) {
 		activeFilters.push({
 			id: `price:${minPrice / 100}-${maxPrice / 100}`,
 			label: `${formatPriceShort(minPrice / 100)} — ${formatPriceShort(maxPrice / 100)}`

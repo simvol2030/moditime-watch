@@ -17,6 +17,10 @@
 		data.cities.map((c) => ({ value: String(c.id), label: c.name }))
 	);
 
+	const categoryOptions = $derived(
+		[{ value: '', label: '— No category —' }, ...data.categories.map((c) => ({ value: String(c.id), label: c.name }))]
+	);
+
 	const templateOptions = [
 		{ value: 'standard', label: 'Standard' },
 		{ value: 'unique', label: 'Unique' },
@@ -99,8 +103,21 @@
 		<FormTextarea label="Excerpt" name="excerpt" value={form?.data?.excerpt ?? ''} rows={2} hint="Short summary for listings" />
 		<FormTextarea label="Content (HTML)" name="content" value={form?.data?.content ?? ''} rows={12} hint="Full article content in HTML" />
 
+		<h3 class="section-title">SEO & Metadata</h3>
+		<div class="form-grid">
+			<FormSelect
+				label="Category"
+				name="category_id"
+				options={categoryOptions}
+				value={form?.data?.category_id != null ? String(form.data.category_id) : ''}
+			/>
+			<FormField label="Read Time (min)" name="read_time" type="number" value={form?.data?.read_time ?? ''} hint="Estimated minutes to read" />
+		</div>
+		<FormField label="Meta Title" name="meta_title" value={form?.data?.meta_title ?? ''} hint="SEO title override (optional)" />
+		<FormField label="Meta Description" name="meta_description" value={form?.data?.meta_description ?? ''} hint="SEO description override (optional)" />
+
 		<h3 class="section-title">Settings</h3>
-		<FormCheckbox label="Published" name="is_published" checked={form?.data?.is_published ?? true} />
+		<FormCheckbox label="Published" name="is_published" checked={form?.data?.is_published !== undefined ? Boolean(form.data.is_published) : true} />
 	</div>
 
 	<div class="form-actions">

@@ -35,7 +35,7 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, params }) => {
+	update: async ({ request, params }) => {
 		const formData = await request.formData();
 		const id = Number(params.id);
 
@@ -96,5 +96,55 @@ export const actions: Actions = {
 		}
 
 		throw redirect(302, '/admin/products');
+	},
+
+	addOption: async ({ request, params }) => {
+		const formData = await request.formData();
+		const productId = Number(params.id);
+
+		const option_type = formData.get('option_type')?.toString() || '';
+		const option_label = formData.get('option_label')?.toString() || '';
+		const option_value = formData.get('option_value')?.toString() || '';
+		const option_value_label = formData.get('option_value_label')?.toString() || '';
+		const price_modifier = parseInt(formData.get('price_modifier')?.toString() || '0', 10);
+		const is_default = formData.get('is_default') ? 1 : 0;
+
+		if (!option_type || !option_label || !option_value) {
+			return fail(400, { error: 'Type, label, and value are required for options' });
+		}
+
+		try {
+			queries.addProductOption.run({
+				product_id: productId,
+				option_type,
+				option_label,
+				option_value,
+				option_value_label: option_value_label || null,
+				price_modifier,
+				is_default,
+				position: 0
+			});
+		} catch (err) {
+			return fail(500, { error: 'Failed to add option' });
+		}
+
+		return { success: true };
+	},
+
+	removeOption: async ({ request }) => {
+		const formData = await request.formData();
+		const optionId = Number(formData.get('option_id'));
+
+		if (!optionId) {
+			return fail(400, { error: 'Option ID is required' });
+		}
+
+		try {
+			queries.deleteProductOption.run(optionId);
+		} catch (err) {
+			return fail(500, { error: 'Failed to remove option' });
+		}
+
+		return { success: true };
 	}
 };

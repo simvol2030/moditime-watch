@@ -162,7 +162,7 @@ export const load: PageServerLoad = async ({ params }) => {
 						src: img.url.startsWith('/') ? img.url : `https://picsum.photos/seed/${slug}-${idx}/720/720`,
 						alt: img.alt || product.name,
 						thumbnail: img.url.startsWith('/')
-							? img.url.replace('.jpg', '-thumb.jpg')
+							? img.url.replace(/(\.\w+)$/, '-thumb$1')
 							: `https://picsum.photos/seed/${slug}-${idx}/120/120`
 					}))
 				: [
@@ -373,7 +373,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			image: mainImage,
 			brand: product.brand_name,
 			sku: product.sku,
-			price: product.price,
+			price: product.price / 100,
 			currency: 'RUB',
 			availability: product.availability_status === 'in-stock'
 				? 'InStock'
