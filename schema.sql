@@ -590,6 +590,12 @@ CREATE TABLE IF NOT EXISTS city_articles (
   content TEXT, -- HTML
   image_url TEXT,
 
+  -- SEO (Session-6)
+  meta_title TEXT,
+  meta_description TEXT,
+  category_id INTEGER REFERENCES city_article_categories(id) ON DELETE SET NULL,
+  read_time INTEGER, -- minutes
+
   -- Тип шаблона (для вариативности)
   template_type TEXT DEFAULT 'standard', -- 'unique', 'variant_A', 'variant_B', 'standard'
 
@@ -616,6 +622,7 @@ CREATE INDEX IF NOT EXISTS idx_city_articles_published ON city_articles(is_publi
 CREATE INDEX IF NOT EXISTS idx_city_articles_template ON city_articles(template_type);
 -- Оптимизированный составной индекс для списка статей города (250k записей!)
 CREATE INDEX IF NOT EXISTS idx_city_articles_list_optimized ON city_articles(city_id, is_published, published_at DESC) WHERE is_published = 1;
+CREATE INDEX IF NOT EXISTS idx_city_articles_category ON city_articles(category_id);
 
 -- Перелинковка статей городов с товарами
 CREATE TABLE IF NOT EXISTS city_article_products (
@@ -629,6 +636,88 @@ CREATE TABLE IF NOT EXISTS city_article_products (
 );
 
 CREATE INDEX IF NOT EXISTS idx_city_article_products_product ON city_article_products(product_id);
+
+-- ============================================
+-- БЛОК 8b: pSEO — КАТЕГОРИИ, ТЕГИ, СВЯЗИ, МЕДИА (Session-6)
+-- ============================================
+
+-- Категории городских статей
+CREATE TABLE IF NOT EXISTS city_article_categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  description TEXT,
+  position INTEGER DEFAULT 0,
+  is_active INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Теги городских статей
+CREATE TABLE IF NOT EXISTS city_article_tags (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT UNIQUE NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Связь статья ↔ теги (M:N)
+CREATE TABLE IF NOT EXISTS city_article_tag_relations (
+  article_id INTEGER NOT NULL,
+  tag_id INTEGER NOT NULL,
+  PRIMARY KEY (article_id, tag_id),
+  FOREIGN KEY (article_id) REFERENCES city_articles(id) ON DELETE CASCADE,
+  FOREIGN KEY (tag_id) REFERENCES city_article_tags(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_city_article_tag_relations_tag ON city_article_tag_relations(tag_id);
+
+-- Связанные статьи (явные, не random)
+CREATE TABLE IF NOT EXISTS city_article_related (
+  article_id INTEGER NOT NULL,
+  related_article_id INTEGER NOT NULL,
+  position INTEGER DEFAULT 0,
+  PRIMARY KEY (article_id, related_article_id),
+  FOREIGN KEY (article_id) REFERENCES city_articles(id) ON DELETE CASCADE,
+  FOREIGN KEY (related_article_id) REFERENCES city_articles(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_city_article_related_related ON city_article_related(related_article_id);
+
+-- Медиа городских статей (изображения, видео)
+CREATE TABLE IF NOT EXISTS city_article_media (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  article_id INTEGER NOT NULL,
+  media_type TEXT NOT NULL CHECK (media_type IN ('image', 'video')),
+  url TEXT NOT NULL,
+  alt_text TEXT,
+  caption TEXT,
+  position INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (article_id) REFERENCES city_articles(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_city_article_media_article ON city_article_media(article_id, position);
+
+-- FTS5 для полнотекстового поиска по городским статьям
+CREATE VIRTUAL TABLE IF NOT EXISTS city_articles_fts USING fts5(
+  title, excerpt, content,
+  content=city_articles, content_rowid=id
+);
+
+-- Триггеры для автоматического обновления FTS5 индекса
+CREATE TRIGGER IF NOT EXISTS city_articles_fts_insert AFTER INSERT ON city_articles BEGIN
+  INSERT INTO city_articles_fts(rowid, title, excerpt, content) VALUES (new.id, new.title, new.excerpt, new.content);
+END;
+
+CREATE TRIGGER IF NOT EXISTS city_articles_fts_update AFTER UPDATE ON city_articles BEGIN
+  INSERT INTO city_articles_fts(city_articles_fts, rowid, title, excerpt, content) VALUES ('delete', old.id, old.title, old.excerpt, old.content);
+  INSERT INTO city_articles_fts(rowid, title, excerpt, content) VALUES (new.id, new.title, new.excerpt, new.content);
+END;
+
+CREATE TRIGGER IF NOT EXISTS city_articles_fts_delete AFTER DELETE ON city_articles BEGIN
+  INSERT INTO city_articles_fts(city_articles_fts, rowid, title, excerpt, content) VALUES ('delete', old.id, old.title, old.excerpt, old.content);
+END;
 
 -- ============================================
 -- БЛОК 9: ЗАКАЗЫ

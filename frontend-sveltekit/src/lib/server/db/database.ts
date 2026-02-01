@@ -97,26 +97,155 @@ export function seedDatabase() {
     insertCity.run('saint-petersburg', 'Санкт-Петербург', 'Санкт-Петербурга', 'Санкт-Петербурге', 1, 'Бесплатно', 1, 2);
     insertCity.run('kazan', 'Казань', 'Казани', 'Казани', 2, 'Бесплатно', 1, 3);
     
+    // ============================================
+    // Session-6: pSEO Seed — Categories, Tags, Articles
+    // ============================================
+
+    // City Article Categories (2 categories)
+    const insertCityArticleCat = db.prepare('INSERT INTO city_article_categories (name, slug, description, position, is_active) VALUES (?, ?, ?, ?, 1)');
+    insertCityArticleCat.run('Покупка часов', 'pokupka-chasov', 'Статьи о покупке, подборе и инвестициях в премиальные часы', 1);
+    const catPokupkaId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertCityArticleCat.run('Ремонт и обслуживание', 'remont-obsluzhivanie', 'Сервисные центры, уход и обслуживание часов', 2);
+    const catRemontId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+
+    // City Article Tags (7 tags)
+    const insertCityArticleTag = db.prepare('INSERT INTO city_article_tags (name, slug) VALUES (?, ?)');
+    insertCityArticleTag.run('швейцарские часы', 'shvejcarskie-chasy');
+    const tagSwissId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertCityArticleTag.run('rolex', 'rolex');
+    const tagRolexId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertCityArticleTag.run('ремонт', 'remont');
+    const tagRemontId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertCityArticleTag.run('инвестиции', 'investicii');
+    const tagInvestId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertCityArticleTag.run('подарок', 'podarok');
+    const tagGiftId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertCityArticleTag.run('trade-in', 'trade-in');
+    const tagTradeInId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+    insertCityArticleTag.run('luxury', 'luxury');
+    const tagLuxuryId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+
     // City Articles (5 для Moscow, 4 для SPb, 3 для Kazan)
-    const insertCityArticle = db.prepare('INSERT INTO city_articles (city_id, slug, title, excerpt, content, is_published, published_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)');
+    // Updated with meta_title, meta_description, category_id, read_time (Session-6)
+    const insertCityArticle = db.prepare('INSERT INTO city_articles (city_id, slug, title, excerpt, content, meta_title, meta_description, category_id, read_time, is_published, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)');
 
     // Moscow (city_id=1)
-    insertCityArticle.run(1, 'gde-kupit-shvejcarskie-chasy-v-moskve', 'Где купить швейцарские часы в Москве', 'Гид по авторизованным бутикам и проверенным дилерам в столице — от Столешникова до ГУМа.', '<h2>Авторизованные бутики</h2><p>Москва — крупнейший рынок премиальных часов в России. На Столешниковом переулке сосредоточены бутики Rolex, Patek Philippe, Audemars Piguet и Vacheron Constantin.</p><h3>ГУМ и ЦУМ</h3><p>В ГУМе представлены бренды Omega, Cartier, IWC и Jaeger-LeCoultre. ЦУМ предлагает коллекции Hublot, TAG Heuer и Breitling.</p><h2>Moditimewatch: доставка и подбор</h2><p>Мы подберём часы под ваш стиль и бюджет, организуем примерку и доставку по Москве в день заказа. Каждая модель проходит проверку подлинности.</p>', 1);
-    insertCityArticle.run(1, 'luchshie-modeli-dlya-biznesmenov-moskvy', 'Лучшие модели часов для бизнесменов Москвы', 'Подборка проверенных референсов для деловых встреч, переговоров и корпоративных мероприятий.', '<h2>Для переговоров</h2><p>Rolex Datejust 41 — универсальная классика для любых встреч. Сочетание стали и белого золота подчёркивает статус без излишней демонстративности.</p><h2>Для корпоративных событий</h2><p>Patek Philippe Calatrava 5227G — эталон дресс-часов. Тонкий корпус из белого золота, гильошированный циферблат, безупречная отделка.</p><h3>Для повседневного ношения</h3><p>Omega Seamaster Aqua Terra 150M — сдержанная спортивная элегантность. Водонепроницаемость 150 м, коаксиальный калибр с антимагнитной защитой.</p>', 1);
-    insertCityArticle.run(1, 'trade-in-chasov-v-moskve', 'Trade-in часов в Москве: как обменять с выгодой', 'Разбираем процесс оценки, документы и сроки обмена часов через Moditimewatch.', '<h2>Как работает trade-in</h2><p>Вы отправляете фото и описание ваших часов. Наш эксперт проводит предварительную оценку в течение 24 часов.</p><h3>Очная экспертиза</h3><p>После предварительного согласования мы организуем встречу для осмотра часов. Проверяем механизм, состояние корпуса, комплектность документов.</p><h2>Финальная сделка</h2><p>Стоимость trade-in зачисляется в счёт новой покупки. Разницу можно оплатить любым способом — наличными, картой или банковским переводом.</p>', 1);
-    insertCityArticle.run(1, 'remont-chasov-v-moskve', 'Сервисные центры и ремонт часов в Москве', 'Обзор авторизованных сервисных центров и рекомендации по обслуживанию часов.', '<h2>Авторизованные сервисные центры</h2><p>Rolex обслуживается в официальных центрах на Кузнецком Мосту. Patek Philippe имеет собственный сервис в Барвихе.</p><h3>Регулярное обслуживание</h3><p>Рекомендуемая периодичность полного обслуживания — каждые 5-7 лет для механических часов. Замена прокладок и проверка герметичности — ежегодно при активном ношении.</p><h2>Moditimewatch сервис</h2><p>Мы предлагаем полный цикл обслуживания: диагностика, полировка, замена ремешков и браслетов, настройка точности хода.</p>', 1);
-    insertCityArticle.run(1, 'investicii-v-chasy-moskva', 'Инвестиции в часы: московский рынок 2025', 'Анализ доходности коллекционных часов и перспективные модели для инвестиционного портфеля.', '<h2>Рынок премиальных часов в 2025</h2><p>Московский рынок коллекционных часов демонстрирует стабильный рост. Rolex Daytona и Patek Philippe Nautilus остаются лидерами по приросту стоимости.</p><h3>Перспективные модели</h3><p>Audemars Piguet Royal Oak «Jumbo» 16202 — преемник легендарного 15202, уже торгуется выше ритейла. Vacheron Constantin Overseas — набирает популярность среди инвесторов.</p><h2>Рекомендации</h2><p>Ключевые факторы для инвестиционной покупки: полная комплектация, состояние близкое к новому, актуальные сертификаты и чеки.</p>', 1);
+    insertCityArticle.run(1, 'gde-kupit-shvejcarskie-chasy-v-moskve', 'Где купить швейцарские часы в Москве', 'Гид по авторизованным бутикам и проверенным дилерам в столице — от Столешникова до ГУМа.', '<h2>Авторизованные бутики</h2><p>Москва — крупнейший рынок премиальных часов в России. На Столешниковом переулке сосредоточены бутики Rolex, Patek Philippe, Audemars Piguet и Vacheron Constantin.</p><h3>ГУМ и ЦУМ</h3><p>В ГУМе представлены бренды Omega, Cartier, IWC и Jaeger-LeCoultre. ЦУМ предлагает коллекции Hublot, TAG Heuer и Breitling.</p><h2>Moditimewatch: доставка и подбор</h2><p>Мы подберём часы под ваш стиль и бюджет, организуем примерку и доставку по Москве в день заказа. Каждая модель проходит проверку подлинности.</p>', 'Купить швейцарские часы в Москве — бутики, дилеры, доставка | Moditimewatch', 'Где купить оригинальные швейцарские часы в Москве: бутики на Столешниковом, ГУМ, ЦУМ. Доставка и подбор от Moditimewatch.', catPokupkaId, 8, 1);
+    const moscowArt1Id = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+
+    insertCityArticle.run(1, 'luchshie-modeli-dlya-biznesmenov-moskvy', 'Лучшие модели часов для бизнесменов Москвы', 'Подборка проверенных референсов для деловых встреч, переговоров и корпоративных мероприятий.', '<h2>Для переговоров</h2><p>Rolex Datejust 41 — универсальная классика для любых встреч. Сочетание стали и белого золота подчёркивает статус без излишней демонстративности.</p><h2>Для корпоративных событий</h2><p>Patek Philippe Calatrava 5227G — эталон дресс-часов. Тонкий корпус из белого золота, гильошированный циферблат, безупречная отделка.</p><h3>Для повседневного ношения</h3><p>Omega Seamaster Aqua Terra 150M — сдержанная спортивная элегантность. Водонепроницаемость 150 м, коаксиальный калибр с антимагнитной защитой.</p>', 'Часы для бизнесменов Москвы — Rolex, Patek Philippe, Omega | Moditimewatch', 'Лучшие модели часов для деловых встреч и переговоров в Москве: Rolex Datejust, Patek Philippe Calatrava, Omega Seamaster.', catPokupkaId, 10, 1);
+    const moscowArt2Id = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+
+    insertCityArticle.run(1, 'trade-in-chasov-v-moskve', 'Trade-in часов в Москве: как обменять с выгодой', 'Разбираем процесс оценки, документы и сроки обмена часов через Moditimewatch.', '<h2>Как работает trade-in</h2><p>Вы отправляете фото и описание ваших часов. Наш эксперт проводит предварительную оценку в течение 24 часов.</p><h3>Очная экспертиза</h3><p>После предварительного согласования мы организуем встречу для осмотра часов. Проверяем механизм, состояние корпуса, комплектность документов.</p><h2>Финальная сделка</h2><p>Стоимость trade-in зачисляется в счёт новой покупки. Разницу можно оплатить любым способом — наличными, картой или банковским переводом.</p>', 'Trade-in часов в Москве — обмен с выгодой | Moditimewatch', 'Обмен часов trade-in в Москве: оценка за 24 часа, очная экспертиза, зачисление стоимости в счёт новой покупки.', catPokupkaId, 6, 1);
+    const moscowArt3Id = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+
+    insertCityArticle.run(1, 'remont-chasov-v-moskve', 'Сервисные центры и ремонт часов в Москве', 'Обзор авторизованных сервисных центров и рекомендации по обслуживанию часов.', '<h2>Авторизованные сервисные центры</h2><p>Rolex обслуживается в официальных центрах на Кузнецком Мосту. Patek Philippe имеет собственный сервис в Барвихе.</p><h3>Регулярное обслуживание</h3><p>Рекомендуемая периодичность полного обслуживания — каждые 5-7 лет для механических часов. Замена прокладок и проверка герметичности — ежегодно при активном ношении.</p><h2>Moditimewatch сервис</h2><p>Мы предлагаем полный цикл обслуживания: диагностика, полировка, замена ремешков и браслетов, настройка точности хода.</p>', 'Ремонт часов в Москве — сервисные центры | Moditimewatch', 'Авторизованные сервисные центры в Москве: ремонт Rolex, Patek Philippe, Omega. Полный цикл обслуживания от Moditimewatch.', catRemontId, 7, 1);
+    const moscowArt4Id = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
+
+    insertCityArticle.run(1, 'investicii-v-chasy-moskva', 'Инвестиции в часы: московский рынок 2025', 'Анализ доходности коллекционных часов и перспективные модели для инвестиционного портфеля.', '<h2>Рынок премиальных часов в 2025</h2><p>Московский рынок коллекционных часов демонстрирует стабильный рост. Rolex Daytona и Patek Philippe Nautilus остаются лидерами по приросту стоимости.</p><h3>Перспективные модели</h3><p>Audemars Piguet Royal Oak «Jumbo» 16202 — преемник легендарного 15202, уже торгуется выше ритейла. Vacheron Constantin Overseas — набирает популярность среди инвесторов.</p><h2>Рекомендации</h2><p>Ключевые факторы для инвестиционной покупки: полная комплектация, состояние близкое к новому, актуальные сертификаты и чеки.</p>', 'Инвестиции в часы в Москве — рынок 2025 | Moditimewatch', 'Какие часы покупать для инвестиций в Москве: Rolex Daytona, Patek Philippe Nautilus, Audemars Piguet Royal Oak.', catPokupkaId, 12, 1);
+    const moscowArt5Id = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id;
 
     // Saint-Petersburg (city_id=2)
-    insertCityArticle.run(2, 'gde-kupit-chasy-v-peterburge', 'Где купить швейцарские часы в Санкт-Петербурге', 'Путеводитель по часовым бутикам Невского проспекта и ДЛТ.', '<h2>Невский проспект</h2><p>Главная часовая магистраль Петербурга. На Невском расположены бутики Rolex, Omega, Breguet и Blancpain. Исторические интерьеры создают особую атмосферу покупки.</p><h3>ДЛТ (Дом Ленинградской Торговли)</h3><p>Премиальный универмаг с часовым отделом: Cartier, IWC, Panerai и Chopard. Удобное расположение рядом с Гостиным двором.</p><h2>Доставка Moditimewatch</h2><p>Доставка по Петербургу — 1 рабочий день. Примерка на дому или в офисе, проверка подлинности при получении.</p>', 1);
-    insertCityArticle.run(2, 'chasy-dlya-belyh-nochej', 'Часы для белых ночей: подборка для петербургского стиля', 'Модели, подчёркивающие петербургский шик — от строгой классики до авангарда.', '<h2>Петербургская классика</h2><p>Breguet Classique 5177 — бренд с историческими корнями в Петербурге. Эмалевый циферблат, знаменитые стрелки Breguet, ультратонкий корпус.</p><h3>Для прогулок по набережным</h3><p>Omega Seamaster Planet Ocean — спортивная элегантность для активного образа жизни. Водонепроницаемость 600 м, керамический безель.</p><h2>Для культурных событий</h2><p>Jaeger-LeCoultre Reverso — часы-перевёртыш с историей. Идеальный выбор для посещения Мариинского театра или Эрмитажа.</p>', 1);
-    insertCityArticle.run(2, 'trade-in-chasov-v-peterburge', 'Trade-in часов в Санкт-Петербурге', 'Обмен часов с доплатой: процесс, сроки и условия в Петербурге.', '<h2>Процесс обмена</h2><p>Отправьте фотографии часов через форму на сайте или в Telegram. Предварительная оценка — в течение 24 часов.</p><h3>Очная оценка</h3><p>Встреча с экспертом в удобном для вас месте в Петербурге. Проверяем механизм, комплектность, состояние.</p><h2>Условия</h2><p>Принимаем часы Rolex, Patek Philippe, Audemars Piguet, Omega и другие премиальные бренды. Стоимость trade-in — до 85% рыночной цены.</p>', 1);
-    insertCityArticle.run(2, 'remont-chasov-v-peterburge', 'Ремонт и обслуживание часов в Санкт-Петербурге', 'Авторизованные мастерские и рекомендации по уходу за часами.', '<h2>Сервисные центры</h2><p>В Петербурге работают авторизованные сервисы Rolex, Omega и Swatch Group. Обслуживание других брендов доступно через Moditimewatch.</p><h3>Стоимость обслуживания</h3><p>Полное обслуживание механических часов: от 30 000 до 150 000 ₽ в зависимости от бренда и сложности механизма.</p>', 1);
+    insertCityArticle.run(2, 'gde-kupit-chasy-v-peterburge', 'Где купить швейцарские часы в Санкт-Петербурге', 'Путеводитель по часовым бутикам Невского проспекта и ДЛТ.', '<h2>Невский проспект</h2><p>Главная часовая магистраль Петербурга. На Невском расположены бутики Rolex, Omega, Breguet и Blancpain. Исторические интерьеры создают особую атмосферу покупки.</p><h3>ДЛТ (Дом Ленинградской Торговли)</h3><p>Премиальный универмаг с часовым отделом: Cartier, IWC, Panerai и Chopard. Удобное расположение рядом с Гостиным двором.</p><h2>Доставка Moditimewatch</h2><p>Доставка по Петербургу — 1 рабочий день. Примерка на дому или в офисе, проверка подлинности при получении.</p>', 'Купить швейцарские часы в Санкт-Петербурге | Moditimewatch', 'Часовые бутики на Невском проспекте и ДЛТ. Доставка часов по Петербургу за 1 день.', catPokupkaId, 7, 1);
+    insertCityArticle.run(2, 'chasy-dlya-belyh-nochej', 'Часы для белых ночей: подборка для петербургского стиля', 'Модели, подчёркивающие петербургский шик — от строгой классики до авангарда.', '<h2>Петербургская классика</h2><p>Breguet Classique 5177 — бренд с историческими корнями в Петербурге. Эмалевый циферблат, знаменитые стрелки Breguet, ультратонкий корпус.</p><h3>Для прогулок по набережным</h3><p>Omega Seamaster Planet Ocean — спортивная элегантность для активного образа жизни. Водонепроницаемость 600 м, керамический безель.</p><h2>Для культурных событий</h2><p>Jaeger-LeCoultre Reverso — часы-перевёртыш с историей. Идеальный выбор для посещения Мариинского театра или Эрмитажа.</p>', 'Часы для петербургского стиля — белые ночи | Moditimewatch', 'Подборка часов для петербургского стиля: Breguet, Omega, Jaeger-LeCoultre.', catPokupkaId, 8, 1);
+    insertCityArticle.run(2, 'trade-in-chasov-v-peterburge', 'Trade-in часов в Санкт-Петербурге', 'Обмен часов с доплатой: процесс, сроки и условия в Петербурге.', '<h2>Процесс обмена</h2><p>Отправьте фотографии часов через форму на сайте или в Telegram. Предварительная оценка — в течение 24 часов.</p><h3>Очная оценка</h3><p>Встреча с экспертом в удобном для вас месте в Петербурге. Проверяем механизм, комплектность, состояние.</p><h2>Условия</h2><p>Принимаем часы Rolex, Patek Philippe, Audemars Piguet, Omega и другие премиальные бренды. Стоимость trade-in — до 85% рыночной цены.</p>', 'Trade-in часов в Санкт-Петербурге | Moditimewatch', 'Обмен часов в Петербурге: оценка, экспертиза, зачисление стоимости.', catPokupkaId, 5, 1);
+    insertCityArticle.run(2, 'remont-chasov-v-peterburge', 'Ремонт и обслуживание часов в Санкт-Петербурге', 'Авторизованные мастерские и рекомендации по уходу за часами.', '<h2>Сервисные центры</h2><p>В Петербурге работают авторизованные сервисы Rolex, Omega и Swatch Group. Обслуживание других брендов доступно через Moditimewatch.</p><h3>Стоимость обслуживания</h3><p>Полное обслуживание механических часов: от 30 000 до 150 000 ₽ в зависимости от бренда и сложности механизма.</p>', 'Ремонт часов в Санкт-Петербурге | Moditimewatch', 'Сервисные центры Rolex, Omega в Петербурге. Стоимость обслуживания.', catRemontId, 6, 1);
 
     // Kazan (city_id=3)
-    insertCityArticle.run(3, 'gde-kupit-chasy-v-kazani', 'Где купить швейцарские часы в Казани', 'Обзор часовых магазинов Казани и возможности доставки Moditimewatch.', '<h2>Часовые магазины Казани</h2><p>В Казани представлены мультибрендовые салоны на улице Баумана и в ТЦ «Кольцо». Ассортимент включает Rolex, Omega, Longines и Tissot.</p><h3>Доставка Moditimewatch</h3><p>Доставляем по Казани за 2 рабочих дня. Бесплатная доставка при заказе от 500 000 ₽. Примерка и проверка подлинности при получении.</p>', 1);
-    insertCityArticle.run(3, 'chasy-dlya-biznesmenov-kazani', 'Лучшие часы для бизнесменов Казани', 'Подборка моделей для деловых встреч и мероприятий в столице Татарстана.', '<h2>Для деловых встреч</h2><p>Rolex Datejust — надёжная классика, узнаваемая во всём мире. Стальной корпус с белым циферблатом — универсальный выбор.</p><h3>Для особых случаев</h3><p>Patek Philippe Calatrava — часы, которые говорят о вкусе и статусе без слов. Тонкий корпус, лаконичный дизайн.</p>', 1);
-    insertCityArticle.run(3, 'trade-in-chasov-v-kazani', 'Trade-in часов в Казани', 'Как обменять часы с выгодой через сервис Moditimewatch в Казани.', '<h2>Условия trade-in</h2><p>Принимаем часы любых премиальных брендов. Предварительная оценка по фото — бесплатно. Очная экспертиза в Казани — по договорённости.</p><h3>Сроки</h3><p>Предварительная оценка: 24 часа. Очная экспертиза: 1-2 рабочих дня. Зачисление стоимости: в день сделки.</p>', 1);
+    insertCityArticle.run(3, 'gde-kupit-chasy-v-kazani', 'Где купить швейцарские часы в Казани', 'Обзор часовых магазинов Казани и возможности доставки Moditimewatch.', '<h2>Часовые магазины Казани</h2><p>В Казани представлены мультибрендовые салоны на улице Баумана и в ТЦ «Кольцо». Ассортимент включает Rolex, Omega, Longines и Tissot.</p><h3>Доставка Moditimewatch</h3><p>Доставляем по Казани за 2 рабочих дня. Бесплатная доставка при заказе от 500 000 ₽. Примерка и проверка подлинности при получении.</p>', 'Купить швейцарские часы в Казани | Moditimewatch', 'Часовые магазины Казани. Доставка за 2 дня от Moditimewatch.', catPokupkaId, 5, 1);
+    insertCityArticle.run(3, 'chasy-dlya-biznesmenov-kazani', 'Лучшие часы для бизнесменов Казани', 'Подборка моделей для деловых встреч и мероприятий в столице Татарстана.', '<h2>Для деловых встреч</h2><p>Rolex Datejust — надёжная классика, узнаваемая во всём мире. Стальной корпус с белым циферблатом — универсальный выбор.</p><h3>Для особых случаев</h3><p>Patek Philippe Calatrava — часы, которые говорят о вкусе и статусе без слов. Тонкий корпус, лаконичный дизайн.</p>', 'Часы для бизнесменов Казани | Moditimewatch', 'Лучшие модели часов для деловых встреч в Казани: Rolex, Patek Philippe.', catPokupkaId, 6, 1);
+    insertCityArticle.run(3, 'trade-in-chasov-v-kazani', 'Trade-in часов в Казани', 'Как обменять часы с выгодой через сервис Moditimewatch в Казани.', '<h2>Условия trade-in</h2><p>Принимаем часы любых премиальных брендов. Предварительная оценка по фото — бесплатно. Очная экспертиза в Казани — по договорённости.</p><h3>Сроки</h3><p>Предварительная оценка: 24 часа. Очная экспертиза: 1-2 рабочих дня. Зачисление стоимости: в день сделки.</p>', 'Trade-in часов в Казани | Moditimewatch', 'Обмен часов в Казани: оценка по фото, экспертиза по договорённости.', catPokupkaId, 4, 1);
+
+    // ============================================
+    // Session-6: Tag relations (Moscow articles)
+    // ============================================
+    const insertTagRel = db.prepare('INSERT INTO city_article_tag_relations (article_id, tag_id) VALUES (?, ?)');
+
+    // Article 1 (Где купить): швейцарские часы, rolex, luxury
+    insertTagRel.run(moscowArt1Id, tagSwissId);
+    insertTagRel.run(moscowArt1Id, tagRolexId);
+    insertTagRel.run(moscowArt1Id, tagLuxuryId);
+
+    // Article 2 (Бизнесмены): швейцарские часы, luxury, подарок
+    insertTagRel.run(moscowArt2Id, tagSwissId);
+    insertTagRel.run(moscowArt2Id, tagLuxuryId);
+    insertTagRel.run(moscowArt2Id, tagGiftId);
+
+    // Article 3 (Trade-in): trade-in, швейцарские часы
+    insertTagRel.run(moscowArt3Id, tagTradeInId);
+    insertTagRel.run(moscowArt3Id, tagSwissId);
+
+    // Article 4 (Ремонт): ремонт, швейцарские часы, rolex
+    insertTagRel.run(moscowArt4Id, tagRemontId);
+    insertTagRel.run(moscowArt4Id, tagSwissId);
+    insertTagRel.run(moscowArt4Id, tagRolexId);
+
+    // Article 5 (Инвестиции): инвестиции, luxury, швейцарские часы
+    insertTagRel.run(moscowArt5Id, tagInvestId);
+    insertTagRel.run(moscowArt5Id, tagLuxuryId);
+    insertTagRel.run(moscowArt5Id, tagSwissId);
+
+    // ============================================
+    // Session-6: Related articles (Moscow)
+    // ============================================
+    const insertRelated = db.prepare('INSERT INTO city_article_related (article_id, related_article_id, position) VALUES (?, ?, ?)');
+
+    // Article 1 → Article 2, Article 5
+    insertRelated.run(moscowArt1Id, moscowArt2Id, 0);
+    insertRelated.run(moscowArt1Id, moscowArt5Id, 1);
+    // Article 2 → Article 1, Article 3
+    insertRelated.run(moscowArt2Id, moscowArt1Id, 0);
+    insertRelated.run(moscowArt2Id, moscowArt3Id, 1);
+    // Article 3 → Article 1, Article 4
+    insertRelated.run(moscowArt3Id, moscowArt1Id, 0);
+    insertRelated.run(moscowArt3Id, moscowArt4Id, 1);
+    // Article 4 → Article 3, Article 1
+    insertRelated.run(moscowArt4Id, moscowArt3Id, 0);
+    insertRelated.run(moscowArt4Id, moscowArt1Id, 1);
+    // Article 5 → Article 2, Article 1
+    insertRelated.run(moscowArt5Id, moscowArt2Id, 0);
+    insertRelated.run(moscowArt5Id, moscowArt1Id, 1);
+
+    // ============================================
+    // Session-6: Media (Moscow articles — images + YouTube)
+    // ============================================
+    const insertMedia = db.prepare('INSERT INTO city_article_media (article_id, media_type, url, alt_text, caption, position) VALUES (?, ?, ?, ?, ?, ?)');
+
+    // Article 1 — 2 images + 1 video
+    insertMedia.run(moscowArt1Id, 'image', 'https://images.unsplash.com/photo-1587836374828-4dbafa94cf0e?w=800', 'Бутик швейцарских часов в Москве', 'Бутик на Столешниковом переулке', 0);
+    insertMedia.run(moscowArt1Id, 'image', 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=800', 'Витрина с часами Rolex', 'Витрина ГУМ', 1);
+    insertMedia.run(moscowArt1Id, 'video', 'dQw4w9WgXcQ', 'Обзор часовых бутиков Москвы', 'Видео-гид по часовым бутикам', 2);
+
+    // Article 2 — 2 images
+    insertMedia.run(moscowArt2Id, 'image', 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800', 'Rolex Datejust на руке бизнесмена', 'Rolex Datejust 41 — выбор для переговоров', 0);
+    insertMedia.run(moscowArt2Id, 'image', 'https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=800', 'Patek Philippe Calatrava', 'Patek Philippe Calatrava 5227G', 1);
+
+    // Article 3 — 1 image + 1 video
+    insertMedia.run(moscowArt3Id, 'image', 'https://images.unsplash.com/photo-1509048191080-d2984bad6ae5?w=800', 'Оценка часов для trade-in', 'Эксперт оценивает часы', 0);
+    insertMedia.run(moscowArt3Id, 'video', 'ScMzIvxBSi4', 'Как работает trade-in часов', 'Процесс trade-in в Moditimewatch', 1);
+
+    // Article 4 — 2 images
+    insertMedia.run(moscowArt4Id, 'image', 'https://images.unsplash.com/photo-1585123334904-845d60e97b29?w=800', 'Мастер ремонтирует механические часы', 'Сервисный центр Moditimewatch', 0);
+    insertMedia.run(moscowArt4Id, 'image', 'https://images.unsplash.com/photo-1495856458515-0637185db551?w=800', 'Инструменты часового мастера', 'Профессиональные инструменты', 1);
+
+    // Article 5 — 1 image + 1 video
+    insertMedia.run(moscowArt5Id, 'image', 'https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?w=800', 'Коллекция инвестиционных часов', 'Rolex Daytona и Patek Philippe Nautilus', 0);
+    insertMedia.run(moscowArt5Id, 'video', '2SUwOgmvzK4', 'Инвестиции в часы 2025', 'Обзор инвестиционных моделей', 1);
+
+    // ============================================
+    // Session-6: Product links (Moscow articles → products)
+    // ============================================
+    const insertArtProduct = db.prepare('INSERT INTO city_article_products (article_id, product_id, position) VALUES (?, ?, ?)');
+    // Article 1 → Rolex Submariner (1), Patek Nautilus (2), Omega Speedmaster (3)
+    insertArtProduct.run(moscowArt1Id, 1, 0);
+    insertArtProduct.run(moscowArt1Id, 2, 1);
+    insertArtProduct.run(moscowArt1Id, 3, 2);
+    // Article 2 → Rolex Submariner (1), Patek Nautilus (2)
+    insertArtProduct.run(moscowArt2Id, 1, 0);
+    insertArtProduct.run(moscowArt2Id, 2, 1);
+    // Article 5 → Patek Nautilus (2), Omega Speedmaster (3)
+    insertArtProduct.run(moscowArt5Id, 2, 0);
+    insertArtProduct.run(moscowArt5Id, 3, 1);
     
     // Collections (6 для главной страницы)
     const insertCollection = db.prepare('INSERT INTO collections (slug, category, title, description, image_url, link_text, link_href, is_active, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
@@ -432,7 +561,7 @@ export function seedDatabase() {
       'Заказ #{{order_number}} доставлен. Спасибо за покупку!'
     );
 
-    console.log('✅ Database seeded successfully (с Hero, Experience, Navigation, Footer, Filters, Config, Email Templates)');
+    console.log('✅ Database seeded successfully (с Hero, Experience, Navigation, Footer, Filters, Config, Email Templates, pSEO Schema)');
   });
   seed();
 }
@@ -756,14 +885,57 @@ const createQueries = () => ({
   getMaxTestimonialOrder: db.prepare('SELECT COALESCE(MAX(display_order), 0) + 1 as next_order FROM testimonials'),
   createTestimonial: db.prepare(`INSERT INTO testimonials (name, position, text, avatar_url, choice, is_active, display_order) VALUES (@name, @position, @text, @avatar_url, @choice, @is_active, @display_order)`),
 
-  // City Articles (Session-2, Task 3)
-  listCityArticles: db.prepare(`SELECT ca.*, c.name as city_name FROM city_articles ca LEFT JOIN cities c ON c.id = ca.city_id ORDER BY ca.published_at DESC, ca.title`),
-  listCityArticlesByCity: db.prepare(`SELECT ca.*, c.name as city_name FROM city_articles ca LEFT JOIN cities c ON c.id = ca.city_id WHERE ca.city_id = ? ORDER BY ca.published_at DESC, ca.title`),
-  getCityArticleById: db.prepare(`SELECT ca.*, c.name as city_name FROM city_articles ca LEFT JOIN cities c ON c.id = ca.city_id WHERE ca.id = ?`),
+  // City Articles (Session-2, Task 3 + Session-6 updates)
+  listCityArticles: db.prepare(`SELECT ca.*, c.name as city_name, cac.name as category_name FROM city_articles ca LEFT JOIN cities c ON c.id = ca.city_id LEFT JOIN city_article_categories cac ON cac.id = ca.category_id ORDER BY ca.published_at DESC, ca.title`),
+  listCityArticlesByCity: db.prepare(`SELECT ca.*, c.name as city_name, cac.name as category_name FROM city_articles ca LEFT JOIN cities c ON c.id = ca.city_id LEFT JOIN city_article_categories cac ON cac.id = ca.category_id WHERE ca.city_id = ? ORDER BY ca.published_at DESC, ca.title`),
+  getCityArticleById: db.prepare(`SELECT ca.*, c.name as city_name, cac.name as category_name FROM city_articles ca LEFT JOIN cities c ON c.id = ca.city_id LEFT JOIN city_article_categories cac ON cac.id = ca.category_id WHERE ca.id = ?`),
   getAllCitiesForSelect: db.prepare('SELECT id, name FROM cities ORDER BY name'),
-  updateCityArticle: db.prepare(`UPDATE city_articles SET city_id = @city_id, slug = @slug, title = @title, excerpt = @excerpt, content = @content, image_url = @image_url, template_type = @template_type, is_published = @is_published, updated_at = datetime('now') WHERE id = @id`),
-  createCityArticle: db.prepare(`INSERT INTO city_articles (city_id, slug, title, excerpt, content, image_url, template_type, is_published, published_at) VALUES (@city_id, @slug, @title, @excerpt, @content, @image_url, @template_type, @is_published, CASE WHEN @is_published = 1 THEN datetime('now') ELSE NULL END)`),
+  updateCityArticle: db.prepare(`UPDATE city_articles SET city_id = @city_id, slug = @slug, title = @title, excerpt = @excerpt, content = @content, image_url = @image_url, template_type = @template_type, meta_title = @meta_title, meta_description = @meta_description, category_id = @category_id, read_time = @read_time, is_published = @is_published, updated_at = datetime('now') WHERE id = @id`),
+  createCityArticle: db.prepare(`INSERT INTO city_articles (city_id, slug, title, excerpt, content, image_url, template_type, meta_title, meta_description, category_id, read_time, is_published, published_at) VALUES (@city_id, @slug, @title, @excerpt, @content, @image_url, @template_type, @meta_title, @meta_description, @category_id, @read_time, @is_published, CASE WHEN @is_published = 1 THEN datetime('now') ELSE NULL END)`),
   deleteCityArticle: db.prepare('DELETE FROM city_articles WHERE id = ?'),
+
+  // ============================================
+  // SESSION-6: pSEO SCHEMA
+  // ============================================
+
+  // City Article Categories
+  listCityArticleCategories: db.prepare('SELECT * FROM city_article_categories ORDER BY position, name'),
+  getCityArticleCategory: db.prepare('SELECT * FROM city_article_categories WHERE id = ?'),
+  createCityArticleCategory: db.prepare('INSERT INTO city_article_categories (name, slug, description, position, is_active) VALUES (@name, @slug, @description, @position, @is_active)'),
+  updateCityArticleCategory: db.prepare(`UPDATE city_article_categories SET name = @name, slug = @slug, description = @description, position = @position, is_active = @is_active, updated_at = datetime('now') WHERE id = @id`),
+  deleteCityArticleCategory: db.prepare('DELETE FROM city_article_categories WHERE id = ?'),
+  getAllCityArticleCategoriesForSelect: db.prepare('SELECT id, name FROM city_article_categories WHERE is_active = 1 ORDER BY position, name'),
+
+  // City Article Tags
+  listCityArticleTags: db.prepare('SELECT * FROM city_article_tags ORDER BY name'),
+  getCityArticleTag: db.prepare('SELECT * FROM city_article_tags WHERE id = ?'),
+  createCityArticleTag: db.prepare('INSERT INTO city_article_tags (name, slug) VALUES (@name, @slug)'),
+  deleteCityArticleTag: db.prepare('DELETE FROM city_article_tags WHERE id = ?'),
+
+  // City Article Tag Relations
+  addTagToCityArticle: db.prepare('INSERT OR IGNORE INTO city_article_tag_relations (article_id, tag_id) VALUES (?, ?)'),
+  removeTagFromCityArticle: db.prepare('DELETE FROM city_article_tag_relations WHERE article_id = ? AND tag_id = ?'),
+  getCityArticleTags: db.prepare(`SELECT t.* FROM city_article_tags t JOIN city_article_tag_relations r ON r.tag_id = t.id WHERE r.article_id = ? ORDER BY t.name`),
+  getCityArticlesByTag: db.prepare(`SELECT ca.*, c.name as city_name FROM city_articles ca JOIN city_article_tag_relations r ON r.article_id = ca.id JOIN cities c ON c.id = ca.city_id WHERE r.tag_id = ? AND ca.is_published = 1 ORDER BY ca.published_at DESC`),
+
+  // City Article Related
+  addRelatedCityArticle: db.prepare('INSERT OR IGNORE INTO city_article_related (article_id, related_article_id, position) VALUES (?, ?, ?)'),
+  removeRelatedCityArticle: db.prepare('DELETE FROM city_article_related WHERE article_id = ? AND related_article_id = ?'),
+  getRelatedCityArticles: db.prepare(`SELECT ca.*, c.name as city_name FROM city_articles ca JOIN city_article_related r ON r.related_article_id = ca.id JOIN cities c ON c.id = ca.city_id WHERE r.article_id = ? ORDER BY r.position`),
+
+  // City Article Media
+  listCityArticleMedia: db.prepare('SELECT * FROM city_article_media WHERE article_id = ? ORDER BY position'),
+  addCityArticleMedia: db.prepare('INSERT INTO city_article_media (article_id, media_type, url, alt_text, caption, position) VALUES (@article_id, @media_type, @url, @alt_text, @caption, @position)'),
+  updateCityArticleMedia: db.prepare(`UPDATE city_article_media SET media_type = @media_type, url = @url, alt_text = @alt_text, caption = @caption, position = @position WHERE id = @id`),
+  deleteCityArticleMedia: db.prepare('DELETE FROM city_article_media WHERE id = ?'),
+
+  // City Article Products (existing table, new queries — Session-6 Task 6)
+  addProductToCityArticle: db.prepare('INSERT OR IGNORE INTO city_article_products (article_id, product_id, position) VALUES (?, ?, ?)'),
+  removeProductFromCityArticle: db.prepare('DELETE FROM city_article_products WHERE article_id = ? AND product_id = ?'),
+  getCityArticleProducts: db.prepare(`SELECT p.*, b.name as brand_name, (SELECT url FROM product_images WHERE product_id = p.id AND is_main = 1 LIMIT 1) as main_image FROM products p JOIN city_article_products cap ON cap.product_id = p.id JOIN brands b ON b.id = p.brand_id WHERE cap.article_id = ? ORDER BY cap.position`),
+
+  // FTS5 Search (Session-6 Task 7)
+  searchCityArticles: db.prepare(`SELECT ca.*, c.name as city_name, c.slug as city_slug FROM city_articles ca JOIN cities c ON c.id = ca.city_id WHERE ca.id IN (SELECT rowid FROM city_articles_fts WHERE city_articles_fts MATCH ?) AND ca.is_published = 1 ORDER BY ca.published_at DESC LIMIT ?`),
 
   // Homepage (Session-4, Task 3) - Admin queries
   adminGetHomeHero: db.prepare('SELECT * FROM home_hero WHERE is_active = 1 LIMIT 1'),
