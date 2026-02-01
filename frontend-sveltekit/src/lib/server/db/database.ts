@@ -435,7 +435,168 @@ export const queries = {
 
   // Static pages
   getPageBySlug: db.prepare('SELECT * FROM pages WHERE slug = ? AND is_published = 1'),
-  getSeoMetaBySlug: db.prepare('SELECT * FROM seo_meta WHERE page_type = ? AND slug = ?')
+  getSeoMetaBySlug: db.prepare('SELECT * FROM seo_meta WHERE page_type = ? AND slug = ?'),
+
+  // ============================================
+  // AUTH
+  // ============================================
+  getAdminByEmail: db.prepare('SELECT * FROM admins WHERE email = ?'),
+
+  // ============================================
+  // ADMIN DASHBOARD
+  // ============================================
+  adminCountAllProducts: db.prepare('SELECT COUNT(*) as count FROM products'),
+  adminCountAllBrands: db.prepare('SELECT COUNT(*) as count FROM brands'),
+  adminCountAllCategories: db.prepare('SELECT COUNT(*) as count FROM categories'),
+  adminCountAllOrders: db.prepare('SELECT COUNT(*) as count FROM orders'),
+  adminCountPendingOrders: db.prepare("SELECT COUNT(*) as count FROM orders WHERE status = 'pending'"),
+  adminGetRecentOrders: db.prepare('SELECT id, order_number, customer_name, total_amount, status, created_at FROM orders ORDER BY created_at DESC LIMIT 5'),
+
+  // ============================================
+  // ADMIN - BRANDS
+  // ============================================
+  adminListBrands: db.prepare('SELECT * FROM brands ORDER BY position, name'),
+  adminGetBrand: db.prepare('SELECT * FROM brands WHERE id = ?'),
+  adminCreateBrand: db.prepare(`
+    INSERT INTO brands (slug, name, description, logo_url, country, founded_year, website_url, is_active, position)
+    VALUES (@slug, @name, @description, @logo_url, @country, @founded_year, @website_url, @is_active, @position)
+  `),
+  adminUpdateBrand: db.prepare(`
+    UPDATE brands SET
+      slug = @slug, name = @name, description = @description, logo_url = @logo_url,
+      country = @country, founded_year = @founded_year, website_url = @website_url,
+      is_active = @is_active, position = @position, updated_at = datetime('now')
+    WHERE id = @id
+  `),
+  adminDeleteBrand: db.prepare('DELETE FROM brands WHERE id = ?'),
+  adminGetMaxBrandPosition: db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM brands'),
+
+  // ============================================
+  // ADMIN - CATEGORIES
+  // ============================================
+  adminListCategories: db.prepare(`
+    SELECT c.*, p.name as parent_name
+    FROM categories c
+    LEFT JOIN categories p ON c.parent_id = p.id
+    ORDER BY c.position, c.name
+  `),
+  adminGetCategory: db.prepare('SELECT * FROM categories WHERE id = ?'),
+  adminSelectCategoriesAll: db.prepare('SELECT id, name FROM categories ORDER BY name'),
+  adminCreateCategory: db.prepare(`
+    INSERT INTO categories (slug, name, description, parent_id, image_url, is_active, position)
+    VALUES (@slug, @name, @description, @parent_id, @image_url, @is_active, @position)
+  `),
+  adminUpdateCategory: db.prepare(`
+    UPDATE categories SET
+      slug = @slug, name = @name, description = @description, parent_id = @parent_id,
+      image_url = @image_url, is_active = @is_active, position = @position,
+      updated_at = datetime('now')
+    WHERE id = @id
+  `),
+  adminDeleteCategory: db.prepare('DELETE FROM categories WHERE id = ?'),
+  adminGetMaxCategoryPosition: db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM categories'),
+
+  // ============================================
+  // ADMIN - PRODUCTS
+  // ============================================
+  adminListProducts: db.prepare(`
+    SELECT p.*, b.name as brand_name, c.name as category_name
+    FROM products p
+    JOIN brands b ON p.brand_id = b.id
+    LEFT JOIN categories c ON p.category_id = c.id
+    ORDER BY p.position, p.name
+  `),
+  adminGetProduct: db.prepare('SELECT * FROM products WHERE id = ?'),
+  adminSelectActiveBrands: db.prepare('SELECT id, name FROM brands WHERE is_active = 1 ORDER BY name'),
+  adminSelectActiveCategories: db.prepare('SELECT id, name FROM categories WHERE is_active = 1 ORDER BY name'),
+  adminCreateProduct: db.prepare(`
+    INSERT INTO products (
+      slug, name, brand_id, category_id, sku, price, price_note,
+      availability_status, description, is_active, is_featured, is_new, is_limited, position
+    ) VALUES (
+      @slug, @name, @brand_id, @category_id, @sku, @price, @price_note,
+      @availability_status, @description, @is_active, @is_featured, @is_new, @is_limited, @position
+    )
+  `),
+  adminUpdateProduct: db.prepare(`
+    UPDATE products SET
+      slug = @slug, name = @name, brand_id = @brand_id, category_id = @category_id,
+      sku = @sku, price = @price, price_note = @price_note,
+      availability_status = @availability_status, description = @description,
+      is_active = @is_active, is_featured = @is_featured, is_new = @is_new,
+      is_limited = @is_limited, position = @position, updated_at = datetime('now')
+    WHERE id = @id
+  `),
+  adminDeleteProduct: db.prepare('DELETE FROM products WHERE id = ?'),
+  adminGetMaxProductPosition: db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM products'),
+
+  // ============================================
+  // ADMIN - ORDERS
+  // ============================================
+  adminListOrders: db.prepare(`
+    SELECT o.*,
+      (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as items_count
+    FROM orders o
+    ORDER BY o.created_at DESC
+  `),
+  adminListOrdersByStatus: db.prepare(`
+    SELECT o.*,
+      (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as items_count
+    FROM orders o
+    WHERE o.status = ?
+    ORDER BY o.created_at DESC
+  `),
+  adminGetOrderStatusCounts: db.prepare('SELECT status, COUNT(*) as count FROM orders GROUP BY status'),
+  adminGetOrder: db.prepare('SELECT * FROM orders WHERE id = ?'),
+  adminGetOrderItems: db.prepare('SELECT * FROM order_items WHERE order_id = ?'),
+  adminGetOrderStatusHistory: db.prepare('SELECT * FROM order_status_history WHERE order_id = ? ORDER BY changed_at DESC'),
+  adminUpdateOrderStatus: db.prepare("UPDATE orders SET status = ?, updated_at = datetime('now') WHERE id = ?"),
+  adminInsertOrderStatusHistory: db.prepare('INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, comment) VALUES (?, ?, ?, ?, ?)'),
+
+  // ============================================
+  // ADMIN - NAVIGATION
+  // ============================================
+  adminListNavItems: db.prepare('SELECT * FROM navigation_items ORDER BY menu_type, position, id'),
+  adminUpdateNavItem: db.prepare(`
+    UPDATE navigation_items SET
+      label = @label, href = @href, position = @position, is_active = @is_active
+    WHERE id = @id
+  `),
+  adminCreateNavItem: db.prepare(`
+    INSERT INTO navigation_items (label, href, parent_id, position, menu_type, is_active, is_main_domain_only)
+    VALUES (@label, @href, @parent_id, @position, @menu_type, @is_active, 1)
+  `),
+  adminDeleteNavItem: db.prepare('DELETE FROM navigation_items WHERE id = ?'),
+
+  // ============================================
+  // ADMIN - PAGES
+  // ============================================
+  adminListPages: db.prepare('SELECT * FROM pages ORDER BY id'),
+  adminGetPage: db.prepare('SELECT * FROM pages WHERE id = ?'),
+  adminUpdatePage: db.prepare(`
+    UPDATE pages SET
+      slug = @slug, title = @title, content = @content, template = @template,
+      meta_json = @meta_json, is_published = @is_published, updated_at = datetime('now')
+    WHERE id = @id
+  `),
+
+  // ============================================
+  // ADMIN - SYSTEM (ADMINS)
+  // ============================================
+  adminListAdmins: db.prepare('SELECT id, email, name, role, created_at FROM admins ORDER BY id'),
+  adminGetAdmin: db.prepare('SELECT id, email, name, role FROM admins WHERE id = ?'),
+  adminCreateAdmin: db.prepare('INSERT INTO admins (email, password, name, role) VALUES (@email, @password, @name, @role)'),
+  adminUpdateAdmin: db.prepare('UPDATE admins SET email = @email, name = @name, role = @role WHERE id = @id'),
+  adminUpdateAdminWithPassword: db.prepare('UPDATE admins SET email = @email, name = @name, role = @role, password = @password WHERE id = @id'),
+  adminDeleteAdmin: db.prepare('DELETE FROM admins WHERE id = ?'),
+
+  // ============================================
+  // ADMIN - SITE CONFIG
+  // ============================================
+  adminListConfig: db.prepare('SELECT * FROM site_config ORDER BY key'),
+  adminUpdateConfig: db.prepare("UPDATE site_config SET value = @value, updated_at = datetime('now') WHERE key = @key"),
+  adminCreateConfig: db.prepare('INSERT INTO site_config (key, value, type, description) VALUES (@key, @value, @type, @description)'),
+  adminDeleteConfig: db.prepare('DELETE FROM site_config WHERE key = ?')
 };
 
 // Utility

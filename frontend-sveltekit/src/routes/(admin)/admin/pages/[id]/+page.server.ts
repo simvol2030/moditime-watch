@@ -1,6 +1,6 @@
 import { fail, redirect, error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 
 interface PageRecord {
 	id: number;
@@ -12,21 +12,8 @@ interface PageRecord {
 	is_published: number;
 }
 
-const getPage = db.prepare('SELECT * FROM pages WHERE id = ?');
-const updatePage = db.prepare(`
-	UPDATE pages SET
-		slug = @slug,
-		title = @title,
-		content = @content,
-		template = @template,
-		meta_json = @meta_json,
-		is_published = @is_published,
-		updated_at = datetime('now')
-	WHERE id = @id
-`);
-
 export const load: PageServerLoad = async ({ params }) => {
-	const page = getPage.get(Number(params.id)) as PageRecord | undefined;
+	const page = queries.adminGetPage.get(Number(params.id)) as PageRecord | undefined;
 
 	if (!page) {
 		throw error(404, 'Page not found');
@@ -74,7 +61,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			updatePage.run({
+			queries.adminUpdatePage.run({
 				id,
 				slug,
 				title,

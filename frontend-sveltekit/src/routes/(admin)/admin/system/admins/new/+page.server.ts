@@ -1,12 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 import { hashPassword, isSuperAdmin } from '$lib/server/auth';
-
-const createAdmin = db.prepare(`
-	INSERT INTO admins (email, password, name, role)
-	VALUES (@email, @password, @name, @role)
-`);
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { admin: currentAdmin } = await parent();
@@ -43,7 +38,7 @@ export const actions: Actions = {
 
 		try {
 			const hashedPassword = await hashPassword(password);
-			createAdmin.run({
+			queries.adminCreateAdmin.run({
 				email,
 				password: hashedPassword,
 				name,

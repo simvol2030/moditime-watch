@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 
 interface Page {
 	id: number;
@@ -11,9 +11,7 @@ interface Page {
 	updated_at: string;
 }
 
-const listPages = db.prepare('SELECT * FROM pages ORDER BY id');
-
 export const load: PageServerLoad = async () => {
-	const pages = listPages.all() as Page[];
+	const pages = queries.adminListPages.all() as Page[];
 	return { pages };
 };

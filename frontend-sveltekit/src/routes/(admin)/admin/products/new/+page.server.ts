@@ -1,25 +1,11 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
-
-const createProduct = db.prepare(`
-	INSERT INTO products (
-		slug, name, brand_id, category_id, sku, price, price_note,
-		availability_status, description, is_active, is_featured, is_new, is_limited, position
-	) VALUES (
-		@slug, @name, @brand_id, @category_id, @sku, @price, @price_note,
-		@availability_status, @description, @is_active, @is_featured, @is_new, @is_limited, @position
-	)
-`);
-
-const listBrands = db.prepare('SELECT id, name FROM brands WHERE is_active = 1 ORDER BY name');
-const listCategories = db.prepare('SELECT id, name FROM categories WHERE is_active = 1 ORDER BY name');
-const getMaxPosition = db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM products');
+import { queries } from '$lib/server/db/database';
 
 export const load: PageServerLoad = async () => {
-	const brands = listBrands.all() as { id: number; name: string }[];
-	const categories = listCategories.all() as { id: number; name: string }[];
-	const result = getMaxPosition.get() as { next_position: number };
+	const brands = queries.adminSelectActiveBrands.all() as { id: number; name: string }[];
+	const categories = queries.adminSelectActiveCategories.all() as { id: number; name: string }[];
+	const result = queries.adminGetMaxProductPosition.get() as { next_position: number };
 	return { brands, categories, nextPosition: result.next_position };
 };
 
@@ -53,7 +39,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			createProduct.run({
+			queries.adminCreateProduct.run({
 				slug,
 				name,
 				brand_id: parseInt(brand_id, 10),

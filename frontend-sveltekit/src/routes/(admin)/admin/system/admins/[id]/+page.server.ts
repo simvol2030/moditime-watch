@@ -1,6 +1,6 @@
 import { fail, redirect, error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 import { hashPassword, isSuperAdmin } from '$lib/server/auth';
 
 interface Admin {
@@ -10,23 +10,6 @@ interface Admin {
 	role: string;
 }
 
-const getAdmin = db.prepare('SELECT id, email, name, role FROM admins WHERE id = ?');
-const updateAdmin = db.prepare(`
-	UPDATE admins SET
-		email = @email,
-		name = @name,
-		role = @role
-	WHERE id = @id
-`);
-const updateAdminWithPassword = db.prepare(`
-	UPDATE admins SET
-		email = @email,
-		name = @name,
-		role = @role,
-		password = @password
-	WHERE id = @id
-`);
-
 export const load: PageServerLoad = async ({ params, parent }) => {
 	const { admin: currentAdmin } = await parent();
 
@@ -34,7 +17,7 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 		throw redirect(302, '/admin/system/admins');
 	}
 
-	const admin = getAdmin.get(Number(params.id)) as Admin | undefined;
+	const admin = queries.adminGetAdmin.get(Number(params.id)) as Admin | undefined;
 
 	if (!admin) {
 		throw error(404, 'Admin not found');
@@ -70,7 +53,7 @@ export const actions: Actions = {
 		try {
 			if (password) {
 				const hashedPassword = await hashPassword(password);
-				updateAdminWithPassword.run({
+				queries.adminUpdateAdminWithPassword.run({
 					id,
 					email,
 					name,
@@ -78,7 +61,7 @@ export const actions: Actions = {
 					password: hashedPassword
 				});
 			} else {
-				updateAdmin.run({ id, email, name, role });
+				queries.adminUpdateAdmin.run({ id, email, name, role });
 			}
 		} catch (error: any) {
 			if (error.message?.includes('UNIQUE constraint')) {

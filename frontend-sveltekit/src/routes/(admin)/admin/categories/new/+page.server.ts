@@ -1,18 +1,10 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
-
-const createCategory = db.prepare(`
-	INSERT INTO categories (slug, name, description, parent_id, image_url, is_active, position)
-	VALUES (@slug, @name, @description, @parent_id, @image_url, @is_active, @position)
-`);
-
-const listCategories = db.prepare('SELECT id, name FROM categories ORDER BY name');
-const getMaxPosition = db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM categories');
+import { queries } from '$lib/server/db/database';
 
 export const load: PageServerLoad = async () => {
-	const categories = listCategories.all() as { id: number; name: string }[];
-	const result = getMaxPosition.get() as { next_position: number };
+	const categories = queries.adminSelectCategoriesAll.all() as { id: number; name: string }[];
+	const result = queries.adminGetMaxCategoryPosition.get() as { next_position: number };
 	return { categories, nextPosition: result.next_position };
 };
 
@@ -36,7 +28,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			createCategory.run({
+			queries.adminCreateCategory.run({
 				slug,
 				name,
 				description: description || null,

@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { db } from './db/database';
+import { queries } from './db/database';
 
 export interface AdminUser {
 	id: number;
@@ -16,13 +16,11 @@ interface AdminRecord {
 	role: string;
 }
 
-const getAdminByEmail = db.prepare('SELECT * FROM admins WHERE email = ?');
-
 /**
  * Verify admin credentials
  */
 export async function verifyAdmin(email: string, password: string): Promise<AdminUser | null> {
-	const admin = getAdminByEmail.get(email) as AdminRecord | undefined;
+	const admin = queries.getAdminByEmail.get(email) as AdminRecord | undefined;
 	if (!admin) return null;
 
 	// Check if password is already hashed (bcrypt hashes start with $2)

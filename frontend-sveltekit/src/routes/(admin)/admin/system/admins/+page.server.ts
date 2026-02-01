@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 import { isSuperAdmin } from '$lib/server/auth';
 
 interface Admin {
@@ -11,9 +11,6 @@ interface Admin {
 	created_at: string;
 }
 
-const listAdmins = db.prepare('SELECT id, email, name, role, created_at FROM admins ORDER BY id');
-const deleteAdmin = db.prepare('DELETE FROM admins WHERE id = ?');
-
 export const load: PageServerLoad = async ({ parent }) => {
 	const { admin: currentAdmin } = await parent();
 
@@ -22,7 +19,7 @@ export const load: PageServerLoad = async ({ parent }) => {
 		return { admins: [], canManage: false };
 	}
 
-	const admins = listAdmins.all() as Admin[];
+	const admins = queries.adminListAdmins.all() as Admin[];
 	return { admins, canManage: true };
 };
 
@@ -39,7 +36,7 @@ export const actions: Actions = {
 		// (we'd need session info to check this properly)
 
 		try {
-			deleteAdmin.run(id);
+			queries.adminDeleteAdmin.run(id);
 			return { success: true };
 		} catch {
 			return fail(500, { error: 'Failed to delete admin' });

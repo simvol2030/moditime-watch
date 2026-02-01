@@ -1,16 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
-
-const createBrand = db.prepare(`
-	INSERT INTO brands (slug, name, description, logo_url, country, founded_year, website_url, is_active, position)
-	VALUES (@slug, @name, @description, @logo_url, @country, @founded_year, @website_url, @is_active, @position)
-`);
-
-const getMaxPosition = db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM brands');
+import { queries } from '$lib/server/db/database';
 
 export const load: PageServerLoad = async () => {
-	const result = getMaxPosition.get() as { next_position: number };
+	const result = queries.adminGetMaxBrandPosition.get() as { next_position: number };
 	return { nextPosition: result.next_position };
 };
 
@@ -37,7 +30,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			createBrand.run({
+			queries.adminCreateBrand.run({
 				slug,
 				name,
 				description: description || null,

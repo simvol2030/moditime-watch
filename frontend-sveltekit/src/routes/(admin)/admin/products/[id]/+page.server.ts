@@ -1,6 +1,6 @@
 import { fail, redirect, error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 
 interface Product {
 	id: number;
@@ -20,61 +20,21 @@ interface Product {
 	position: number;
 }
 
-const getProduct = db.prepare('SELECT * FROM products WHERE id = ?');
-const listBrands = db.prepare('SELECT id, name FROM brands WHERE is_active = 1 ORDER BY name');
-const listCategories = db.prepare('SELECT id, name FROM categories WHERE is_active = 1 ORDER BY name');
-const getProductOptions = db.prepare('SELECT * FROM product_options WHERE product_id = ? ORDER BY position, option_type');
-const addProductOption = db.prepare(`
-	INSERT INTO product_options (product_id, option_type, option_label, option_value, option_value_label, price_modifier, is_default, position)
-	VALUES (@product_id, @option_type, @option_label, @option_value, @option_value_label, @price_modifier, @is_default, @position)
-`);
-const removeProductOption = db.prepare('DELETE FROM product_options WHERE id = ? AND product_id = ?');
-const getMaxOptionPosition = db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_pos FROM product_options WHERE product_id = ?');
-const updateProduct = db.prepare(`
-	UPDATE products SET
-		slug = @slug,
-		name = @name,
-		brand_id = @brand_id,
-		category_id = @category_id,
-		sku = @sku,
-		price = @price,
-		price_note = @price_note,
-		availability_status = @availability_status,
-		description = @description,
-		is_active = @is_active,
-		is_featured = @is_featured,
-		is_new = @is_new,
-		is_limited = @is_limited,
-		position = @position,
-		updated_at = datetime('now')
-	WHERE id = @id
-`);
-
 export const load: PageServerLoad = async ({ params }) => {
-	const product = getProduct.get(Number(params.id)) as Product | undefined;
+	const product = queries.adminGetProduct.get(Number(params.id)) as Product | undefined;
 
 	if (!product) {
 		throw error(404, 'Product not found');
 	}
 
-	const brands = listBrands.all() as { id: number; name: string }[];
-	const categories = listCategories.all() as { id: number; name: string }[];
-	const options = getProductOptions.all(product.id) as Array<{
-		id: number;
-		option_type: string;
-		option_label: string;
-		option_value: string;
-		option_value_label: string | null;
-		price_modifier: number;
-		is_default: number;
-		position: number;
-	}>;
+	const brands = queries.adminSelectActiveBrands.all() as { id: number; name: string }[];
+	const categories = queries.adminSelectActiveCategories.all() as { id: number; name: string }[];
 
-	return { product, brands, categories, options };
+	return { product, brands, categories };
 };
 
 export const actions: Actions = {
-	update: async ({ request, params }) => {
+	default: async ({ request, params }) => {
 		const formData = await request.formData();
 		const id = Number(params.id);
 
@@ -104,7 +64,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			updateProduct.run({
+			queries.adminUpdateProduct.run({
 				id,
 				slug,
 				name,
@@ -135,58 +95,5 @@ export const actions: Actions = {
 		}
 
 		throw redirect(302, '/admin/products');
-	},
-
-	addOption: async ({ request, params }) => {
-		const formData = await request.formData();
-		const product_id = Number(params.id);
-
-		const option_type = formData.get('option_type')?.toString() || '';
-		const option_label = formData.get('option_label')?.toString() || '';
-		const option_value = formData.get('option_value')?.toString() || '';
-		const option_value_label = formData.get('option_value_label')?.toString() || '';
-		const price_modifier = parseInt(formData.get('price_modifier')?.toString() || '0', 10);
-		const is_default = formData.get('is_default') ? 1 : 0;
-
-		if (!option_type || !option_label || !option_value) {
-			return fail(400, { error: 'Option type, label, and value are required' });
-		}
-
-		const nextPos = getMaxOptionPosition.get(product_id) as { next_pos: number };
-
-		try {
-			addProductOption.run({
-				product_id,
-				option_type,
-				option_label,
-				option_value,
-				option_value_label: option_value_label || null,
-				price_modifier,
-				is_default,
-				position: nextPos.next_pos
-			});
-		} catch (error: any) {
-			return fail(500, { error: 'Failed to add option' });
-		}
-
-		return { success: true };
-	},
-
-	removeOption: async ({ request, params }) => {
-		const formData = await request.formData();
-		const option_id = formData.get('option_id');
-		const product_id = Number(params.id);
-
-		if (!option_id) {
-			return fail(400, { error: 'Option ID is required' });
-		}
-
-		try {
-			removeProductOption.run(Number(option_id), product_id);
-		} catch (error: any) {
-			return fail(500, { error: 'Failed to remove option' });
-		}
-
-		return { success: true };
 	}
 };

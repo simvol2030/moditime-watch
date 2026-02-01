@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 
 interface NavItem {
 	id: number;
@@ -13,29 +13,8 @@ interface NavItem {
 	is_main_domain_only: number;
 }
 
-const listNavItems = db.prepare(`
-	SELECT * FROM navigation_items
-	ORDER BY menu_type, position, id
-`);
-
-const updateNavItem = db.prepare(`
-	UPDATE navigation_items SET
-		label = @label,
-		href = @href,
-		position = @position,
-		is_active = @is_active
-	WHERE id = @id
-`);
-
-const createNavItem = db.prepare(`
-	INSERT INTO navigation_items (label, href, parent_id, position, menu_type, is_active, is_main_domain_only)
-	VALUES (@label, @href, @parent_id, @position, @menu_type, @is_active, 1)
-`);
-
-const deleteNavItem = db.prepare('DELETE FROM navigation_items WHERE id = ?');
-
 export const load: PageServerLoad = async () => {
-	const items = listNavItems.all() as NavItem[];
+	const items = queries.adminListNavItems.all() as NavItem[];
 
 	// Group by menu_type and organize hierarchically
 	const grouped: Record<string, { topLevel: NavItem[]; children: Record<number, NavItem[]> }> = {};
@@ -72,7 +51,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			updateNavItem.run({ id, label, href, position, is_active });
+			queries.adminUpdateNavItem.run({ id, label, href, position, is_active });
 			return { success: true };
 		} catch {
 			return fail(500, { error: 'Failed to update navigation item' });
@@ -93,7 +72,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			createNavItem.run({
+			queries.adminCreateNavItem.run({
 				label,
 				href,
 				parent_id: parent_id ? Number(parent_id) : null,
@@ -112,7 +91,7 @@ export const actions: Actions = {
 		const id = Number(formData.get('id'));
 
 		try {
-			deleteNavItem.run(id);
+			queries.adminDeleteNavItem.run(id);
 			return { success: true };
 		} catch {
 			return fail(500, { error: 'Failed to delete navigation item' });
