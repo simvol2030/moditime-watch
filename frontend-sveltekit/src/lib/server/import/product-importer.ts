@@ -50,9 +50,11 @@ export function importProducts(rows: Record<string, string>[]): ImportResult {
 	const deleteProductImages = db.prepare('DELETE FROM product_images WHERE product_id = ?');
 	const insertImage = db.prepare('INSERT INTO product_images (product_id, url, alt, position, is_main) VALUES (?, ?, ?, ?, ?)');
 
-	// FTS
-	const deleteFTS = db.prepare('DELETE FROM products_fts WHERE rowid = ?');
-	const insertFTS = db.prepare('INSERT INTO products_fts (rowid, name, description, brand_name) VALUES (?, ?, ?, ?)');
+	// Brand name lookup (hoisted out of loop)
+	const getBrandName = db.prepare('SELECT name FROM brands WHERE id = ?');
+
+	// FTS5 rebuild after import (external content table requires 'rebuild' instead of per-row delete/insert)
+	const rebuildFTS = db.prepare("INSERT INTO products_fts(products_fts) VALUES('rebuild')");
 
 	const transaction = db.transaction(() => {
 		for (let i = 0; i < rows.length; i++) {
@@ -156,12 +158,10 @@ export function importProducts(rows: Record<string, string>[]): ImportResult {
 					}
 				}
 			}
-
-			// Update FTS5
-			const brandName = (db.prepare('SELECT name FROM brands WHERE id = ?').get(brand.id) as { name: string })?.name || '';
-			deleteFTS.run(productId);
-			insertFTS.run(productId, row.name.trim(), row.description?.trim() || '', brandName);
 		}
+
+		// Rebuild FTS5 index after all product changes (external content table)
+		rebuildFTS.run();
 	});
 
 	transaction();

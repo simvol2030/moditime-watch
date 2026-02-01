@@ -43,6 +43,9 @@ export function importCities(rows: Record<string, string>[]): ImportResult {
 				continue;
 			}
 
+			const parsedDeliveryDays = row.delivery_days?.trim() !== '' && row.delivery_days !== undefined
+				? parseInt(row.delivery_days) : NaN;
+
 			const data = {
 				slug: row.slug.trim(),
 				name: row.name.trim(),
@@ -53,7 +56,7 @@ export function importCities(rows: Record<string, string>[]): ImportResult {
 				region: row.region?.trim() || null,
 				population: parseInt(row.population || '') || null,
 				timezone: row.timezone?.trim() || null,
-				delivery_days: parseInt(row.delivery_days || '3') || 3,
+				delivery_days: !isNaN(parsedDeliveryDays) ? parsedDeliveryDays : 3,
 				delivery_price: row.delivery_price?.trim() || 'Бесплатно',
 				hero_image_url: row.hero_image_url?.trim() || null,
 				hero_title: row.hero_title?.trim() || null,
