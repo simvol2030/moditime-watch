@@ -49,6 +49,9 @@
 			/>
 		</symbol>
 	</svg>
+
+	<!-- WebSite JSON-LD with SearchAction -->
+	{@html '<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Moditimewatch","url":"https://moditime-watch.ru","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://moditime-watch.ru/catalog?q={search_term_string}"},"query-input":"required name=search_term_string"}}<\/script>'}
 </svelte:head>
 
 <HeroSection content={heroContent} />

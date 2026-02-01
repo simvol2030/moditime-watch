@@ -22,7 +22,16 @@ export const reroute: Reroute = ({ url }) => {
 			return `/city/${citySlug}`;
 		}
 
-		// For other paths on subdomains, could also reroute if needed
-		// e.g., /article-slug → /city/{citySlug}/article-slug
+		// Reroute article paths: /article-slug → /city/{citySlug}/article-slug
+		// Only reroute paths that look like article slugs (not system paths)
+		const systemPaths = ['/admin', '/api', '/catalog', '/product', '/checkout', '/cart',
+			'/about', '/contacts', '/delivery', '/warranty', '/privacy', '/terms',
+			'/search', '/sitemap', '/city', '/quiz', '/brands', '/orders', '/auth'];
+		const isSystemPath = systemPaths.some((p) => url.pathname === p || url.pathname.startsWith(p + '/'));
+
+		if (!isSystemPath && url.pathname !== '/') {
+			// Treat as article slug: /my-article → /city/{citySlug}/my-article
+			return `/city/${citySlug}${url.pathname}`;
+		}
 	}
 };

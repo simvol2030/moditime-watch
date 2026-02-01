@@ -4,6 +4,14 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+
+	/**
+	 * Extract YouTube video ID from various URL formats
+	 */
+	function getYoutubeId(url: string): string | null {
+		const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=))([a-zA-Z0-9_-]{11})/);
+		return match ? match[1] : null;
+	}
 </script>
 
 <SeoManager seo={data.seo} />
@@ -32,8 +40,14 @@
 		<div class="container">
 			<div class="article-header__meta">
 				<a href="/city/{data.city.slug}" class="article-header__city">{data.city.name}</a>
+				{#if data.article.categoryName}
+					<span class="article-header__category">{data.article.categoryName}</span>
+				{/if}
 				{#if data.article.publishedAt}
 					<span class="article-header__date">{data.article.publishedAt}</span>
+				{/if}
+				{#if data.article.readTime}
+					<span class="article-header__read-time">{data.article.readTime} мин чтения</span>
 				{/if}
 			</div>
 			<h1 class="article-header__title">{data.article.title}</h1>
@@ -68,6 +82,69 @@
 		</div>
 	</article>
 
+	<!-- Media Gallery (images + videos from city_article_media) -->
+	{#if data.media.length > 0}
+		<section class="article-media">
+			<div class="container">
+				<div class="article-media__grid">
+					{#each data.media as item}
+						{#if item.type === 'video'}
+							{@const videoId = getYoutubeId(item.url)}
+							<div class="media-item media-item--video">
+								{#if videoId}
+									<div class="media-item__video-wrap">
+										<iframe
+											src="https://www.youtube.com/embed/{videoId}"
+											title={item.caption || 'Video'}
+											frameborder="0"
+											allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+											allowfullscreen
+										></iframe>
+									</div>
+								{:else}
+									<div class="media-item__video-wrap">
+										<iframe
+											src={item.url}
+											title={item.caption || 'Video'}
+											frameborder="0"
+											allowfullscreen
+										></iframe>
+									</div>
+								{/if}
+								{#if item.caption}
+									<p class="media-item__caption">{item.caption}</p>
+								{/if}
+							</div>
+						{:else}
+							<figure class="media-item media-item--image">
+								<img src={item.url} alt={item.caption || data.article.title} class="media-item__img" />
+								{#if item.caption}
+									<figcaption class="media-item__caption">{item.caption}</figcaption>
+								{/if}
+							</figure>
+						{/if}
+					{/each}
+				</div>
+			</div>
+		</section>
+	{/if}
+
+	<!-- Tags -->
+	{#if data.tags.length > 0}
+		<section class="article-tags">
+			<div class="container">
+				<div class="article-tags__inner">
+					<span class="article-tags__label">Теги:</span>
+					<div class="article-tags__list">
+						{#each data.tags as tag}
+							<span class="article-tags__tag">{tag.name}</span>
+						{/each}
+					</div>
+				</div>
+			</div>
+		</section>
+	{/if}
+
 	<!-- CTA: Watch Selection -->
 	<section class="article-selection-cta">
 		<div class="container">
@@ -90,7 +167,7 @@
 	<section class="article-back">
 		<div class="container">
 			<a href="/city/{data.city.slug}" class="article-back__link">
-				<span class="article-back__arrow">←</span>
+				<span class="article-back__arrow">&larr;</span>
 				Все статьи о часах в {data.city.namePrepositional}
 			</a>
 		</div>
@@ -116,7 +193,7 @@
 									<span class="article-card__date">{article.date}</span>
 									<h3 class="article-card__title">{article.title}</h3>
 									<p class="article-card__excerpt">{article.excerpt}</p>
-									<span class="article-card__more">Читать далее</span>
+									<span class="article-card__more">Читать далее &rarr;</span>
 								</div>
 							</a>
 						</article>
@@ -183,6 +260,7 @@
 		justify-content: center;
 		gap: var(--space-md);
 		margin-bottom: var(--space-lg);
+		flex-wrap: wrap;
 	}
 
 	.article-header__city {
@@ -199,10 +277,25 @@
 	}
 
 	.article-header__city:hover {
-		background: var(--color-primary-dark);
+		background: var(--color-primary-dark, #1a4a8a);
+	}
+
+	.article-header__category {
+		display: inline-block;
+		padding: var(--space-2xs) var(--space-sm);
+		background: var(--color-surface);
+		color: var(--color-text-soft);
+		border-radius: var(--radius-sm);
+		font-size: var(--font-size-caption);
+		border: 1px solid var(--color-border);
 	}
 
 	.article-header__date {
+		color: var(--color-text-muted);
+		font-size: var(--font-size-body-sm);
+	}
+
+	.article-header__read-time {
 		color: var(--color-text-muted);
 		font-size: var(--font-size-body-sm);
 	}
@@ -285,6 +378,90 @@
 		max-width: 100%;
 		border-radius: var(--radius-md);
 		margin: var(--space-lg) 0;
+	}
+
+	/* Media Gallery */
+	.article-media {
+		padding: var(--space-xl) 0 var(--space-2xl);
+	}
+
+	.article-media__grid {
+		max-width: 750px;
+		margin: 0 auto;
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xl);
+	}
+
+	.media-item--image .media-item__img {
+		width: 100%;
+		border-radius: var(--radius-lg);
+	}
+
+	.media-item__video-wrap {
+		position: relative;
+		padding-bottom: 56.25%;
+		height: 0;
+		overflow: hidden;
+		border-radius: var(--radius-lg);
+	}
+
+	.media-item__video-wrap iframe {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		border: 0;
+	}
+
+	.media-item__caption {
+		margin-top: var(--space-sm);
+		font-size: var(--font-size-body-sm);
+		color: var(--color-text-muted);
+		text-align: center;
+	}
+
+	/* Tags */
+	.article-tags {
+		padding: var(--space-lg) 0;
+		border-top: 1px solid var(--color-border);
+	}
+
+	.article-tags__inner {
+		max-width: 750px;
+		margin: 0 auto;
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		flex-wrap: wrap;
+	}
+
+	.article-tags__label {
+		font-size: var(--font-size-body-sm);
+		color: var(--color-text-muted);
+		font-weight: 500;
+	}
+
+	.article-tags__list {
+		display: flex;
+		gap: var(--space-xs);
+		flex-wrap: wrap;
+	}
+
+	.article-tags__tag {
+		display: inline-block;
+		padding: var(--space-2xs) var(--space-sm);
+		background: var(--color-surface);
+		color: var(--color-text-soft);
+		border-radius: var(--radius-full, 100px);
+		font-size: var(--font-size-caption);
+		border: 1px solid var(--color-border);
+		transition: background-color var(--transition-fast);
+	}
+
+	.article-tags__tag:hover {
+		background: var(--color-border);
 	}
 
 	/* Article Widget (after image) */
