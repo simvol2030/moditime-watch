@@ -1,18 +1,9 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
-
-const getTestimonialById = db.prepare('SELECT * FROM testimonials WHERE id = ?');
-
-const updateTestimonial = db.prepare(`
-	UPDATE testimonials SET
-		name = @name, position = @position, avatar_url = @avatar_url,
-		text = @text, choice = @choice, is_active = @is_active, display_order = @display_order
-	WHERE id = @id
-`);
+import { queries } from '$lib/server/db/database';
 
 export const load: PageServerLoad = async ({ params }) => {
-	const testimonial = getTestimonialById.get(Number(params.id)) as Record<string, any> | undefined;
+	const testimonial = queries.getTestimonialById.get(Number(params.id)) as Record<string, any> | undefined;
 	if (!testimonial) throw error(404, 'Testimonial not found');
 
 	return { testimonial };
@@ -37,7 +28,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			updateTestimonial.run({
+			queries.updateTestimonial.run({
 				id: Number(params.id),
 				name,
 				position: position || null,

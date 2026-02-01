@@ -1,33 +1,12 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
-
-const getCityById = db.prepare('SELECT * FROM cities WHERE id = ?');
-
-const updateCity = db.prepare(`
-	UPDATE cities SET
-		slug = @slug, name = @name, name_genitive = @name_genitive,
-		name_prepositional = @name_prepositional, name_dative = @name_dative,
-		name_accusative = @name_accusative, region = @region, population = @population,
-		timezone = @timezone, delivery_days = @delivery_days, delivery_price = @delivery_price,
-		hero_image_url = @hero_image_url, hero_title = @hero_title, hero_subtitle = @hero_subtitle,
-		meta_description = @meta_description, is_active = @is_active, priority = @priority,
-		updated_at = datetime('now')
-	WHERE id = @id
-`);
-
-const getCityArticles = db.prepare(`
-	SELECT id, slug, title, is_published, published_at
-	FROM city_articles
-	WHERE city_id = ?
-	ORDER BY published_at DESC
-`);
+import { queries } from '$lib/server/db/database';
 
 export const load: PageServerLoad = async ({ params }) => {
-	const city = getCityById.get(Number(params.id)) as Record<string, any> | undefined;
+	const city = queries.adminGetCity.get(Number(params.id)) as Record<string, any> | undefined;
 	if (!city) throw error(404, 'City not found');
 
-	const articles = getCityArticles.all(city.id) as Array<{
+	const articles = queries.adminGetCityArticles.all(city.id) as Array<{
 		id: number;
 		slug: string;
 		title: string;
@@ -71,7 +50,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			updateCity.run({
+			queries.adminUpdateCity.run({
 				id: Number(params.id),
 				slug,
 				name,

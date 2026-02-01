@@ -1,19 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
-
-const getAllCategories = db.prepare('SELECT id, name FROM article_categories ORDER BY position');
-
-const createArticle = db.prepare(`
-	INSERT INTO articles (slug, title, subtitle, excerpt, content, image_url, category_id,
-		author_name, author_role, author_avatar_url, read_time, is_published, is_featured, published_at)
-	VALUES (@slug, @title, @subtitle, @excerpt, @content, @image_url, @category_id,
-		@author_name, @author_role, @author_avatar_url, @read_time, @is_published, @is_featured,
-		CASE WHEN @is_published = 1 THEN datetime('now') ELSE NULL END)
-`);
+import { queries } from '$lib/server/db/database';
 
 export const load: PageServerLoad = async () => {
-	const categories = getAllCategories.all() as Array<{ id: number; name: string }>;
+	const categories = queries.getAllArticleCategories.all() as Array<{ id: number; name: string }>;
 	return { categories };
 };
 
@@ -26,39 +16,44 @@ export const actions: Actions = {
 		const subtitle = formData.get('subtitle')?.toString() || '';
 		const excerpt = formData.get('excerpt')?.toString() || '';
 		const content = formData.get('content')?.toString() || '';
-		const image_url = formData.get('image_url')?.toString() || '';
-		const category_id = parseInt(formData.get('category_id')?.toString() || '0', 10) || null;
+		const category_id = formData.get('category_id')?.toString() ? Number(formData.get('category_id')) : null;
+		const cover_image_url = formData.get('cover_image_url')?.toString() || '';
 		const author_name = formData.get('author_name')?.toString() || '';
 		const author_role = formData.get('author_role')?.toString() || '';
 		const author_avatar_url = formData.get('author_avatar_url')?.toString() || '';
-		const read_time = parseInt(formData.get('read_time')?.toString() || '0', 10) || null;
+		const read_time = formData.get('read_time')?.toString() ? Number(formData.get('read_time')) : null;
 		const is_published = formData.get('is_published') ? 1 : 0;
 		const is_featured = formData.get('is_featured') ? 1 : 0;
+		const meta_title = formData.get('meta_title')?.toString() || '';
+		const meta_description = formData.get('meta_description')?.toString() || '';
 
 		const data = {
-			slug, title, subtitle, excerpt, content, image_url, category_id,
-			author_name, author_role, author_avatar_url, read_time, is_published, is_featured
+			slug, title, subtitle, excerpt, content, category_id, cover_image_url,
+			author_name, author_role, author_avatar_url, read_time, is_published,
+			is_featured, meta_title, meta_description
 		};
 
-		if (!title || !slug) {
-			return fail(400, { error: 'Title and slug are required', data });
+		if (!slug || !title || !content) {
+			return fail(400, { error: 'Slug, title, and content are required', data });
 		}
 
 		try {
-			createArticle.run({
+			queries.adminCreateArticle.run({
 				slug,
 				title,
 				subtitle: subtitle || null,
 				excerpt: excerpt || null,
-				content: content || null,
-				image_url: image_url || null,
+				content,
 				category_id,
+				cover_image_url: cover_image_url || null,
 				author_name: author_name || null,
 				author_role: author_role || null,
 				author_avatar_url: author_avatar_url || null,
 				read_time,
 				is_published,
-				is_featured
+				is_featured,
+				meta_title: meta_title || null,
+				meta_description: meta_description || null
 			});
 		} catch (error: any) {
 			if (error.message?.includes('UNIQUE constraint')) {

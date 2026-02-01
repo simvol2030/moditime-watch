@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 
 interface Collection {
 	id: number;
@@ -16,16 +16,8 @@ interface Collection {
 	product_count: number;
 }
 
-const listCollections = db.prepare(`
-	SELECT c.*,
-		(SELECT COUNT(*) FROM collection_products cp WHERE cp.collection_id = c.id) as product_count
-	FROM collections c
-	ORDER BY c.position, c.title
-`);
-const deleteCollection = db.prepare('DELETE FROM collections WHERE id = ?');
-
 export const load: PageServerLoad = async () => {
-	const collections = listCollections.all() as Collection[];
+	const collections = queries.adminListCollections.all() as Collection[];
 	return { collections };
 };
 
@@ -39,7 +31,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			deleteCollection.run(Number(id));
+			queries.adminDeleteCollection.run(Number(id));
 			return { success: true };
 		} catch (error) {
 			return fail(500, { error: 'Failed to delete collection' });

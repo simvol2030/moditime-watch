@@ -1,6 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries, db } from '$lib/server/db/database';
 
 interface Collection {
 	id: number;
@@ -15,46 +15,15 @@ interface Collection {
 	position: number;
 }
 
-const getCollection = db.prepare('SELECT * FROM collections WHERE id = ?');
-const updateCollection = db.prepare(`
-	UPDATE collections SET
-		slug = @slug, category = @category, title = @title, description = @description,
-		image_url = @image_url, link_text = @link_text, link_href = @link_href,
-		is_active = @is_active, position = @position, updated_at = datetime('now')
-	WHERE id = @id
-`);
-const getCollectionProducts = db.prepare(`
-	SELECT p.id, p.name, p.slug, b.name as brand_name, cp.position
-	FROM collection_products cp
-	JOIN products p ON p.id = cp.product_id
-	JOIN brands b ON b.id = p.brand_id
-	WHERE cp.collection_id = ?
-	ORDER BY cp.position
-`);
-const getAllProducts = db.prepare(`
-	SELECT p.id, p.name, p.slug, b.name as brand_name
-	FROM products p
-	JOIN brands b ON b.id = p.brand_id
-	WHERE p.is_active = 1
-	ORDER BY b.name, p.name
-`);
-const addProductToCollection = db.prepare(`
-	INSERT OR IGNORE INTO collection_products (collection_id, product_id, position)
-	VALUES (?, ?, ?)
-`);
-const removeProductFromCollection = db.prepare(
-	'DELETE FROM collection_products WHERE collection_id = ? AND product_id = ?'
-);
-
 export const load: PageServerLoad = async ({ params }) => {
-	const collection = getCollection.get(Number(params.id)) as Collection | undefined;
+	const collection = queries.adminGetCollection.get(Number(params.id)) as Collection | undefined;
 
 	if (!collection) {
 		throw error(404, 'Collection not found');
 	}
 
-	const collectionProducts = getCollectionProducts.all(collection.id) as any[];
-	const allProducts = getAllProducts.all() as any[];
+	const collectionProducts = queries.adminGetCollectionProducts.all(collection.id) as any[];
+	const allProducts = queries.adminGetAllProductsForCollection.all() as any[];
 
 	return { collection, collectionProducts, allProducts };
 };
@@ -81,7 +50,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			updateCollection.run({
+			queries.adminUpdateCollection.run({
 				id,
 				slug,
 				category,
@@ -116,7 +85,7 @@ export const actions: Actions = {
 			const maxPos = db.prepare(
 				'SELECT COALESCE(MAX(position), 0) + 1 as next FROM collection_products WHERE collection_id = ?'
 			).get(collectionId) as { next: number };
-			addProductToCollection.run(collectionId, productId, maxPos.next);
+			queries.adminAddProductToCollection.run(collectionId, productId, maxPos.next);
 			return { success: true };
 		} catch {
 			return fail(500, { error: 'Failed to add product' });
@@ -133,7 +102,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			removeProductFromCollection.run(collectionId, productId);
+			queries.adminRemoveProductFromCollection.run(collectionId, productId);
 			return { success: true };
 		} catch {
 			return fail(500, { error: 'Failed to remove product' });

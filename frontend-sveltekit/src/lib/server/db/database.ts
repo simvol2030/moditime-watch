@@ -596,7 +596,91 @@ export const queries = {
   adminListConfig: db.prepare('SELECT * FROM site_config ORDER BY key'),
   adminUpdateConfig: db.prepare("UPDATE site_config SET value = @value, updated_at = datetime('now') WHERE key = @key"),
   adminCreateConfig: db.prepare('INSERT INTO site_config (key, value, type, description) VALUES (@key, @value, @type, @description)'),
-  adminDeleteConfig: db.prepare('DELETE FROM site_config WHERE key = ?')
+  adminDeleteConfig: db.prepare('DELETE FROM site_config WHERE key = ?'),
+
+  // ============================================
+  // SESSIONS 1-4 QUERIES
+  // ============================================
+
+  // Collections (Session-2, Task 1)
+  adminListCollections: db.prepare(`SELECT c.*, (SELECT COUNT(*) FROM collection_products WHERE collection_id = c.id) as product_count FROM collections c ORDER BY c.position, c.title`),
+  adminGetCollection: db.prepare('SELECT * FROM collections WHERE id = ?'),
+  adminCreateCollection: db.prepare(`INSERT INTO collections (slug, category, title, description, image_url, link_text, link_href, is_active, position) VALUES (@slug, @category, @title, @description, @image_url, @link_text, @link_href, @is_active, @position)`),
+  adminUpdateCollection: db.prepare(`UPDATE collections SET slug = @slug, category = @category, title = @title, description = @description, image_url = @image_url, link_text = @link_text, link_href = @link_href, is_active = @is_active, position = @position, updated_at = datetime('now') WHERE id = @id`),
+  adminDeleteCollection: db.prepare('DELETE FROM collections WHERE id = ?'),
+  adminGetMaxCollectionPosition: db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM collections'),
+  adminGetCollectionProducts: db.prepare(`SELECT p.* FROM products p JOIN collection_products cp ON cp.product_id = p.id WHERE cp.collection_id = ? ORDER BY cp.position`),
+  adminGetAllProductsForCollection: db.prepare(`SELECT id, name FROM products WHERE is_active = 1 ORDER BY name`),
+  adminAddProductToCollection: db.prepare(`INSERT INTO collection_products (collection_id, product_id, position) VALUES (@collection_id, @product_id, @position)`),
+  adminRemoveProductFromCollection: db.prepare('DELETE FROM collection_products WHERE collection_id = ? AND product_id = ?'),
+
+  // Articles/Journal (Session-2, Task 5)
+  adminListArticles: db.prepare(`SELECT a.*, ac.name as category_name FROM articles a LEFT JOIN article_categories ac ON ac.id = a.category_id ORDER BY a.published_at DESC, a.title`),
+  adminListArticlesByCategory: db.prepare(`SELECT a.*, ac.name as category_name FROM articles a LEFT JOIN article_categories ac ON ac.id = a.category_id WHERE a.category_id = ? ORDER BY a.published_at DESC, a.title`),
+  adminGetArticle: db.prepare(`SELECT a.*, ac.name as category_name FROM articles a LEFT JOIN article_categories ac ON ac.id = a.category_id WHERE a.id = ?`),
+  adminGetAllArticleCategories: db.prepare('SELECT id, name FROM article_categories ORDER BY position'),
+  adminCreateArticle: db.prepare(`INSERT INTO articles (slug, title, subtitle, excerpt, content, image_url, category_id, is_featured, is_published, published_at) VALUES (@slug, @title, @subtitle, @excerpt, @content, @image_url, @category_id, @is_featured, @is_published, CASE WHEN @is_published = 1 THEN datetime('now') ELSE NULL END)`),
+  adminUpdateArticle: db.prepare(`UPDATE articles SET slug = @slug, title = @title, subtitle = @subtitle, excerpt = @excerpt, content = @content, image_url = @image_url, category_id = @category_id, is_featured = @is_featured, is_published = @is_published, updated_at = datetime('now') WHERE id = @id`),
+  adminDeleteArticle: db.prepare('DELETE FROM articles WHERE id = ?'),
+
+  // Cities (Session-2, Task 2)
+  adminListCities: db.prepare(`SELECT c.*, (SELECT COUNT(*) FROM city_articles WHERE city_id = c.id) as article_count FROM cities c ORDER BY c.priority DESC, c.name`),
+  adminSearchCities: db.prepare(`SELECT c.*, (SELECT COUNT(*) FROM city_articles WHERE city_id = c.id) as article_count FROM cities c WHERE c.name LIKE ? ORDER BY c.priority DESC, c.name`),
+  adminGetCity: db.prepare('SELECT * FROM cities WHERE id = ?'),
+  adminCreateCity: db.prepare(`INSERT INTO cities (slug, name, name_genitive, name_prepositional, region_id, delivery_info, delivery_days, priority, is_active, hero_title, hero_subtitle, hero_image_url) VALUES (@slug, @name, @name_genitive, @name_prepositional, @region_id, @delivery_info, @delivery_days, @priority, @is_active, @hero_title, @hero_subtitle, @hero_image_url)`),
+  adminUpdateCity: db.prepare(`UPDATE cities SET slug = @slug, name = @name, name_genitive = @name_genitive, name_prepositional = @name_prepositional, region_id = @region_id, delivery_info = @delivery_info, delivery_days = @delivery_days, priority = @priority, is_active = @is_active, hero_title = @hero_title, hero_subtitle = @hero_subtitle, hero_image_url = @hero_image_url, updated_at = datetime('now') WHERE id = @id`),
+  adminDeleteCity: db.prepare('DELETE FROM cities WHERE id = ?'),
+  adminGetMaxCityPriority: db.prepare('SELECT COALESCE(MAX(priority), 0) + 1 as next_priority FROM cities'),
+  adminGetCityArticles: db.prepare(`SELECT * FROM city_articles WHERE city_id = ? ORDER BY published_at DESC, title`),
+
+  // Testimonials (Session-2, Task 4)
+  listTestimonials: db.prepare('SELECT * FROM testimonials ORDER BY display_order, name'),
+  getTestimonialById: db.prepare('SELECT * FROM testimonials WHERE id = ?'),
+  updateTestimonial: db.prepare(`UPDATE testimonials SET name = @name, position = @position, text = @text, avatar_url = @avatar_url, choice = @choice, is_active = @is_active, display_order = @display_order WHERE id = @id`),
+  deleteTestimonial: db.prepare('DELETE FROM testimonials WHERE id = ?'),
+  getMaxTestimonialOrder: db.prepare('SELECT COALESCE(MAX(display_order), 0) + 1 as next_order FROM testimonials'),
+  createTestimonial: db.prepare(`INSERT INTO testimonials (name, position, text, avatar_url, choice, is_active, display_order) VALUES (@name, @position, @text, @avatar_url, @choice, @is_active, @display_order)`),
+
+  // City Articles (Session-2, Task 3)
+  listCityArticles: db.prepare(`SELECT ca.*, c.name as city_name FROM city_articles ca LEFT JOIN cities c ON c.id = ca.city_id ORDER BY ca.published_at DESC, ca.title`),
+  listCityArticlesByCity: db.prepare(`SELECT ca.*, c.name as city_name FROM city_articles ca LEFT JOIN cities c ON c.id = ca.city_id WHERE ca.city_id = ? ORDER BY ca.published_at DESC, ca.title`),
+  getCityArticleById: db.prepare(`SELECT ca.*, c.name as city_name FROM city_articles ca LEFT JOIN cities c ON c.id = ca.city_id WHERE ca.id = ?`),
+  getAllCitiesForSelect: db.prepare('SELECT id, name FROM cities ORDER BY name'),
+  updateCityArticle: db.prepare(`UPDATE city_articles SET city_id = @city_id, slug = @slug, title = @title, excerpt = @excerpt, content = @content, image_url = @image_url, template_type = @template_type, is_published = @is_published, updated_at = datetime('now') WHERE id = @id`),
+  createCityArticle: db.prepare(`INSERT INTO city_articles (city_id, slug, title, excerpt, content, image_url, template_type, is_published, published_at) VALUES (@city_id, @slug, @title, @excerpt, @content, @image_url, @template_type, @is_published, CASE WHEN @is_published = 1 THEN datetime('now') ELSE NULL END)`),
+  deleteCityArticle: db.prepare('DELETE FROM city_articles WHERE id = ?'),
+
+  // Homepage (Session-4, Task 3)
+  getActiveHomeHero: db.prepare('SELECT * FROM home_hero WHERE is_active = 1 LIMIT 1'),
+  getHomeServicesAdmin: db.prepare('SELECT * FROM home_services ORDER BY position'),
+  getHomeStatsAdmin: db.prepare('SELECT * FROM home_service_stats ORDER BY position'),
+  getActiveTelegramWidget: db.prepare("SELECT * FROM widgets WHERE type = 'telegram_cta' AND is_active = 1 LIMIT 1"),
+  updateHomeHero: db.prepare(`UPDATE home_hero SET eyebrow = @eyebrow, title = @title, description = @description, image_url = @image_url, cta_text = @cta_text, cta_link = @cta_link, is_active = @is_active, updated_at = datetime('now') WHERE id = @id`),
+  updateHomeService: db.prepare(`UPDATE home_services SET icon_svg = @icon_svg, title = @title, description = @description, link_text = @link_text, link_href = @link_href, position = @position, is_active = @is_active, updated_at = datetime('now') WHERE id = @id`),
+  createHomeService: db.prepare(`INSERT INTO home_services (icon_svg, title, description, link_text, link_href, position, is_active) VALUES (@icon_svg, @title, @description, @link_text, @link_href, @position, @is_active)`),
+  deleteHomeService: db.prepare('DELETE FROM home_services WHERE id = ?'),
+  updateHomeStat: db.prepare('UPDATE home_service_stats SET label = @label, value = @value, position = @position WHERE id = @id'),
+  createHomeStat: db.prepare('INSERT INTO home_service_stats (label, value, position) VALUES (@label, @value, @position)'),
+  deleteHomeStat: db.prepare('DELETE FROM home_service_stats WHERE id = ?'),
+  updateTelegramWidgetData: db.prepare('UPDATE widgets SET data_json = @data_json, is_active = @is_active WHERE id = @id'),
+
+  // Footer (Session-4, Task 1)
+  getFooterSections: db.prepare('SELECT * FROM footer_sections ORDER BY position'),
+  getFooterLinks: db.prepare('SELECT * FROM footer_links WHERE section_id = ? ORDER BY position'),
+  createFooterSection: db.prepare(`INSERT INTO footer_sections (title, position, column_number, is_active) VALUES (@title, @position, @column_number, @is_active)`),
+  updateFooterSection: db.prepare(`UPDATE footer_sections SET title = @title, position = @position, column_number = @column_number, is_active = @is_active WHERE id = @id`),
+  deleteFooterSection: db.prepare('DELETE FROM footer_sections WHERE id = ?'),
+  deleteFooterSectionLinks: db.prepare('DELETE FROM footer_links WHERE section_id = ?'),
+  createFooterLink: db.prepare(`INSERT INTO footer_links (section_id, label, href, position, is_main_domain_only) VALUES (@section_id, @label, @href, @position, @is_main_domain_only)`),
+  updateFooterLink: db.prepare(`UPDATE footer_links SET label = @label, href = @href, position = @position, is_main_domain_only = @is_main_domain_only WHERE id = @id`),
+  deleteFooterLink: db.prepare('DELETE FROM footer_links WHERE id = ?'),
+
+  // Site Config (Session-4, Task 2)
+  getAllSiteConfig: db.prepare('SELECT key, value FROM site_config'),
+
+  // City Layout (Session-4, Task 4)
+  getCityNavItems: db.prepare(`SELECT * FROM navigation_items WHERE menu_type = 'city_header' AND is_active = 1 AND parent_id IS NULL ORDER BY position`),
+  getFooterLegalLinks: db.prepare(`SELECT fl.* FROM footer_links fl JOIN footer_sections fs ON fs.id = fl.section_id WHERE fs.title = 'Правовая информация' ORDER BY fl.position`)
 };
 
 // Utility

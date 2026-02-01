@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 
 interface City {
 	id: number;
@@ -14,32 +14,15 @@ interface City {
 	article_count: number;
 }
 
-const listCities = db.prepare(`
-	SELECT c.*,
-		(SELECT COUNT(*) FROM city_articles ca WHERE ca.city_id = c.id) as article_count
-	FROM cities c
-	ORDER BY c.priority DESC, c.name
-`);
-
-const searchCities = db.prepare(`
-	SELECT c.*,
-		(SELECT COUNT(*) FROM city_articles ca WHERE ca.city_id = c.id) as article_count
-	FROM cities c
-	WHERE c.name LIKE ? OR c.region LIKE ?
-	ORDER BY c.priority DESC, c.name
-`);
-
-const deleteCity = db.prepare('DELETE FROM cities WHERE id = ?');
-
 export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search')?.trim() || '';
 
 	let cities: City[];
 	if (search) {
 		const pattern = `%${search}%`;
-		cities = searchCities.all(pattern, pattern) as City[];
+		cities = queries.adminSearchCities.all(pattern, pattern) as City[];
 	} else {
-		cities = listCities.all() as City[];
+		cities = queries.adminListCities.all() as City[];
 	}
 
 	return { cities, search };
@@ -55,7 +38,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			deleteCity.run(Number(id));
+			queries.adminDeleteCity.run(Number(id));
 			return { success: true };
 		} catch (error) {
 			return fail(500, { error: 'Failed to delete city' });

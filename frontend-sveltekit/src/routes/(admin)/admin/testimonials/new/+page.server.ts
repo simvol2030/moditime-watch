@@ -1,16 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
-
-const getMaxOrder = db.prepare('SELECT COALESCE(MAX(display_order), 0) + 1 as next_order FROM testimonials');
-
-const createTestimonial = db.prepare(`
-	INSERT INTO testimonials (name, position, avatar_url, text, choice, is_active, display_order)
-	VALUES (@name, @position, @avatar_url, @text, @choice, @is_active, @display_order)
-`);
+import { queries } from '$lib/server/db/database';
 
 export const load: PageServerLoad = async () => {
-	const result = getMaxOrder.get() as { next_order: number };
+	const result = queries.getMaxTestimonialOrder.get() as { next_order: number };
 	return { nextOrder: result.next_order };
 };
 
@@ -33,7 +26,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			createTestimonial.run({
+			queries.createTestimonial.run({
 				name,
 				position: position || null,
 				avatar_url: avatar_url || null,

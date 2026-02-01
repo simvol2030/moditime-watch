@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 
 interface Testimonial {
 	id: number;
@@ -13,11 +13,8 @@ interface Testimonial {
 	display_order: number;
 }
 
-const listTestimonials = db.prepare('SELECT * FROM testimonials ORDER BY display_order, name');
-const deleteTestimonial = db.prepare('DELETE FROM testimonials WHERE id = ?');
-
 export const load: PageServerLoad = async () => {
-	const testimonials = listTestimonials.all() as Testimonial[];
+	const testimonials = queries.listTestimonials.all() as Testimonial[];
 	return { testimonials };
 };
 
@@ -31,7 +28,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			deleteTestimonial.run(Number(id));
+			queries.deleteTestimonial.run(Number(id));
 			return { success: true };
 		} catch (error) {
 			return fail(500, { error: 'Failed to delete testimonial' });

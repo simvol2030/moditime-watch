@@ -1,17 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
-
-const getMaxPosition = db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM collections');
-const createCollection = db.prepare(`
-	INSERT INTO collections (slug, category, title, description, image_url, link_text, link_href, is_active, position)
-	VALUES (@slug, @category, @title, @description, @image_url, @link_text, @link_href, @is_active, @position)
-`);
-
-export const load: PageServerLoad = async () => {
-	const result = getMaxPosition.get() as { next_position: number };
-	return { nextPosition: result.next_position };
-};
+import { queries } from '$lib/server/db/database';
 
 export const actions: Actions = {
 	default: async ({ request }) => {
@@ -34,7 +23,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			createCollection.run({
+			queries.adminCreateCollection.run({
 				slug,
 				category,
 				title,

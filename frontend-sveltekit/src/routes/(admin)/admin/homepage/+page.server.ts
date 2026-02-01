@@ -1,61 +1,12 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
-
-const getHero = db.prepare('SELECT * FROM home_hero WHERE is_active = 1 LIMIT 1');
-const getServices = db.prepare('SELECT * FROM home_services ORDER BY position');
-const getStats = db.prepare('SELECT * FROM home_service_stats ORDER BY position');
-const getTelegramWidget = db.prepare("SELECT * FROM widgets WHERE type = 'telegram_cta' AND is_active = 1 LIMIT 1");
-
-const updateHero = db.prepare(`
-	UPDATE home_hero SET
-		tagline = @tagline,
-		title = @title,
-		description = @description,
-		primary_cta_text = @primary_cta_text,
-		primary_cta_href = @primary_cta_href,
-		secondary_cta_text = @secondary_cta_text,
-		secondary_cta_href = @secondary_cta_href,
-		image_url = @image_url,
-		image_alt = @image_alt,
-		image_badge_label = @image_badge_label,
-		image_badge_title = @image_badge_title,
-		stats_json = @stats_json,
-		quick_links_json = @quick_links_json,
-		brands_json = @brands_json
-	WHERE id = @id
-`);
-
-const updateService = db.prepare(`
-	UPDATE home_services SET
-		icon_svg = @icon_svg,
-		title = @title,
-		description = @description,
-		link_text = @link_text,
-		link_href = @link_href,
-		position = @position,
-		is_active = @is_active
-	WHERE id = @id
-`);
-
-const createService = db.prepare(`
-	INSERT INTO home_services (icon_svg, title, description, link_text, link_href, position, is_active)
-	VALUES (@icon_svg, @title, @description, @link_text, @link_href, @position, @is_active)
-`);
-
-const deleteService = db.prepare('DELETE FROM home_services WHERE id = ?');
-
-const updateStat = db.prepare('UPDATE home_service_stats SET label = @label, value = @value, position = @position WHERE id = @id');
-const createStat = db.prepare('INSERT INTO home_service_stats (label, value, position) VALUES (@label, @value, @position)');
-const deleteStat = db.prepare('DELETE FROM home_service_stats WHERE id = ?');
-
-const updateWidget = db.prepare('UPDATE widgets SET data_json = @data_json, is_active = @is_active WHERE id = @id');
+import { queries } from '$lib/server/db/database';
 
 export const load: PageServerLoad = async () => {
-	const hero = getHero.get() as any;
-	const services = getServices.all() as any[];
-	const stats = getStats.all() as any[];
-	const telegramWidget = getTelegramWidget.get() as any;
+	const hero = queries.adminGetHomeHero.get() as any;
+	const services = queries.adminGetHomeServices.all() as any[];
+	const stats = queries.adminGetHomeStats.all() as any[];
+	const telegramWidget = queries.adminGetTelegramWidget.get() as any;
 
 	return {
 		hero,
@@ -100,7 +51,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			updateHero.run({
+			queries.adminUpdateHomeHero.run({
 				id, tagline, title, description,
 				primary_cta_text, primary_cta_href,
 				secondary_cta_text, secondary_cta_href,
@@ -128,7 +79,7 @@ export const actions: Actions = {
 		if (!title) return fail(400, { error: 'Title is required' });
 
 		try {
-			updateService.run({ id, icon_svg, title, description, link_text, link_href, position, is_active });
+			queries.adminUpdateHomeService.run({ id, icon_svg, title, description, link_text, link_href, position, is_active });
 			return { success: true, section: 'services' };
 		} catch {
 			return fail(500, { error: 'Failed to update service' });
@@ -148,7 +99,7 @@ export const actions: Actions = {
 		if (!title) return fail(400, { error: 'Title is required' });
 
 		try {
-			createService.run({ icon_svg, title, description, link_text, link_href, position, is_active });
+			queries.adminCreateHomeService.run({ icon_svg, title, description, link_text, link_href, position, is_active });
 			return { success: true, section: 'services' };
 		} catch {
 			return fail(500, { error: 'Failed to create service' });
@@ -160,7 +111,7 @@ export const actions: Actions = {
 		const id = Number(formData.get('id'));
 
 		try {
-			deleteService.run(id);
+			queries.adminDeleteHomeService.run(id);
 			return { success: true, section: 'services' };
 		} catch {
 			return fail(500, { error: 'Failed to delete service' });
@@ -177,7 +128,7 @@ export const actions: Actions = {
 		if (!label || !value) return fail(400, { error: 'Label and value are required' });
 
 		try {
-			updateStat.run({ id, label, value, position });
+			queries.adminUpdateHomeStat.run({ id, label, value, position });
 			return { success: true, section: 'stats' };
 		} catch {
 			return fail(500, { error: 'Failed to update stat' });
@@ -193,7 +144,7 @@ export const actions: Actions = {
 		if (!label || !value) return fail(400, { error: 'Label and value are required' });
 
 		try {
-			createStat.run({ label, value, position });
+			queries.adminCreateHomeStat.run({ label, value, position });
 			return { success: true, section: 'stats' };
 		} catch {
 			return fail(500, { error: 'Failed to create stat' });
@@ -205,7 +156,7 @@ export const actions: Actions = {
 		const id = Number(formData.get('id'));
 
 		try {
-			deleteStat.run(id);
+			queries.adminDeleteHomeStat.run(id);
 			return { success: true, section: 'stats' };
 		} catch {
 			return fail(500, { error: 'Failed to delete stat' });
@@ -225,7 +176,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			updateWidget.run({ id, data_json, is_active });
+			queries.adminUpdateWidget.run({ id, data_json, is_active });
 			return { success: true, section: 'telegram' };
 		} catch {
 			return fail(500, { error: 'Failed to update telegram widget' });

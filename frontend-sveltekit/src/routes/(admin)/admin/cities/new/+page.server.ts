@@ -1,20 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
-
-const getMaxPriority = db.prepare('SELECT COALESCE(MAX(priority), 0) + 1 as next_priority FROM cities');
-
-const createCity = db.prepare(`
-	INSERT INTO cities (slug, name, name_genitive, name_prepositional, name_dative, name_accusative,
-		region, population, timezone, delivery_days, delivery_price,
-		hero_image_url, hero_title, hero_subtitle, meta_description, is_active, priority)
-	VALUES (@slug, @name, @name_genitive, @name_prepositional, @name_dative, @name_accusative,
-		@region, @population, @timezone, @delivery_days, @delivery_price,
-		@hero_image_url, @hero_title, @hero_subtitle, @meta_description, @is_active, @priority)
-`);
+import { queries } from '$lib/server/db/database';
 
 export const load: PageServerLoad = async () => {
-	const result = getMaxPriority.get() as { next_priority: number };
+	const result = queries.adminGetMaxCityPriority.get() as { next_priority: number };
 	return { nextPriority: result.next_priority };
 };
 
@@ -51,7 +40,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			createCity.run({
+			queries.adminCreateCity.run({
 				slug,
 				name,
 				name_genitive: name_genitive || null,

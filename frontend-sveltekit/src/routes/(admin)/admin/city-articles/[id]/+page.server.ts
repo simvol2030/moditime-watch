@@ -1,29 +1,12 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
-
-const getArticleById = db.prepare(`
-	SELECT ca.*, c.name as city_name
-	FROM city_articles ca
-	JOIN cities c ON c.id = ca.city_id
-	WHERE ca.id = ?
-`);
-
-const getAllCities = db.prepare('SELECT id, name FROM cities ORDER BY name');
-
-const updateArticle = db.prepare(`
-	UPDATE city_articles SET
-		city_id = @city_id, slug = @slug, title = @title, excerpt = @excerpt,
-		content = @content, image_url = @image_url, template_type = @template_type,
-		is_published = @is_published, updated_at = datetime('now')
-	WHERE id = @id
-`);
+import { queries } from '$lib/server/db/database';
 
 export const load: PageServerLoad = async ({ params }) => {
-	const article = getArticleById.get(Number(params.id)) as Record<string, any> | undefined;
+	const article = queries.getCityArticleById.get(Number(params.id)) as Record<string, any> | undefined;
 	if (!article) throw error(404, 'Article not found');
 
-	const cities = getAllCities.all() as Array<{ id: number; name: string }>;
+	const cities = queries.getAllCitiesForSelect.all() as Array<{ id: number; name: string }>;
 
 	return { article, cities };
 };
@@ -48,7 +31,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			updateArticle.run({
+			queries.updateCityArticle.run({
 				id: Number(params.id),
 				city_id,
 				slug,

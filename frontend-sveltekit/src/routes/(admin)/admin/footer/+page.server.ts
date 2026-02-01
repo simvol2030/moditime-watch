@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 
 interface FooterSection {
 	id: number;
@@ -19,34 +19,12 @@ interface FooterLink {
 	is_main_domain_only: number;
 }
 
-const listSections = db.prepare('SELECT * FROM footer_sections ORDER BY position');
-const listLinks = db.prepare('SELECT * FROM footer_links WHERE section_id = ? ORDER BY position');
-
-const updateSection = db.prepare(`
-	UPDATE footer_sections SET title = @title, position = @position, column_number = @column_number, is_active = @is_active
-	WHERE id = @id
-`);
-const createSection = db.prepare(`
-	INSERT INTO footer_sections (title, position, column_number, is_active) VALUES (@title, @position, @column_number, @is_active)
-`);
-const deleteSection = db.prepare('DELETE FROM footer_sections WHERE id = ?');
-const deleteSectionLinks = db.prepare('DELETE FROM footer_links WHERE section_id = ?');
-
-const createLink = db.prepare(`
-	INSERT INTO footer_links (section_id, label, href, position, is_main_domain_only)
-	VALUES (@section_id, @label, @href, @position, @is_main_domain_only)
-`);
-const updateLink = db.prepare(`
-	UPDATE footer_links SET label = @label, href = @href, position = @position, is_main_domain_only = @is_main_domain_only
-	WHERE id = @id
-`);
-const deleteLink = db.prepare('DELETE FROM footer_links WHERE id = ?');
 
 export const load: PageServerLoad = async () => {
-	const sections = listSections.all() as FooterSection[];
+	const sections = queries.getFooterSections.all() as FooterSection[];
 
 	const sectionsWithLinks = sections.map((section) => {
-		const links = listLinks.all(section.id) as FooterLink[];
+		const links = queries.getFooterLinks.all(section.id) as FooterLink[];
 		return { ...section, links };
 	});
 
@@ -65,7 +43,7 @@ export const actions: Actions = {
 		if (!title) return fail(400, { error: 'Title is required' });
 
 		try {
-			updateSection.run({ id, title, position, column_number, is_active });
+			queries.updateFooterSection.run({ id, title, position, column_number, is_active });
 			return { success: true };
 		} catch {
 			return fail(500, { error: 'Failed to update section' });
@@ -82,7 +60,7 @@ export const actions: Actions = {
 		if (!title) return fail(400, { error: 'Title is required' });
 
 		try {
-			createSection.run({ title, position, column_number, is_active });
+			queries.createFooterSection.run({ title, position, column_number, is_active });
 			return { success: true };
 		} catch {
 			return fail(500, { error: 'Failed to create section' });
@@ -95,8 +73,8 @@ export const actions: Actions = {
 
 		try {
 			const tx = db.transaction(() => {
-				deleteSectionLinks.run(id);
-				deleteSection.run(id);
+				queries.deleteFooterSectionLinks.run(id);
+				queries.deleteFooterSection.run(id);
 			});
 			tx();
 			return { success: true };
@@ -116,7 +94,7 @@ export const actions: Actions = {
 		if (!label || !href) return fail(400, { error: 'Label and URL are required' });
 
 		try {
-			createLink.run({ section_id, label, href, position, is_main_domain_only });
+			queries.createFooterLink.run({ section_id, label, href, position, is_main_domain_only });
 			return { success: true };
 		} catch {
 			return fail(500, { error: 'Failed to create link' });
@@ -134,7 +112,7 @@ export const actions: Actions = {
 		if (!label || !href) return fail(400, { error: 'Label and URL are required' });
 
 		try {
-			updateLink.run({ id, label, href, position, is_main_domain_only });
+			queries.updateFooterLink.run({ id, label, href, position, is_main_domain_only });
 			return { success: true };
 		} catch {
 			return fail(500, { error: 'Failed to update link' });
@@ -146,7 +124,7 @@ export const actions: Actions = {
 		const id = Number(formData.get('id'));
 
 		try {
-			deleteLink.run(id);
+			queries.deleteFooterLink.run(id);
 			return { success: true };
 		} catch {
 			return fail(500, { error: 'Failed to delete link' });

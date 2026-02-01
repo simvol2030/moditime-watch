@@ -1,16 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '$lib/server/db/database';
-
-const getAllCities = db.prepare('SELECT id, name FROM cities ORDER BY name');
-
-const createArticle = db.prepare(`
-	INSERT INTO city_articles (city_id, slug, title, excerpt, content, image_url, template_type, is_published)
-	VALUES (@city_id, @slug, @title, @excerpt, @content, @image_url, @template_type, @is_published)
-`);
+import { queries } from '$lib/server/db/database';
 
 export const load: PageServerLoad = async () => {
-	const cities = getAllCities.all() as Array<{ id: number; name: string }>;
+	const cities = queries.getAllCitiesForSelect.all() as Array<{ id: number; name: string }>;
 	return { cities };
 };
 
@@ -34,7 +27,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			createArticle.run({
+			queries.createCityArticle.run({
 				city_id,
 				slug,
 				title,

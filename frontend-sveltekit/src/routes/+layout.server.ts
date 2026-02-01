@@ -1,8 +1,7 @@
 import type { LayoutServerLoad } from './$types';
-import { queries, db } from '$lib/server/db/database';
+import { queries } from '$lib/server/db/database';
 import type { NavigationLink, FooterSection } from '$lib/types/navigation';
 
-const getAllConfig = db.prepare('SELECT key, value FROM site_config');
 
 export const load: LayoutServerLoad = async () => {
 	// ============================================
@@ -52,7 +51,7 @@ export const load: LayoutServerLoad = async () => {
 	// ============================================
 	// SITE CONFIG - из БД для Header/Footer!
 	// ============================================
-	const configRows = getAllConfig.all() as { key: string; value: string }[];
+	const configRows = queries.getAllSiteConfig.all() as { key: string; value: string }[];
 	const siteConfig: Record<string, string> = {};
 	for (const row of configRows) {
 		siteConfig[row.key] = row.value;
