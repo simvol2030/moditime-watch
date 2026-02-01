@@ -343,7 +343,7 @@ if (isMainThread) {
 }
 
 // QUERIES (создаются ПОСЛЕ инициализации таблиц, only in main thread)
-export const queries = !isMainThread ? {} as any : {
+export const queries = {
   // Products - Basic
   getProductBySlug: db.prepare('SELECT p.*, b.name as brand_name, b.slug as brand_slug FROM products p JOIN brands b ON b.id = p.brand_id WHERE p.slug = ? AND p.is_active = 1'),
   getAllActiveProducts: db.prepare('SELECT p.*, b.name as brand_name FROM products p JOIN brands b ON b.id = p.brand_id WHERE p.is_active = 1 ORDER BY p.position'),
