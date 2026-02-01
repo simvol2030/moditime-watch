@@ -49,6 +49,7 @@
 <div class="form-card">
 	<form
 		method="POST"
+		action="?/update"
 		use:enhance={() => {
 			loading = true;
 			return async ({ update }) => {
@@ -185,6 +186,64 @@
 	</form>
 </div>
 
+<!-- Product Options -->
+<div class="form-card" style="margin-top: 1.5rem">
+	<h3 class="section-title" style="margin-top: 0; padding-top: 0; border-top: none;">Product Options ({data.options.length})</h3>
+
+	{#if data.options.length > 0}
+		<table class="options-table">
+			<thead>
+				<tr>
+					<th>Type</th>
+					<th>Label</th>
+					<th>Value</th>
+					<th style="width: 90px">Price +/-</th>
+					<th style="width: 70px">Default</th>
+					<th style="width: 80px">Action</th>
+				</tr>
+			</thead>
+			<tbody>
+				{#each data.options as option}
+					<tr>
+						<td><code>{option.option_type}</code></td>
+						<td>{option.option_label}</td>
+						<td>{option.option_value}{option.option_value_label ? ` (${option.option_value_label})` : ''}</td>
+						<td>{option.price_modifier ? `${option.price_modifier > 0 ? '+' : ''}${option.price_modifier}` : '—'}</td>
+						<td>{option.is_default ? 'Yes' : 'No'}</td>
+						<td>
+							<form method="POST" action="?/removeOption" use:enhance>
+								<input type="hidden" name="option_id" value={option.id} />
+								<ActionButton type="submit" variant="danger" size="sm">Remove</ActionButton>
+							</form>
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	{:else}
+		<p class="empty-text">No options configured for this product.</p>
+	{/if}
+
+	<form method="POST" action="?/addOption" use:enhance class="add-option-form">
+		<h4 class="subsection-title">Add Option</h4>
+		<div class="option-grid">
+			<FormField label="Type" name="option_type" value="" hint="e.g. diameter, package, bracelet" required />
+			<FormField label="Label" name="option_label" value="" hint="e.g. Диаметр корпуса" required />
+		</div>
+		<div class="option-grid">
+			<FormField label="Value" name="option_value" value="" hint="e.g. 41 mm" required />
+			<FormField label="Value Label" name="option_value_label" value="" hint="Display label (optional)" />
+		</div>
+		<div class="option-grid">
+			<FormField label="Price Modifier (kopecks)" name="price_modifier" value="0" type="number" hint="e.g. 5000000 for +50K RUB" />
+			<FormCheckbox label="Default Option" name="is_default" />
+		</div>
+		<div class="option-actions">
+			<ActionButton type="submit" variant="primary" size="sm">Add Option</ActionButton>
+		</div>
+	</form>
+</div>
+
 <style>
 	.form-card {
 		background: white;
@@ -236,5 +295,67 @@
 		padding: 0.75rem 1rem;
 		border-radius: 8px;
 		margin-bottom: 1rem;
+	}
+
+	.options-table {
+		width: 100%;
+		border-collapse: collapse;
+		margin-bottom: 1rem;
+	}
+
+	.options-table th,
+	.options-table td {
+		padding: 0.625rem 0.75rem;
+		text-align: left;
+		border-bottom: 1px solid #e5e7eb;
+		font-size: 0.875rem;
+	}
+
+	.options-table th {
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: #6b7280;
+		font-weight: 600;
+	}
+
+	.options-table code {
+		background: #f3f4f6;
+		padding: 0.125rem 0.375rem;
+		border-radius: 4px;
+		font-size: 0.8125rem;
+	}
+
+	.empty-text {
+		color: #9ca3af;
+		font-size: 0.875rem;
+		text-align: center;
+		padding: 1rem 0;
+	}
+
+	.add-option-form {
+		margin-top: 1rem;
+		padding-top: 1rem;
+		border-top: 1px solid #e5e7eb;
+	}
+
+	.subsection-title {
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: #6b7280;
+		margin: 0 0 0.75rem;
+	}
+
+	.option-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: 0.75rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.option-actions {
+		display: flex;
+		justify-content: flex-end;
+		margin-top: 0.5rem;
 	}
 </style>

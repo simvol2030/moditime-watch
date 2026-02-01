@@ -33,7 +33,7 @@
 | Task 3 | City Articles CRUD | ✅ DONE | - |
 | Task 4 | Testimonials CRUD | ✅ DONE | - |
 | Task 5 | Journal Articles CRUD | ✅ DONE | - |
-| Task 6 | Product Options UI | ⏳ PENDING | - |
+| Task 6 | Product Options UI | ✅ DONE | - |
 | Task 7 | Config seed + UI | ⏳ PENDING | - |
 | Task 8 | Orders improve | ⏳ PENDING | - |
 | Task 9 | Sidebar update | ⏳ PENDING | - |
