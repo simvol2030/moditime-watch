@@ -1,6 +1,7 @@
 import { fail, error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { queries } from '$lib/server/db/database';
+import { sendOrderStatusChanged, sendTelegramText, type OrderData } from '$lib/server/notifications';
 
 interface Order {
 	id: number;
@@ -49,7 +50,7 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	updateStatus: async ({ request, params, locals }) => {
+	updateStatus: async ({ request, params }) => {
 		const formData = await request.formData();
 		const newStatus = formData.get('status')?.toString();
 		const comment = formData.get('comment')?.toString() || '';
@@ -71,8 +72,52 @@ export const actions: Actions = {
 		}
 
 		try {
+			// 1. Update order status
 			queries.adminUpdateOrderStatus.run(newStatus, orderId);
+
+			// 2. Insert status history
 			queries.adminInsertOrderStatusHistory.run(orderId, oldStatus, newStatus, 'admin', comment || null);
+
+			// 3. Send notifications (non-blocking)
+			const items = queries.adminGetOrderItems.all(orderId) as OrderItem[];
+			const orderData: OrderData = {
+				orderNumber: order.order_number,
+				customerName: order.customer_name,
+				customerPhone: order.customer_phone,
+				customerEmail: order.customer_email,
+				address: order.delivery_address,
+				comment: order.delivery_comment,
+				totalAmount: order.total_amount,
+				items: items.map((item) => ({
+					name: item.product_name,
+					brand: item.product_brand,
+					price: item.price,
+					quantity: item.quantity
+				}))
+			};
+
+			try {
+				// Email to customer about status change
+				await sendOrderStatusChanged(orderData, oldStatus, newStatus);
+
+				// Telegram notification for cancelled orders
+				if (newStatus === 'cancelled') {
+					const statusLabels: Record<string, string> = {
+						pending: 'Ожидает', confirmed: 'Подтверждён', paid: 'Оплачен',
+						shipped: 'Отправлен', delivered: 'Доставлен', cancelled: 'Отменён'
+					};
+					await sendTelegramText(
+						`\u{274C} <b>Заказ отменён</b>\n\n` +
+						`<b>Номер:</b> <code>${order.order_number}</code>\n` +
+						`<b>Клиент:</b> ${order.customer_name}\n` +
+						`<b>Был статус:</b> ${statusLabels[oldStatus] || oldStatus}\n` +
+						(comment ? `<b>Причина:</b> ${comment}` : '')
+					);
+				}
+			} catch (notificationError) {
+				console.error('Status notification error:', notificationError);
+			}
+
 			return { success: true };
 		} catch (err) {
 			return fail(500, { error: 'Failed to update status' });
