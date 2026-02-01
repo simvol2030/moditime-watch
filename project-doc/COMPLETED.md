@@ -42,15 +42,15 @@
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| Task 1 | CSV Parser | ⏳ PENDING | - |
-| Task 2 | Products Importer | ⏳ PENDING | - |
-| Task 3 | Brands/Categories Importer | ⏳ PENDING | - |
-| Task 4 | Cities Importer | ⏳ PENDING | - |
-| Task 5 | City Articles Importer | ⏳ PENDING | - |
-| Task 6 | Filter Values Importer | ⏳ PENDING | - |
-| Task 7 | Import UI page | ⏳ PENDING | - |
-| Task 8 | Export endpoints | ⏳ PENDING | - |
-| Task 9 | Template downloads | ⏳ PENDING | - |
+| Task 1 | CSV Parser | ✅ DONE | - |
+| Task 2 | Products Importer | ✅ DONE | - |
+| Task 3 | Brands/Categories Importer | ✅ DONE | - |
+| Task 4 | Cities Importer | ✅ DONE | - |
+| Task 5 | City Articles Importer | ✅ DONE | - |
+| Task 6 | Filter Values Importer | ✅ DONE | - |
+| Task 7 | Import UI page | ✅ DONE | - |
+| Task 8 | Export endpoints | ✅ DONE | - |
+| Task 9 | Template downloads | ✅ DONE | - |
 
 ### Session-4: Layout Management (depends on Session-2)
 
