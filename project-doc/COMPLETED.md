@@ -30,7 +30,7 @@
 |------|---------|--------|----------|
 | Task 1 | Collections CRUD | ✅ DONE | - |
 | Task 2 | Cities CRUD | ✅ DONE | - |
-| Task 3 | City Articles CRUD | ⏳ PENDING | - |
+| Task 3 | City Articles CRUD | ✅ DONE | - |
 | Task 4 | Testimonials CRUD | ⏳ PENDING | - |
 | Task 5 | Journal Articles CRUD | ⏳ PENDING | - |
 | Task 6 | Product Options UI | ⏳ PENDING | - |
