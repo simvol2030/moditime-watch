@@ -17,6 +17,7 @@
 	const telegram = $derived(siteConfig.social_telegram || 'https://t.me/moditimewatch');
 
 	const cityName = $derived(($page.data as any)?.city?.name || '');
+	const cityNameAccusative = $derived(($page.data as any)?.city?.nameAccusative || cityName);
 	const deliveryDays = $derived(($page.data as any)?.delivery?.days || 0);
 	const deliveryPrice = $derived(($page.data as any)?.delivery?.price || '');
 </script>
@@ -38,7 +39,7 @@
 
 		{#if cityName && deliveryDays}
 			<div class="city-footer__delivery">
-				<span class="city-footer__delivery-label">Доставка в {cityName}:</span>
+				<span class="city-footer__delivery-label">Доставка в {cityNameAccusative}:</span>
 				<span class="city-footer__delivery-value">{deliveryDays} дн., {deliveryPrice}</span>
 			</div>
 		{/if}

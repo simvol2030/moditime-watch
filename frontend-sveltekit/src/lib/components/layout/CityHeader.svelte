@@ -14,6 +14,7 @@
 	} = $props();
 
 	const cityName = $derived(($page.data as any)?.city?.name || '');
+	const cityNamePrepositional = $derived(($page.data as any)?.city?.namePrepositional || cityName);
 	const citySlug = $derived(($page.data as any)?.city?.slug || '');
 
 	const phone = $derived(siteConfig.contact_phone || '+7 (495) 120-00-00');
@@ -48,7 +49,7 @@
 		<!-- City name badge -->
 		{#if cityName}
 			<a href="/city/{citySlug}" class="city-header__city-badge">
-				Часы в {cityName}
+				Часы в {cityNamePrepositional}
 			</a>
 		{/if}
 
