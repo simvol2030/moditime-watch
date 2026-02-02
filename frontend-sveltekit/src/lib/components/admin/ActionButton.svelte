@@ -8,6 +8,7 @@
 		type?: 'button' | 'submit';
 		disabled?: boolean;
 		children: Snippet;
+		[key: string]: unknown;
 	}
 
 	let {
@@ -16,16 +17,17 @@
 		size = 'md',
 		type = 'button',
 		disabled = false,
-		children
+		children,
+		...rest
 	}: Props = $props();
 </script>
 
 {#if href}
-	<a {href} class="btn {variant} {size}">
+	<a {href} class="btn {variant} {size}" {...rest}>
 		{@render children()}
 	</a>
 {:else}
-	<button {type} class="btn {variant} {size}" {disabled}>
+	<button {type} class="btn {variant} {size}" {disabled} {...rest}>
 		{@render children()}
 	</button>
 {/if}
