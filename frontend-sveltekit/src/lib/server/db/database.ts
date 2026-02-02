@@ -75,11 +75,12 @@ export function seedDatabase() {
     
     insertProduct.run('omega-speedmaster', 3, 2, 'Omega Speedmaster Moonwatch', 'OMG-SPEED', 98000000, 'in-stock', 'Первые часы на Луне', 4.9, 567, JSON.stringify({"Корпус":[{"label":"Диаметр","value":"42 мм"}]}), 1, 1, 3);
     
-    // Product Images
+    // Product Images (use picsum.photos placeholders — local files don't exist)
     const insertImage = db.prepare('INSERT INTO product_images (product_id, url, alt, position, is_main) VALUES (?, ?, ?, ?, ?)');
+    const productSlugs = ['rolex-submariner-126610ln', 'patek-philippe-nautilus-5711', 'omega-speedmaster'];
     for(let i=1; i<=3; i++) {
       for(let j=0; j<4; j++) {
-        insertImage.run(i, `/images/products/product-${i}-${j+1}.jpg`, `Product ${i} image ${j+1}`, j, j===0?1:0);
+        insertImage.run(i, `https://picsum.photos/seed/${productSlugs[i-1]}-${j}/720/720`, `Product ${i} image ${j+1}`, j, j===0?1:0);
       }
     }
     
