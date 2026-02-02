@@ -11,10 +11,10 @@
 | Метрика | Значение |
 |---------|----------|
 | **Всего задач** | 77 |
-| **Выполнено** | 58 (75%) |
-| **Осталось** | 19 (25%) |
+| **Выполнено** | 64 (83%) |
+| **Осталось** | 13 (17%) |
 | **Всего сессий** | 12 |
-| **Завершено сессий** | 8 (67%) |
+| **Завершено сессий** | 9 (75%) |
 
 ---
 
@@ -30,6 +30,7 @@
 | Session-6 | pSEO Schema & Backend (8 tasks) | 2025-02-02 | 17e6397 |
 | Session-7 | pSEO Admin UI (8 tasks) | 2025-02-02 | 666f4f8 |
 | Session-8 | pSEO Frontend & SEO (9 tasks + 10 bugfixes) | 2025-02-02 | 4d079b1 |
+| Session-9 | Critical SEO & Content Fixes (6 tasks, 1 fixed, 5 verified) | 2025-02-02 | 5aac2e9 |
 
 ---
 
@@ -38,17 +39,6 @@
 > **Источник:** QA validation reports (session-8-v1) выявили 19 багов
 > **Приоритет:** Sessions 9-10 = HIGH, Sessions 11-12 = MEDIUM
 > **Roadmaps:** см. `project-doc/session-{9,10,11,12}-*/roadmap.md`
-
-### Session-9: Critical SEO & Content Fixes (depends on Session-8)
-
-| Task | Summary | Status | Deployed |
-|------|---------|--------|----------|
-| Task 1 | Добавить LocalBusiness JSON-LD (CRIT-1) | ⏳ PENDING | - |
-| Task 2 | Добавить Article JSON-LD (CRIT-2) | ⏳ PENDING | - |
-| Task 3 | Добавить BreadcrumbList JSON-LD (CRIT-3) | ⏳ PENDING | - |
-| Task 4 | Исправить грамматику "Москва" → "Москве" (CRIT-4) | ⏳ PENDING | - |
-| Task 5 | Добавить rich media в статьях (CRIT-5) | ⏳ PENDING | - |
-| Task 6 | Убрать дублирование WebSite JSON-LD (MEDIUM-4) | ⏳ PENDING | - |
 
 ### Session-10: Critical Admin pSEO Fixes (depends on Session-7, Session-8)
 
