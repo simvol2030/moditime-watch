@@ -9,12 +9,12 @@
 
 | Метрика | Значение |
 |---------|----------|
-| **Всего задач** | 77 |
-| **Выполнено** | 74 (96%) |
-| **Осталось** | 3 (4%) |
-| **Текущая сессия** | Session-12 (Communication & UX) |
-| **Всего сессий** | 12 |
-| **Завершено сессий** | 11 (92%) |
+| **Всего задач** | 80 |
+| **Выполнено** | 75 (94%) |
+| **Осталось** | 5 (6%) |
+| **Текущая сессия** | Session-13 (Critical Bugfixes Session-12) |
+| **Всего сессий** | 13 |
+| **Завершено сессий** | 11 (85%) |
 
 ---
 
@@ -237,22 +237,45 @@
 
 ---
 
-### ⏳ Session-12: Communication & Admin UX (3 задачи)
+### ⚠️ Session-12: Communication & Admin UX (3 задачи)
 
-**Статус:** PENDING (ready for Developer)
-**Приоритет:** 🟡 MEDIUM
+**Статус:** PARTIALLY DONE (QA выявила критичные баги)
+**Дата завершения:** 2025-02-02
 **Зависит от:** Session-5 (Notifications), Session-2 (Admin Panel)
 **Источник:** QA validation reports + Moderator feedback
 
-**Задачи:**
-1. Убрать Telegram iframe → ссылка `t.me/moditime_watch` + админка управление (MEDIUM-2)
-2. Phone mobile visibility + функционал телефон/форма обратного звонка (MEDIUM-8)
-3. Drag-and-drop для приоритетов во всех разделах админки (FUNC-1 — масштабная задача)
+**Что сделано:**
+1. ✅ Telegram iframe → link (MEDIUM-2) — CSP violation fixed, link works
+2. ⚠️ Phone callback functionality (MEDIUM-8) — реализовано, но баги: icon missing в CityHeader, wrong click handler в SiteHeader
+3. ❌ Drag-and-drop (FUNC-1) — реализовано, но НЕ работает (кнопка "Reorder" не активирует drag mode)
 
 **Roadmap:** `project-doc/session-12-communication-ux/roadmap.md`
 
+**QA Validation:** QA FAILED — 3 критичных бага (score 27):
+- CRIT-1: Phone icon missing в CityHeader (score 8)
+- CRIT-2: Phone button malfunction (score 9)
+- CRIT-3: Drag-and-drop не работает (score 10)
+
+**Примечание:** Критичные баги требуют отдельной сессии (Session-13) для исправления.
+
+---
+
+### ⏳ Session-13: Critical Bugfixes Session-12 (3 задачи)
+
+**Статус:** PENDING (ready for Developer)
+**Приоритет:** 🔴 CRITICAL (блокирует запуск на 100%)
+**Зависит от:** Session-12 (Communication & Admin UX)
+**Источник:** QA validation reports (session-12-v1)
+
+**Задачи:**
+1. Fix phone icon в CityHeader (добавить на mobile) — CRIT-1, score 8
+2. Fix phone button click handler в SiteHeader (tel:/callback вместо menu/redirect) — CRIT-2, score 9
+3. Fix drag-and-drop functionality во всех 6 разделах админки — CRIT-3, score 10
+
+**Roadmap:** `project-doc/session-13-critical-bugfixes-session-12/roadmap.md`
+
 **Описание:**
-Улучшить коммуникацию с клиентами (Telegram, phone callback) и UX админки (drag-and-drop вместо ручного ввода order).
+Исправить 3 критичных бага из Session-12 QA validation, которые блокируют запуск проекта на 100%. После завершения Session-13 → проект готов!
 
 ---
 
@@ -271,7 +294,9 @@ Session-2 (независимая) → ✅ DONE
                             ├── Session-9 (Critical SEO) → ✅ DONE
                             ├── Session-10 (Critical Admin) → ✅ DONE
                             ├── Session-11 (Media & Layout) → ✅ DONE
-                            └── Session-12 (Communication & UX) → ⏳ PENDING
+                            └── Session-12 (Communication & UX) → ⚠️ PARTIALLY DONE
+                                    └── QA Validation → 3 critical bugs found → Bugfix Session:
+                                            └── Session-13 (Critical Bugfixes Session-12) → ⏳ PENDING
 ```
 
 ---
@@ -302,8 +327,9 @@ Session-2 (независимая) → ✅ DONE
 | Session-9 | 6 | ✅ DONE | 2025-02-02 |
 | Session-10 | 5 | ✅ DONE | 2025-02-02 |
 | Session-11 | 5 | ✅ DONE | 2025-02-02 |
-| **Session-12** | **3** | **⏳ PENDING** | — |
-| **ИТОГО** | **77** | **74 DONE / 3 PENDING** | **96%** |
+| Session-12 | 3 | ⚠️ PARTIALLY DONE | 2025-02-02 |
+| **Session-13** | **3** | **⏳ PENDING** | — |
+| **ИТОГО** | **80** | **75 DONE / 2 PARTIALLY / 3 PENDING** | **94%** |
 
 ---
 
@@ -325,18 +351,19 @@ Session-2 (независимая) → ✅ DONE
 - ✅ Админка для управления pSEO контентом — Session-7 DONE
 - ✅ Frontend: отдельные layouts для городов, rich content, sitemap index, JSON-LD — Session-8 DONE
 
-**Фаза 4: Bugfixes & Polish (Sessions 9-12)** → 🔄 В ПРОЦЕССЕ (3/4 завершено)
+**Фаза 4: Bugfixes & Polish (Sessions 9-13)** → 🔄 В ПРОЦЕССЕ (3/5 завершено)
 - ✅ Critical SEO fixes (grammar) — Session-9 DONE
 - ✅ Critical Admin pSEO fixes (100 cities seed) — Session-10 DONE
 - ✅ Media & Layout fixes (images fallback, favicon, footer, hydration) — Session-11 DONE
-- ⏳ Communication & UX (Telegram, phone callback, drag-and-drop) — Session-12 PENDING
+- ⚠️ Communication & UX (Telegram, phone callback, drag-and-drop) — Session-12 PARTIALLY DONE (QA failed)
+- ⏳ Critical Bugfixes Session-12 (phone icon, phone handler, drag-and-drop fix) — Session-13 PENDING
 
-**После завершения Session-12 — проект готов на 100%!**
+**После завершения Session-13 — проект готов на 100%!**
 
 ---
 
-**Версия:** 3.3
+**Версия:** 3.4
 **Создано:** 2025-02-01
 **Обновлено:** 2025-02-02
-**Для Developer:** Session-11 завершена. Начни с Session-12 (Communication & UX) — MEDIUM PRIORITY, ПОСЛЕДНЯЯ СЕССИЯ!
-**Для Moderator:** 74 из 77 задач выполнено (96%), осталось 3 задачи (1 bugfix сессия) — проект на 96%!
+**Для Developer:** Session-12 completed but QA failed (3 critical bugs). Начни с Session-13 (Critical Bugfixes Session-12) — CRITICAL PRIORITY!
+**Для Moderator:** 75 из 80 задач выполнено (94%), осталось 5 задач: 2 partially done + 3 pending (Session-13)

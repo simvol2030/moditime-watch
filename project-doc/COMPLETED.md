@@ -10,11 +10,11 @@
 
 | Метрика | Значение |
 |---------|----------|
-| **Всего задач** | 77 |
-| **Выполнено** | 74 (96%) |
-| **Осталось** | 3 (4%) |
-| **Всего сессий** | 12 |
-| **Завершено сессий** | 11 (92%) |
+| **Всего задач** | 80 |
+| **Выполнено** | 75 (94%) |
+| **Осталось** | 5 (6%) |
+| **Всего сессий** | 13 |
+| **Завершено сессий** | 11 (85%) |
 
 ---
 
@@ -33,22 +33,23 @@
 | Session-9 | Critical SEO & Content Fixes (6 tasks, 1 fixed, 5 verified) | 2025-02-02 | 5aac2e9 |
 | Session-10 | Critical Admin pSEO Fixes (5 tasks, 1 implemented, 4 verified) | 2025-02-02 | 2b384d4 |
 | Session-11 | Media & Layout Fixes (5 tasks) | 2025-02-02 | 8e958ee |
+| Session-12 | Communication & Admin UX (3 tasks, 1 done, 2 partially — QA failed) | 2025-02-02 | 9cebeea |
 
 ---
 
-## Активные сессии (Bugfixes после Session-8)
+## Активные сессии (Bugfixes после Session-12)
 
-> **Источник:** QA validation reports (session-8-v1) выявили 19 багов
-> **Приоритет:** Sessions 9-10 = HIGH, Sessions 11-12 = MEDIUM
-> **Roadmaps:** см. `project-doc/session-{9,10,11,12}-*/roadmap.md`
+> **Источник:** QA validation reports (session-12-v1) выявили 3 критичных бага
+> **Приоритет:** Session-13 = CRITICAL (блокирует запуск на 100%)
+> **Roadmaps:** см. `project-doc/session-13-critical-bugfixes-session-12/roadmap.md`
 
-### Session-12: Communication & Admin UX (depends on Session-5, Session-2)
+### Session-13: Critical Bugfixes Session-12 (depends on Session-12)
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| Task 1 | Telegram iframe → ссылка + админка (MEDIUM-2) | ⏳ PENDING | - |
-| Task 2 | Phone visibility + callback функционал (MEDIUM-8) | ⏳ PENDING | - |
-| Task 3 | Drag-and-drop для приоритетов (FUNC-1) | ⏳ PENDING | - |
+| Bug 1 | Phone icon missing в CityHeader (mobile) — score 8 | ⏳ PENDING | - |
+| Bug 2 | Phone button malfunction в SiteHeader — score 9 | ⏳ PENDING | - |
+| Bug 3 | Drag-and-drop НЕ работает (6 разделов) — score 10 | ⏳ PENDING | - |
 
 ---
 
@@ -63,7 +64,8 @@
 6. Session-6 (после Session-2)
 7. Session-7 (после Session-6)
 8. Session-8 (после Session-6 + Session-7)
-9. **Session-9 (bugfixes после Session-8, HIGH PRIORITY)**
-10. **Session-10 (bugfixes после Session-8, HIGH PRIORITY)**
-11. **Session-11 (bugfixes после Session-8, MEDIUM PRIORITY)**
-12. **Session-12 (bugfixes после Session-8, MEDIUM PRIORITY)**
+9. Session-9 (bugfixes после Session-8, HIGH PRIORITY)
+10. Session-10 (bugfixes после Session-8, HIGH PRIORITY)
+11. Session-11 (bugfixes после Session-8, MEDIUM PRIORITY)
+12. Session-12 (bugfixes после Session-8, MEDIUM PRIORITY) — PARTIALLY DONE (QA failed)
+13. **Session-13 (bugfixes после Session-12, CRITICAL PRIORITY)**
