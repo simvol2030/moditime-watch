@@ -173,7 +173,9 @@
 
 	<CatalogHero {...data.heroContent} />
 
-	<TelegramCtaSection {...data.telegramContent} />
+	{#if data.telegramGroupEnabled}
+		<TelegramCtaSection {...data.telegramContent} />
+	{/if}
 </main>
 
 <style>

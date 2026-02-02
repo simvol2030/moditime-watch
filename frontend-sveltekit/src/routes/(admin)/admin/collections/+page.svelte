@@ -4,8 +4,24 @@
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import DataTable from '$lib/components/admin/DataTable.svelte';
 	import ActionButton from '$lib/components/admin/ActionButton.svelte';
+	import DragDropList from '$lib/components/admin/DragDropList.svelte';
 
 	let { data }: { data: PageData } = $props();
+	let reorderMode = $state(false);
+
+	function submitReorder(ids: number[]) {
+		const form = document.createElement('form');
+		form.method = 'POST';
+		form.action = '?/reorder';
+		form.style.display = 'none';
+		const input = document.createElement('input');
+		input.type = 'hidden';
+		input.name = 'ids';
+		input.value = JSON.stringify(ids);
+		form.appendChild(input);
+		document.body.appendChild(form);
+		form.submit();
+	}
 
 	const columns = [
 		{ key: 'id', label: 'ID', width: '60px' },
@@ -31,10 +47,24 @@
 
 <PageHeader title="Collections" description="Manage curated collections">
 	{#snippet actions()}
-		<ActionButton href="/admin/collections/new" variant="primary">+ Add Collection</ActionButton>
+		<ActionButton variant={reorderMode ? 'primary' : 'ghost'} onclick={() => reorderMode = !reorderMode}>
+			{reorderMode ? 'Exit Reorder' : 'Reorder'}
+		</ActionButton>
+		{#if !reorderMode}
+			<ActionButton href="/admin/collections/new" variant="primary">+ Add Collection</ActionButton>
+		{/if}
 	{/snippet}
 </PageHeader>
 
+{#if reorderMode}
+	<div class="card" style="background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+		<h3 style="font-size: 1rem; font-weight: 600; color: #1f2937; margin: 0 0 1rem;">Drag to reorder collections</h3>
+		<DragDropList
+			items={data.collections.map(c => ({ id: c.id, label: c.title, slug: c.slug }))}
+			onreorder={submitReorder}
+		/>
+	</div>
+{:else}
 <DataTable {columns} data={tableData} emptyMessage="No collections found">
 	{#snippet actions(item)}
 		<div class="action-buttons">
@@ -58,6 +88,7 @@
 		</div>
 	{/snippet}
 </DataTable>
+{/if}
 
 <style>
 	.action-buttons {

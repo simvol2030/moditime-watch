@@ -3,6 +3,7 @@
 	import type { ActionData, PageData } from './$types';
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import ActionButton from '$lib/components/admin/ActionButton.svelte';
+	import DragDropList from '$lib/components/admin/DragDropList.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -10,6 +11,22 @@
 	let editingSectionId = $state<number | null>(null);
 	let addingLinkSectionId = $state<number | null>(null);
 	let editingLinkId = $state<number | null>(null);
+	let reorderMode = $state(false);
+	let reorderFormEl = $state<HTMLFormElement | null>(null);
+
+	function submitReorder(action: string, ids: number[]) {
+		const form = document.createElement('form');
+		form.method = 'POST';
+		form.action = `?/${action}`;
+		form.style.display = 'none';
+		const input = document.createElement('input');
+		input.type = 'hidden';
+		input.name = 'ids';
+		input.value = JSON.stringify(ids);
+		form.appendChild(input);
+		document.body.appendChild(form);
+		form.submit();
+	}
 </script>
 
 <svelte:head>
@@ -18,9 +35,14 @@
 
 <PageHeader title="Footer Management" description="Manage footer sections and links">
 	{#snippet actions()}
-		<ActionButton variant="primary" onclick={() => showAddSection = !showAddSection}>
-			{showAddSection ? 'Cancel' : '+ Add Section'}
+		<ActionButton variant={reorderMode ? 'primary' : 'ghost'} onclick={() => { reorderMode = !reorderMode; if (reorderMode) showAddSection = false; }}>
+			{reorderMode ? 'Exit Reorder' : 'Reorder'}
 		</ActionButton>
+		{#if !reorderMode}
+			<ActionButton variant="primary" onclick={() => showAddSection = !showAddSection}>
+				{showAddSection ? 'Cancel' : '+ Add Section'}
+			</ActionButton>
+		{/if}
 	{/snippet}
 </PageHeader>
 
@@ -59,6 +81,28 @@
 		</form>
 	</div>
 {/if}
+
+{#if reorderMode}
+	<div class="card">
+		<h3>Drag sections to reorder</h3>
+		<DragDropList
+			items={data.sections.map(s => ({ id: s.id, label: s.title }))}
+			onreorder={(ids) => submitReorder('reorderSections', ids)}
+		/>
+	</div>
+
+	{#each data.sections as section}
+		{#if section.links.length > 0}
+			<div class="card">
+				<h3>{section.title} — Reorder links</h3>
+				<DragDropList
+					items={section.links.map(l => ({ id: l.id, label: l.label, href: l.href }))}
+					onreorder={(ids) => submitReorder('reorderLinks', ids)}
+				/>
+			</div>
+		{/if}
+	{/each}
+{:else}
 
 {#each data.sections as section}
 	<div class="card section-card">
@@ -189,6 +233,7 @@
 		{/if}
 	</div>
 {/each}
+{/if}
 
 <style>
 	.card {

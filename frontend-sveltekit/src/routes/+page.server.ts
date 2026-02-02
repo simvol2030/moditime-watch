@@ -145,25 +145,32 @@ export const load: PageServerLoad = async () => {
 	};
 
 	// ============================================
-	// 7. TELEGRAM CTA - ВИДЖЕТ из БД ✅
+	// 7. TELEGRAM CTA - из config + виджет (Session-12: link instead of iframe)
 	// ============================================
+	const telegramGroupEnabled = (queries.getConfigByKey.get('telegram_group_enabled') as any)?.value === 'true';
+	const telegramGroupUrl = (queries.getConfigByKey.get('telegram_group_url') as any)?.value || 'https://t.me/moditime_watch';
+	const telegramGroupLabel = (queries.getConfigByKey.get('telegram_group_label') as any)?.value || 'Telegram группа Moditimewatch';
+
 	const telegramWidgetFromDb = queries.getTelegramWidget.get() as any;
 	let telegramCtaContent: TelegramCtaSectionProps;
 
 	if (telegramWidgetFromDb?.data_json) {
 		telegramCtaContent = JSON.parse(telegramWidgetFromDb.data_json);
 	} else {
-		// Fallback если виджет не найден
 		telegramCtaContent = {
 			eyebrow: 'Подписка',
 			title: 'Канал Moditimewatch в Telegram',
 			description: 'Анонсы релизов и эксклюзивные предложения',
 			features: ['Эксклюзивные предложения', 'Подборки часов', 'Обзоры новинок'],
 			ctaText: 'Подписаться',
-			ctaHref: 'https://t.me/moditimewatch',
-			channelUrl: 'https://t.me/s/moditimewatch'
+			ctaHref: telegramGroupUrl,
+			channelUrl: telegramGroupUrl
 		};
 	}
+
+	// Override with config values
+	telegramCtaContent.ctaHref = telegramGroupUrl;
+	telegramCtaContent.channelUrl = telegramGroupUrl;
 
 	return {
 		heroContent,
@@ -172,7 +179,8 @@ export const load: PageServerLoad = async () => {
 		experienceContent,
 		testimonialsContent,
 		editorialContent,
-		telegramCtaContent
+		telegramCtaContent,
+		telegramGroupEnabled
 	};
 };
 

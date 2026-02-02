@@ -63,12 +63,14 @@
 	articles={data.editorialContent.articles}
 />
 
-<TelegramCtaSection
-	eyebrow={data.telegramCtaContent.eyebrow}
-	title={data.telegramCtaContent.title}
-	description={data.telegramCtaContent.description}
-	features={data.telegramCtaContent.features}
-	ctaText={data.telegramCtaContent.ctaText}
-	ctaHref={data.telegramCtaContent.ctaHref}
-	channelUrl={data.telegramCtaContent.channelUrl}
-/>
+{#if data.telegramGroupEnabled}
+	<TelegramCtaSection
+		eyebrow={data.telegramCtaContent.eyebrow}
+		title={data.telegramCtaContent.title}
+		description={data.telegramCtaContent.description}
+		features={data.telegramCtaContent.features}
+		ctaText={data.telegramCtaContent.ctaText}
+		ctaHref={data.telegramCtaContent.ctaHref}
+		channelUrl={data.telegramCtaContent.channelUrl}
+	/>
+{/if}

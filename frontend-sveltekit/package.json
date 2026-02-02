@@ -38,6 +38,7 @@
 		"@types/bcrypt": "^6.0.0",
 		"bcrypt": "^6.0.0",
 		"better-sqlite3": "^12.4.1",
-		"nodemailer": "^7.0.13"
+		"nodemailer": "^7.0.13",
+		"svelte-dnd-action": "^0.9.69"
 	}
 }
