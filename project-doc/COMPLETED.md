@@ -10,11 +10,11 @@
 
 | Метрика | Значение |
 |---------|----------|
-| **Всего задач** | 58 |
-| **Выполнено** | 50 (86%) |
-| **Осталось** | 8 (14%) |
-| **Всего сессий** | 8 |
-| **Завершено сессий** | 7 (87%) |
+| **Всего задач** | 77 |
+| **Выполнено** | 58 (75%) |
+| **Осталось** | 19 (25%) |
+| **Всего сессий** | 12 |
+| **Завершено сессий** | 8 (67%) |
 
 ---
 
@@ -29,38 +29,54 @@
 | Session-5 | Notifications & Order Flow (6 tasks) | 2025-02-01 | 453f938 |
 | Session-6 | pSEO Schema & Backend (8 tasks) | 2025-02-02 | 17e6397 |
 | Session-7 | pSEO Admin UI (8 tasks) | 2025-02-02 | 666f4f8 |
+| Session-8 | pSEO Frontend & SEO (9 tasks + 10 bugfixes) | 2025-02-02 | 4d079b1 |
 
 ---
 
-## Активные сессии
+## Активные сессии (Bugfixes после Session-8)
 
+> **Источник:** QA validation reports (session-8-v1) выявили 19 багов
+> **Приоритет:** Sessions 9-10 = HIGH, Sessions 11-12 = MEDIUM
+> **Roadmaps:** см. `project-doc/session-{9,10,11,12}-*/roadmap.md`
 
-### Session-7: pSEO Admin UI (depends on Session-6)
-
-| Task | Summary | Status | Deployed |
-|------|---------|--------|----------|
-| Task 1 | /admin/pseo Dashboard | ⏳ PENDING | - |
-| Task 2 | Форма создания/редактирования статьи | ⏳ PENDING | - |
-| Task 3 | Категории CRUD | ⏳ PENDING | - |
-| Task 4 | Теги CRUD | ⏳ PENDING | - |
-| Task 5 | SEO настройки города | ⏳ PENDING | - |
-| Task 6 | Импорт/Экспорт | ⏳ PENDING | - |
-| Task 7 | AdminSidebar — секция pSEO | ⏳ PENDING | - |
-| Task 8 | Компоненты (CitySelector, MediaEditor, RelatedEditor) | ⏳ PENDING | - |
-
-### Session-8: pSEO Frontend & SEO (depends on Session-6, Session-7)
+### Session-9: Critical SEO & Content Fixes (depends on Session-8)
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| Task 1 | City Layout Group | ⏳ PENDING | - |
-| Task 2 | CityHeader + CityFooter | ⏳ PENDING | - |
-| Task 3 | Главная города (листинги по категориям) | ⏳ PENDING | - |
-| Task 4 | Страница статьи (rich content) | ⏳ PENDING | - |
-| Task 5 | Reroute article paths на поддоменах | ⏳ PENDING | - |
-| Task 6 | Sitemap Index | ⏳ PENDING | - |
-| Task 7 | robots.txt | ⏳ PENDING | - |
-| Task 8 | JSON-LD schemas | ⏳ PENDING | - |
-| Task 9 | Cache-Control headers | ⏳ PENDING | - |
+| Task 1 | Добавить LocalBusiness JSON-LD (CRIT-1) | ⏳ PENDING | - |
+| Task 2 | Добавить Article JSON-LD (CRIT-2) | ⏳ PENDING | - |
+| Task 3 | Добавить BreadcrumbList JSON-LD (CRIT-3) | ⏳ PENDING | - |
+| Task 4 | Исправить грамматику "Москва" → "Москве" (CRIT-4) | ⏳ PENDING | - |
+| Task 5 | Добавить rich media в статьях (CRIT-5) | ⏳ PENDING | - |
+| Task 6 | Убрать дублирование WebSite JSON-LD (MEDIUM-4) | ⏳ PENDING | - |
+
+### Session-10: Critical Admin pSEO Fixes (depends on Session-7, Session-8)
+
+| Task | Summary | Status | Deployed |
+|------|---------|--------|----------|
+| Task 1 | Исправить пустой dashboard в /admin/pseo (CRIT-6) | ⏳ PENDING | - |
+| Task 2 | Исправить пустое поле "Категория" (CRIT-8) | ⏳ PENDING | - |
+| Task 3 | Добавить селектор городов (MEDIUM-9) | ⏳ PENDING | - |
+| Task 4 | Исследовать 3 города вместо 102 (MINOR-1) | ⏳ PENDING | - |
+| Task 5 | Исправить sitemap-cities.xml (MEDIUM-7) | ⏳ PENDING | - |
+
+### Session-11: Media & Layout Fixes (depends on Session-8, Session-1)
+
+| Task | Summary | Status | Deployed |
+|------|---------|--------|----------|
+| Task 1 | Product images 404 + fallback (MEDIUM-1) | ⏳ PENDING | - |
+| Task 2 | Добавить favicon + админка (MEDIUM-5) | ⏳ PENDING | - |
+| Task 3 | Duplicate footer на city pages (CRIT-7) | ⏳ PENDING | - |
+| Task 4 | Hydration mismatch warning (MEDIUM-3) | ⏳ PENDING | - |
+| Task 5 | Product page 404 (MEDIUM-6) | ⏳ PENDING | - |
+
+### Session-12: Communication & Admin UX (depends on Session-5, Session-2)
+
+| Task | Summary | Status | Deployed |
+|------|---------|--------|----------|
+| Task 1 | Telegram iframe → ссылка + админка (MEDIUM-2) | ⏳ PENDING | - |
+| Task 2 | Phone visibility + callback функционал (MEDIUM-8) | ⏳ PENDING | - |
+| Task 3 | Drag-and-drop для приоритетов (FUNC-1) | ⏳ PENDING | - |
 
 ---
 
@@ -75,3 +91,7 @@
 6. Session-6 (после Session-2)
 7. Session-7 (после Session-6)
 8. Session-8 (после Session-6 + Session-7)
+9. **Session-9 (bugfixes после Session-8, HIGH PRIORITY)**
+10. **Session-10 (bugfixes после Session-8, HIGH PRIORITY)**
+11. **Session-11 (bugfixes после Session-8, MEDIUM PRIORITY)**
+12. **Session-12 (bugfixes после Session-8, MEDIUM PRIORITY)**
