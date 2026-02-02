@@ -11,29 +11,30 @@
 
 	let localItems = $state<{ id: number; [key: string]: any }[]>([]);
 
-	// Sync items to localItems
+	// Sync items from prop to local state (shallow clone each item to strip proxy)
 	$effect(() => {
-		localItems = [...items];
+		localItems = items.map((item) => ({ ...item }));
 	});
 
 	function handleDndConsider(e: CustomEvent) {
-		localItems = e.detail.items;
+		const { items: newItems } = e.detail;
+		localItems = newItems;
 	}
 
 	function handleDndFinalize(e: CustomEvent) {
-		localItems = e.detail.items;
-		// Emit ordered IDs to parent
-		onreorder(localItems.map((item) => item.id));
+		const { items: newItems } = e.detail;
+		localItems = newItems;
+		onreorder(newItems.map((item: any) => item.id));
 	}
 </script>
 
 <div
 	class="dnd-list"
-	use:dndzone={{ items: localItems, flipDurationMs: 200 }}
+	use:dndzone={{ items: $state.snapshot(localItems), flipDurationMs: 200 }}
 	onconsider={handleDndConsider}
 	onfinalize={handleDndFinalize}
 >
-	{#each localItems as item (item.id)}
+	{#each localItems as item, idx (item.id)}
 		<div class="dnd-item" aria-roledescription="sortable">
 			<div class="dnd-handle">
 				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -51,7 +52,7 @@
 					<span class="dnd-meta">{item.slug}</span>
 				{/if}
 			</div>
-			<span class="dnd-position">#{localItems.indexOf(item) + 1}</span>
+			<span class="dnd-position">#{idx + 1}</span>
 		</div>
 	{/each}
 </div>
