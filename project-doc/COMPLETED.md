@@ -11,10 +11,10 @@
 | Метрика | Значение |
 |---------|----------|
 | **Всего задач** | 77 |
-| **Выполнено** | 64 (83%) |
-| **Осталось** | 13 (17%) |
+| **Выполнено** | 69 (90%) |
+| **Осталось** | 8 (10%) |
 | **Всего сессий** | 12 |
-| **Завершено сессий** | 9 (75%) |
+| **Завершено сессий** | 10 (83%) |
 
 ---
 
@@ -31,6 +31,7 @@
 | Session-7 | pSEO Admin UI (8 tasks) | 2025-02-02 | 666f4f8 |
 | Session-8 | pSEO Frontend & SEO (9 tasks + 10 bugfixes) | 2025-02-02 | 4d079b1 |
 | Session-9 | Critical SEO & Content Fixes (6 tasks, 1 fixed, 5 verified) | 2025-02-02 | 5aac2e9 |
+| Session-10 | Critical Admin pSEO Fixes (5 tasks, 1 implemented, 4 verified) | 2025-02-02 | 2b384d4 |
 
 ---
 
@@ -39,16 +40,6 @@
 > **Источник:** QA validation reports (session-8-v1) выявили 19 багов
 > **Приоритет:** Sessions 9-10 = HIGH, Sessions 11-12 = MEDIUM
 > **Roadmaps:** см. `project-doc/session-{9,10,11,12}-*/roadmap.md`
-
-### Session-10: Critical Admin pSEO Fixes (depends on Session-7, Session-8)
-
-| Task | Summary | Status | Deployed |
-|------|---------|--------|----------|
-| Task 1 | Исправить пустой dashboard в /admin/pseo (CRIT-6) | ⏳ PENDING | - |
-| Task 2 | Исправить пустое поле "Категория" (CRIT-8) | ⏳ PENDING | - |
-| Task 3 | Добавить селектор городов (MEDIUM-9) | ⏳ PENDING | - |
-| Task 4 | Исследовать 3 города вместо 102 (MINOR-1) | ⏳ PENDING | - |
-| Task 5 | Исправить sitemap-cities.xml (MEDIUM-7) | ⏳ PENDING | - |
 
 ### Session-11: Media & Layout Fixes (depends on Session-8, Session-1)
 
