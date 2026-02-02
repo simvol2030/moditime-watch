@@ -11,10 +11,10 @@
 | Метрика | Значение |
 |---------|----------|
 | **Всего задач** | 77 |
-| **Выполнено** | 69 (90%) |
-| **Осталось** | 8 (10%) |
+| **Выполнено** | 74 (96%) |
+| **Осталось** | 3 (4%) |
 | **Всего сессий** | 12 |
-| **Завершено сессий** | 10 (83%) |
+| **Завершено сессий** | 11 (92%) |
 
 ---
 
@@ -32,6 +32,7 @@
 | Session-8 | pSEO Frontend & SEO (9 tasks + 10 bugfixes) | 2025-02-02 | 4d079b1 |
 | Session-9 | Critical SEO & Content Fixes (6 tasks, 1 fixed, 5 verified) | 2025-02-02 | 5aac2e9 |
 | Session-10 | Critical Admin pSEO Fixes (5 tasks, 1 implemented, 4 verified) | 2025-02-02 | 2b384d4 |
+| Session-11 | Media & Layout Fixes (5 tasks) | 2025-02-02 | 8e958ee |
 
 ---
 
@@ -40,16 +41,6 @@
 > **Источник:** QA validation reports (session-8-v1) выявили 19 багов
 > **Приоритет:** Sessions 9-10 = HIGH, Sessions 11-12 = MEDIUM
 > **Roadmaps:** см. `project-doc/session-{9,10,11,12}-*/roadmap.md`
-
-### Session-11: Media & Layout Fixes (depends on Session-8, Session-1)
-
-| Task | Summary | Status | Deployed |
-|------|---------|--------|----------|
-| Task 1 | Product images 404 + fallback (MEDIUM-1) | ⏳ PENDING | - |
-| Task 2 | Добавить favicon + админка (MEDIUM-5) | ⏳ PENDING | - |
-| Task 3 | Duplicate footer на city pages (CRIT-7) | ⏳ PENDING | - |
-| Task 4 | Hydration mismatch warning (MEDIUM-3) | ⏳ PENDING | - |
-| Task 5 | Product page 404 (MEDIUM-6) | ⏳ PENDING | - |
 
 ### Session-12: Communication & Admin UX (depends on Session-5, Session-2)
 

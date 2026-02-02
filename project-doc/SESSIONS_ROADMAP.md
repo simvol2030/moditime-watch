@@ -10,11 +10,11 @@
 | Метрика | Значение |
 |---------|----------|
 | **Всего задач** | 77 |
-| **Выполнено** | 69 (90%) |
-| **Осталось** | 8 (10%) |
-| **Текущая сессия** | Session-11 (Media & Layout) |
+| **Выполнено** | 74 (96%) |
+| **Осталось** | 3 (4%) |
+| **Текущая сессия** | Session-12 (Communication & UX) |
 | **Всего сессий** | 12 |
-| **Завершено сессий** | 10 (83%) |
+| **Завершено сессий** | 11 (92%) |
 
 ---
 
@@ -217,24 +217,23 @@
 
 ---
 
-### ⏳ Session-11: Media & Layout Fixes (5 задач)
+### ✅ Session-11: Media & Layout Fixes (5 задач)
 
-**Статус:** PENDING (ready for Developer)
-**Приоритет:** 🟡 MEDIUM
+**Статус:** DONE
+**Дата завершения:** 2025-02-02
 **Зависит от:** Session-8 (pSEO Frontend), Session-1 (Catalog)
 **Источник:** QA validation reports
 
-**Задачи:**
-1. Исправить 404 на product images + добавить fallback image компонент (MEDIUM-1)
-2. Добавить favicon + админка для управления (MEDIUM-5)
-3. Исправить duplicate footer на city pages (CRIT-7)
-4. Исправить Svelte hydration mismatch warning (MEDIUM-3)
-5. Исследовать product page 404, исправить (MEDIUM-6)
+**Что сделано:**
+1. Product images 404 исправлен — switched to picsum.photos, fallback mechanism работает (MEDIUM-1)
+2. Favicon добавлен — фирменная буква "M" (золото на тёмном), inline SVG (MEDIUM-5)
+3. Duplicate footer исправлен — isCityPage check в +layout.svelte (CRIT-7)
+4. Hydration mismatch исправлен — removed destructuring в +page.svelte (MEDIUM-3)
+5. Product pages доступны — verified working, no 404 (MEDIUM-6)
 
 **Roadmap:** `project-doc/session-11-media-layout/roadmap.md`
 
-**Описание:**
-Исправить баги медиа-контента и layout структуры, которые ухудшают UX и могут привести к проблемам в будущем.
+**QA Validation:** Quick QA passed — tech + UX subagents confirmed all 5 fixes working
 
 ---
 
@@ -271,7 +270,7 @@ Session-2 (независимая) → ✅ DONE
                     └── QA Validation → 19 bugs found → Bugfix Sessions:
                             ├── Session-9 (Critical SEO) → ✅ DONE
                             ├── Session-10 (Critical Admin) → ✅ DONE
-                            ├── Session-11 (Media & Layout) → ⏳ PENDING
+                            ├── Session-11 (Media & Layout) → ✅ DONE
                             └── Session-12 (Communication & UX) → ⏳ PENDING
 ```
 
@@ -302,9 +301,9 @@ Session-2 (независимая) → ✅ DONE
 | Session-8 | 9 | ✅ DONE | 2025-02-02 |
 | Session-9 | 6 | ✅ DONE | 2025-02-02 |
 | Session-10 | 5 | ✅ DONE | 2025-02-02 |
-| **Session-11** | **5** | **⏳ PENDING** | — |
+| Session-11 | 5 | ✅ DONE | 2025-02-02 |
 | **Session-12** | **3** | **⏳ PENDING** | — |
-| **ИТОГО** | **77** | **69 DONE / 8 PENDING** | **90%** |
+| **ИТОГО** | **77** | **74 DONE / 3 PENDING** | **96%** |
 
 ---
 
@@ -326,18 +325,18 @@ Session-2 (независимая) → ✅ DONE
 - ✅ Админка для управления pSEO контентом — Session-7 DONE
 - ✅ Frontend: отдельные layouts для городов, rich content, sitemap index, JSON-LD — Session-8 DONE
 
-**Фаза 4: Bugfixes & Polish (Sessions 9-12)** → 🔄 В ПРОЦЕССЕ (2/4 завершено)
+**Фаза 4: Bugfixes & Polish (Sessions 9-12)** → 🔄 В ПРОЦЕССЕ (3/4 завершено)
 - ✅ Critical SEO fixes (grammar) — Session-9 DONE
 - ✅ Critical Admin pSEO fixes (100 cities seed) — Session-10 DONE
-- ⏳ Media & Layout fixes (images fallback, favicon, footer, hydration) — Session-11 PENDING
+- ✅ Media & Layout fixes (images fallback, favicon, footer, hydration) — Session-11 DONE
 - ⏳ Communication & UX (Telegram, phone callback, drag-and-drop) — Session-12 PENDING
 
 **После завершения Session-12 — проект готов на 100%!**
 
 ---
 
-**Версия:** 3.2
+**Версия:** 3.3
 **Создано:** 2025-02-01
 **Обновлено:** 2025-02-02
-**Для Developer:** Session-10 завершена. Начни с Session-11 (Media & Layout Fixes) — MEDIUM PRIORITY
-**Для Moderator:** 69 из 77 задач выполнено (90%), осталось 8 задач (2 bugfix сессии)
+**Для Developer:** Session-11 завершена. Начни с Session-12 (Communication & UX) — MEDIUM PRIORITY, ПОСЛЕДНЯЯ СЕССИЯ!
+**Для Moderator:** 74 из 77 задач выполнено (96%), осталось 3 задачи (1 bugfix сессия) — проект на 96%!
