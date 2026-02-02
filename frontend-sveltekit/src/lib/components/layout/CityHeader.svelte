@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { toggleTheme, initializeTheme } from '$lib/stores/ui.svelte';
 	import { onMount } from 'svelte';
 	import { getNavigationHref } from '$lib/types/navigation';
@@ -11,6 +12,9 @@
 		siteConfig?: Record<string, string>;
 		cityNavItems?: { label: string; href: string; isMainDomainOnly?: boolean }[];
 	} = $props();
+
+	const cityName = $derived(($page.data as any)?.city?.name || '');
+	const citySlug = $derived(($page.data as any)?.city?.slug || '');
 
 	const phone = $derived(siteConfig.contact_phone || '+7 (495) 120-00-00');
 	const phoneHref = $derived('tel:' + phone.replace(/[\s()-]/g, ''));
@@ -40,6 +44,13 @@
 			<span class="site-logo__wordmark">Moditimewatch</span>
 			<span class="site-logo__tagline">Fine Time Delivery</span>
 		</a>
+
+		<!-- City name badge -->
+		{#if cityName}
+			<a href="/city/{citySlug}" class="city-header__city-badge">
+				Часы в {cityName}
+			</a>
+		{/if}
 
 		<!-- Back to main catalog -->
 		<a href="/" class="city-header__back">
@@ -138,6 +149,23 @@
 		letter-spacing: 0.15em;
 		opacity: 0.6;
 		margin-top: 2px;
+	}
+
+	.city-header__city-badge {
+		display: inline-block;
+		padding: var(--space-2xs) var(--space-sm);
+		background: var(--color-primary);
+		color: var(--color-white);
+		border-radius: var(--radius-sm);
+		font-size: 0.8125rem;
+		font-weight: 600;
+		text-decoration: none;
+		white-space: nowrap;
+		transition: background-color var(--transition-fast);
+	}
+
+	.city-header__city-badge:hover {
+		background: var(--color-primary-dark, #1a4a8a);
 	}
 
 	.city-header__back {

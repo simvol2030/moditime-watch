@@ -1,3 +1,9 @@
-# allow crawling everything by default
+# Moditime Watch - robots.txt
 User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /api/
+Disallow: /checkout/
+Disallow: /cart/
+Disallow: /auth/
+
+Sitemap: https://moditime-watch.ru/sitemap.xml

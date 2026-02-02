@@ -18,7 +18,7 @@
 		<div class="container city-hero__content">
 			<h1 class="city-hero__title">{data.hero.title}</h1>
 			<p class="city-hero__subtitle">{data.hero.subtitle}</p>
-			
+
 			<div class="city-hero__widget">
 				<WatchSearchWidget />
 			</div>
@@ -47,33 +47,100 @@
 		</div>
 	</section>
 
-	<!-- Articles Grid -->
-	<section class="section city-articles">
-		<div class="container">
-			<div class="section-intro">
-				<span class="section-eyebrow">Журнал</span>
-				<h2 class="section-title">Часовая жизнь {data.city.nameGenitive}</h2>
-			</div>
+	<!-- Articles by Category -->
+	{#if data.categorySections.length > 0}
+		{#each data.categorySections as section}
+			<section class="section city-articles">
+				<div class="container">
+					<div class="section-intro">
+						<span class="section-eyebrow">{section.name}</span>
+						<h2 class="section-title">{section.name} в {data.city.namePrepositional}</h2>
+					</div>
 
-			<div class="articles-grid">
-				{#each data.articles as article}
-					<article class="article-card">
-						<a href="/city/{data.city.slug}/{article.slug}" class="article-card__link">
-							<div class="article-card__image">
-								<img src={article.image} alt={article.title} />
-							</div>
-							<div class="article-card__content">
-								<span class="article-card__date">{article.date}</span>
-								<h3 class="article-card__title">{article.title}</h3>
-								<p class="article-card__excerpt">{article.excerpt}</p>
-								<span class="article-card__more">Читать далее →</span>
-							</div>
-						</a>
-					</article>
-				{/each}
+					<div class="articles-grid">
+						{#each section.articles as article}
+							<article class="article-card">
+								<a href="/city/{data.city.slug}/{article.slug}" class="article-card__link">
+									<div class="article-card__image">
+										<img src={article.image} alt={article.title} />
+									</div>
+									<div class="article-card__content">
+										<div class="article-card__meta">
+											<span class="article-card__date">{article.date}</span>
+											{#if article.readTime}
+												<span class="article-card__read-time">{article.readTime} мин</span>
+											{/if}
+										</div>
+										<h3 class="article-card__title">{article.title}</h3>
+										<p class="article-card__excerpt">{article.excerpt}</p>
+										<span class="article-card__more">Читать далее &rarr;</span>
+									</div>
+								</a>
+							</article>
+						{/each}
+					</div>
+				</div>
+			</section>
+		{/each}
+	{:else if data.articles.length > 0}
+		<!-- Fallback: flat article list if no categories -->
+		<section class="section city-articles">
+			<div class="container">
+				<div class="section-intro">
+					<span class="section-eyebrow">Журнал</span>
+					<h2 class="section-title">Часовая жизнь {data.city.nameGenitive}</h2>
+				</div>
+
+				<div class="articles-grid">
+					{#each data.articles as article}
+						<article class="article-card">
+							<a href="/city/{data.city.slug}/{article.slug}" class="article-card__link">
+								<div class="article-card__image">
+									<img src={article.image} alt={article.title} />
+								</div>
+								<div class="article-card__content">
+									<div class="article-card__meta">
+										<span class="article-card__date">{article.date}</span>
+										{#if article.readTime}
+											<span class="article-card__read-time">{article.readTime} мин</span>
+										{/if}
+									</div>
+									<h3 class="article-card__title">{article.title}</h3>
+									<p class="article-card__excerpt">{article.excerpt}</p>
+									<span class="article-card__more">Читать далее &rarr;</span>
+								</div>
+							</a>
+						</article>
+					{/each}
+				</div>
 			</div>
-		</div>
-	</section>
+		</section>
+	{/if}
+
+	<!-- Pagination -->
+	{#if data.pagination.totalPages > 1}
+		<section class="section pagination-section">
+			<div class="container">
+				<nav class="pagination" aria-label="Навигация по страницам">
+					{#if data.pagination.currentPage > 1}
+						<a href="/city/{data.city.slug}?page={data.pagination.currentPage - 1}" class="pagination__link pagination__prev">&larr; Назад</a>
+					{/if}
+
+					{#each Array.from({ length: data.pagination.totalPages }, (_, i) => i + 1) as pageNum}
+						{#if pageNum === data.pagination.currentPage}
+							<span class="pagination__link pagination__current">{pageNum}</span>
+						{:else}
+							<a href="/city/{data.city.slug}?page={pageNum}" class="pagination__link">{pageNum}</a>
+						{/if}
+					{/each}
+
+					{#if data.pagination.currentPage < data.pagination.totalPages}
+						<a href="/city/{data.city.slug}?page={data.pagination.currentPage + 1}" class="pagination__link pagination__next">Вперед &rarr;</a>
+					{/if}
+				</nav>
+			</div>
+		</section>
+	{/if}
 </main>
 
 <style>
@@ -177,9 +244,35 @@
 		background-color: var(--color-border);
 	}
 
+	/* Section Intro */
+	.section-intro {
+		text-align: center;
+		margin-bottom: var(--space-2xl);
+	}
+
+	.section-eyebrow {
+		display: block;
+		font-size: var(--font-size-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-primary);
+		font-weight: 600;
+		margin-bottom: var(--space-xs);
+	}
+
+	.section-title {
+		font-size: var(--font-size-h2);
+		color: var(--color-text);
+		line-height: var(--line-height-tight);
+	}
+
 	/* Articles Grid */
 	.section {
 		padding: var(--space-3xl) 0;
+	}
+
+	.city-articles + .city-articles {
+		padding-top: 0;
 	}
 
 	.articles-grid {
@@ -199,6 +292,12 @@
 	.article-card:hover {
 		transform: translateY(-4px);
 		box-shadow: var(--shadow-md);
+	}
+
+	.article-card__link {
+		text-decoration: none;
+		color: inherit;
+		display: block;
 	}
 
 	.article-card__image {
@@ -224,9 +323,25 @@
 		gap: var(--space-sm);
 	}
 
+	.article-card__meta {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
 	.article-card__date {
 		font-size: var(--font-size-caption);
 		color: var(--color-text-muted);
+	}
+
+	.article-card__read-time {
+		font-size: var(--font-size-caption);
+		color: var(--color-text-muted);
+	}
+
+	.article-card__read-time::before {
+		content: '\00B7';
+		margin-right: var(--space-xs);
 	}
 
 	.article-card__title {
@@ -251,7 +366,57 @@
 		margin-top: var(--space-xs);
 	}
 
+	/* Pagination */
+	.pagination-section {
+		padding-top: 0;
+	}
+
+	.pagination {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-xs);
+	}
+
+	.pagination__link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 40px;
+		height: 40px;
+		padding: 0 var(--space-sm);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		color: var(--color-text);
+		text-decoration: none;
+		font-size: var(--font-size-body-sm);
+		transition: background-color var(--transition-fast), border-color var(--transition-fast);
+	}
+
+	.pagination__link:hover {
+		background: var(--color-surface);
+		border-color: var(--color-primary);
+	}
+
+	.pagination__current {
+		background: var(--color-primary);
+		color: var(--color-white);
+		border-color: var(--color-primary);
+	}
+
 	@media (max-width: 768px) {
+		.city-hero {
+			min-height: 400px;
+		}
+
+		.city-hero__title {
+			font-size: var(--font-size-h1);
+		}
+
+		.city-hero__subtitle {
+			font-size: var(--font-size-body);
+		}
+
 		.delivery-card {
 			flex-direction: column;
 			gap: var(--space-md);

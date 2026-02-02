@@ -7,8 +7,9 @@ export const load: PageServerLoad = async ({ params }) => {
 	if (!article) throw error(404, 'Article not found');
 
 	const cities = queries.getAllCitiesForSelect.all() as Array<{ id: number; name: string }>;
+	const categories = queries.getAllCityArticleCategoriesForSelect.all() as Array<{ id: number; name: string }>;
 
-	return { article, cities };
+	return { article, cities, categories };
 };
 
 export const actions: Actions = {
@@ -22,9 +23,15 @@ export const actions: Actions = {
 		const content = formData.get('content')?.toString() || '';
 		const image_url = formData.get('image_url')?.toString() || '';
 		const template_type = formData.get('template_type')?.toString() || 'standard';
+		const meta_title = formData.get('meta_title')?.toString() || '';
+		const meta_description = formData.get('meta_description')?.toString() || '';
+		const category_id_raw = formData.get('category_id')?.toString() || '';
+		const category_id = category_id_raw ? parseInt(category_id_raw, 10) : null;
+		const read_time_raw = formData.get('read_time')?.toString() || '';
+		const read_time = read_time_raw ? parseInt(read_time_raw, 10) : null;
 		const is_published = formData.get('is_published') ? 1 : 0;
 
-		const data = { city_id, slug, title, excerpt, content, image_url, template_type, is_published };
+		const data = { city_id, slug, title, excerpt, content, image_url, template_type, meta_title, meta_description, category_id, read_time, is_published };
 
 		if (!city_id || !slug || !title) {
 			return fail(400, { error: 'City, slug, and title are required', data });
@@ -40,6 +47,10 @@ export const actions: Actions = {
 				content: content || null,
 				image_url: image_url || null,
 				template_type,
+				meta_title: meta_title || null,
+				meta_description: meta_description || null,
+				category_id,
+				read_time,
 				is_published
 			});
 		} catch (error: any) {

@@ -19,21 +19,45 @@
 	let activeFilters = $state<CatalogFilter>(data.filtersContent.filters);
 	let filtersOpen = $state(false);
 
+	// Build URL from current filter/sort state and navigate
+	function navigateWithParams(overrides: Record<string, string | undefined> = {}) {
+		const params = new URLSearchParams();
+
+		const sort = overrides.sort ?? currentSort;
+		if (sort && sort !== 'popular') params.set('sort', sort);
+
+		const filters = overrides._filters
+			? JSON.parse(overrides._filters) as CatalogFilter
+			: activeFilters;
+
+		if (filters.brands.length > 0) params.set('brand', filters.brands.join(','));
+		if (filters.availability.length > 0) params.set('availability', filters.availability.join(','));
+		if (filters.materials.length > 0) params.set('material', filters.materials.join(','));
+		if (filters.mechanisms.length > 0) params.set('mechanism', filters.mechanisms.join(','));
+		if (filters.scenarios.length > 0) params.set('scenario', filters.scenarios.join(','));
+		if (filters.priceRange.min > 0) params.set('minPrice', String(filters.priceRange.min));
+		if (filters.priceRange.max < 10000000) params.set('maxPrice', String(filters.priceRange.max));
+
+		const page = overrides.page ? parseInt(overrides.page) : undefined;
+		if (page && page > 1) params.set('page', String(page));
+
+		const qs = params.toString();
+		goto(`/catalog${qs ? '?' + qs : ''}`, { invalidateAll: true });
+	}
+
 	// Event handlers
 	function handleSortChange(value: string) {
 		currentSort = value;
-		console.log('Sort changed to:', value);
-		// TODO: Trigger data reload with new sort
+		navigateWithParams({ sort: value });
 	}
 
 	function handleViewChange(mode: 'grid' | 'list') {
 		viewMode = mode;
-		console.log('View mode changed to:', mode);
 	}
 
 	function handleFiltersToggle() {
 		filtersOpen = !filtersOpen;
-		document.body.style.overflow = filtersOpen ? 'hidden' : ''; // Prevent scroll on mobile
+		document.body.style.overflow = filtersOpen ? 'hidden' : '';
 	}
 
 	function handleFiltersClose() {
@@ -50,26 +74,36 @@
 			mechanisms: [],
 			scenarios: []
 		};
-		console.log('Filters reset');
-		// TODO: Trigger data reload with empty filters
+		navigateWithParams({ _filters: JSON.stringify(activeFilters) });
 	}
 
 	function handleFiltersApply(filters: CatalogFilter) {
 		activeFilters = filters;
 		filtersOpen = false;
 		document.body.style.overflow = '';
-		console.log('Filters applied:', filters);
-		// TODO: Trigger data reload with new filters
+		navigateWithParams({ _filters: JSON.stringify(filters) });
 	}
 
 	function handleRemoveFilter(filterId: string) {
-		console.log('Remove filter:', filterId);
-		// TODO: Remove filter from activeFilters
+		const [type, value] = filterId.split(':');
+		const updated = { ...activeFilters };
+
+		if (type === 'brand') updated.brands = updated.brands.filter((v) => v !== value);
+		else if (type === 'availability') updated.availability = updated.availability.filter((v) => v !== value);
+		else if (type === 'material') updated.materials = updated.materials.filter((v) => v !== value);
+		else if (type === 'mechanism') updated.mechanisms = updated.mechanisms.filter((v) => v !== value);
+		else if (type === 'scenario') updated.scenarios = updated.scenarios.filter((v) => v !== value);
+		else if (type === 'price') updated.priceRange = { min: 0, max: 10000000 };
+
+		activeFilters = updated;
+		navigateWithParams({ _filters: JSON.stringify(updated) });
 	}
 
 	function handleLoadMore() {
-		console.log('Load more products');
-		// TODO: Load next page of products
+		const nextPage = data.currentPage + 1;
+		if (nextPage <= data.totalPages) {
+			navigateWithParams({ page: String(nextPage) });
+		}
 	}
 
 	function handleAddToCart(product: CatalogProduct) {

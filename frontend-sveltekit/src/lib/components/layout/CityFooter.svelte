@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { getNavigationHref } from '$lib/types/navigation';
 
 	let {
@@ -14,6 +15,10 @@
 	const copyright = $derived(siteConfig.copyright_text || `\u00A9 ${new Date().getFullYear()} Moditimewatch. Все права защищены.`);
 	const phoneHref = $derived('tel:' + phone.replace(/[\s()-]/g, ''));
 	const telegram = $derived(siteConfig.social_telegram || 'https://t.me/moditimewatch');
+
+	const cityName = $derived(($page.data as any)?.city?.name || '');
+	const deliveryDays = $derived(($page.data as any)?.delivery?.days || 0);
+	const deliveryPrice = $derived(($page.data as any)?.delivery?.price || '');
 </script>
 
 <footer class="city-footer">
@@ -30,6 +35,13 @@
 			<a href="mailto:{email}" class="city-footer__link">{email}</a>
 			<a href={telegram} target="_blank" rel="noopener noreferrer" class="city-footer__link">Telegram</a>
 		</div>
+
+		{#if cityName && deliveryDays}
+			<div class="city-footer__delivery">
+				<span class="city-footer__delivery-label">Доставка в {cityName}:</span>
+				<span class="city-footer__delivery-value">{deliveryDays} дн., {deliveryPrice}</span>
+			</div>
+		{/if}
 
 		<div class="city-footer__catalog">
 			<a href="/" class="city-footer__catalog-link">Перейти на главный каталог &rarr;</a>
@@ -108,6 +120,22 @@
 
 	.city-footer__link:hover {
 		color: var(--color-primary);
+	}
+
+	.city-footer__delivery {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		font-size: 0.875rem;
+	}
+
+	.city-footer__delivery-label {
+		color: var(--color-text-muted);
+	}
+
+	.city-footer__delivery-value {
+		color: var(--color-primary);
+		font-weight: 600;
 	}
 
 	.city-footer__catalog-link {

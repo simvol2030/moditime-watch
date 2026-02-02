@@ -56,8 +56,14 @@ export const actions: Actions = {
 		const comment = formData.get('comment')?.toString() || '';
 		const orderId = Number(params.id);
 
+		const VALID_STATUSES = ['pending', 'confirmed', 'paid', 'shipped', 'delivered', 'cancelled'] as const;
+
 		if (!newStatus) {
 			return fail(400, { error: 'Status is required' });
+		}
+
+		if (!VALID_STATUSES.includes(newStatus as typeof VALID_STATUSES[number])) {
+			return fail(400, { error: 'Invalid status value' });
 		}
 
 		const order = queries.adminGetOrder.get(orderId) as Order | undefined;

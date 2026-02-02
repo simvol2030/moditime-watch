@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import SeoManager from '$lib/components/seo/SeoManager.svelte';
 	import Container from '$lib/components/ui/Container.svelte';
 	import { cart } from '$lib/stores/cart.svelte';
+
+	const orderNumber = $derived($page.url.searchParams.get('order'));
 
 	const seo = {
 		title: 'Заказ оформлен',
@@ -42,6 +45,9 @@
 		<div class="success-content">
 			<div class="success-icon">✓</div>
 			<h1 class="success-title">Заказ успешно оформлен!</h1>
+			{#if orderNumber}
+				<p class="success-order-number">Номер заказа: <strong>{orderNumber}</strong></p>
+			{/if}
 			<p class="success-description">
 				Благодарим за выбор Moditimewatch. Ваш заказ принят в обработку, и наш персональный
 				консьерж свяжется с вами в ближайшее время для подтверждения деталей.
@@ -133,6 +139,15 @@
 	.success-title {
 		font-size: var(--font-size-h1);
 		color: var(--color-text);
+	}
+
+	.success-order-number {
+		font-size: var(--font-size-body-lg);
+		color: var(--color-text-secondary);
+		background-color: var(--color-surface);
+		padding: var(--space-sm) var(--space-lg);
+		border-radius: var(--radius-md);
+		border: 1px solid var(--color-border);
 	}
 
 	.success-description {

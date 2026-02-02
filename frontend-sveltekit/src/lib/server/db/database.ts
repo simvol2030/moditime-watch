@@ -603,7 +603,9 @@ const createQueries = () => ({
   getProductHighlights: db.prepare('SELECT icon, title, description FROM product_highlights WHERE product_id = ? ORDER BY position'),
   getProductTabs: db.prepare('SELECT tab_id as id, tab_label as label, content FROM product_tabs WHERE product_id = ? ORDER BY position'),
   getProductBenefits: db.prepare('SELECT id, icon_svg as icon, title, description FROM product_benefits WHERE product_id = ? ORDER BY position'),
-  getProductOptions: db.prepare('SELECT option_type, option_label, option_value, option_value_label, price_modifier, is_default FROM product_options WHERE product_id = ? ORDER BY position'),
+  getProductOptions: db.prepare('SELECT id, option_type, option_label, option_value, option_value_label, price_modifier, is_default FROM product_options WHERE product_id = ? ORDER BY position'),
+  addProductOption: db.prepare('INSERT INTO product_options (product_id, option_type, option_label, option_value, option_value_label, price_modifier, is_default, position) VALUES (@product_id, @option_type, @option_label, @option_value, @option_value_label, @price_modifier, @is_default, @position)'),
+  deleteProductOption: db.prepare('DELETE FROM product_options WHERE id = ?'),
   getProductReviews: db.prepare('SELECT id, author_name, author_role, author_avatar_url, rating, content, delivery_info, is_verified, created_at FROM reviews WHERE product_id = ? AND is_active = 1 ORDER BY created_at DESC LIMIT ?'),
   getRelatedProducts: db.prepare(`
     SELECT p.*, b.name as brand_name,

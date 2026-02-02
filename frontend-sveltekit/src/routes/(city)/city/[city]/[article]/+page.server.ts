@@ -14,6 +14,8 @@ interface CityArticleRow {
 	image_url: string | null;
 	meta_title: string | null;
 	meta_description: string | null;
+	category_id: number | null;
+	read_time: number | null;
 	is_published: number;
 	published_at: string | null;
 	updated_at: string | null;
@@ -25,6 +27,21 @@ interface CityArticleRow {
 	name_accusative: string | null;
 }
 
+interface MediaRow {
+	id: number;
+	article_id: number;
+	media_type: string;
+	url: string;
+	caption: string | null;
+	position: number;
+}
+
+interface TagRow {
+	id: number;
+	name: string;
+	slug: string;
+}
+
 interface RelatedArticleRow {
 	id: number;
 	slug: string;
@@ -32,9 +49,16 @@ interface RelatedArticleRow {
 	excerpt: string | null;
 	image_url: string | null;
 	published_at: string | null;
+	city_name: string;
 }
 
-export const load: PageServerLoad = async ({ params }) => {
+interface CategoryRow {
+	id: number;
+	name: string;
+	slug: string;
+}
+
+export const load: PageServerLoad = async ({ params, setHeaders }) => {
 	const { city: citySlug, article: articleSlug } = params;
 
 	// Get article with city info
@@ -46,12 +70,22 @@ export const load: PageServerLoad = async ({ params }) => {
 		});
 	}
 
-	// Get related articles from the same city (excluding current)
-	const relatedArticlesRaw = queries.getCityArticles.all(article.city_id, 4, 0) as RelatedArticleRow[];
-	const relatedArticles = relatedArticlesRaw
-		.filter((a) => a.slug !== articleSlug)
-		.slice(0, 3)
-		.map((a, index) => ({
+	// Cache-Control: 24 hours for articles
+	setHeaders({ 'Cache-Control': 'public, max-age=86400' });
+
+	// Load media from city_article_media
+	const media = queries.listCityArticleMedia.all(article.id) as MediaRow[];
+
+	// Load tags
+	const tags = queries.getCityArticleTags.all(article.id) as TagRow[];
+
+	// Load related articles from city_article_related table (not random)
+	const relatedFromDb = queries.getRelatedCityArticles.all(article.id) as RelatedArticleRow[];
+
+	// If no related articles in DB, fall back to same-city articles
+	let relatedArticles;
+	if (relatedFromDb.length > 0) {
+		relatedArticles = relatedFromDb.map((a, index) => ({
 			id: String(a.id),
 			title: a.title,
 			excerpt: a.excerpt || '',
@@ -66,20 +100,51 @@ export const load: PageServerLoad = async ({ params }) => {
 					})
 				: ''
 		}));
+	} else {
+		const fallbackRaw = queries.getCityArticles.all(article.city_id, 4, 0) as any[];
+		relatedArticles = fallbackRaw
+			.filter((a: any) => a.slug !== articleSlug)
+			.slice(0, 3)
+			.map((a: any, index: number) => ({
+				id: String(a.id),
+				title: a.title,
+				excerpt: a.excerpt || '',
+				image: a.image_url || `https://picsum.photos/seed/related-${index}/400/300`,
+				slug: a.slug,
+				href: `/city/${citySlug}/${a.slug}`,
+				date: a.published_at
+					? new Date(a.published_at).toLocaleDateString('ru-RU', {
+							day: '2-digit',
+							month: '2-digit',
+							year: 'numeric'
+						})
+					: ''
+			}));
+	}
 
-	// Build breadcrumbs
+	// Get category name for breadcrumbs
+	let categoryName = '';
+	if (article.category_id) {
+		const cat = queries.getCityArticleCategory.get(article.category_id) as CategoryRow | undefined;
+		if (cat) categoryName = cat.name;
+	}
+
+	// Build breadcrumbs: Главная → Город → Категория (optional) → Статья
 	const breadcrumbs = [
 		{ label: 'Главная', href: '/' },
-		{ label: article.city_name, href: `/city/${article.city_slug}` },
-		{ label: article.title, href: `/city/${article.city_slug}/${article.slug}` }
+		{ label: article.city_name, href: `/city/${article.city_slug}` }
 	];
+	if (categoryName) {
+		breadcrumbs.push({ label: categoryName, href: `/city/${article.city_slug}` });
+	}
+	breadcrumbs.push({ label: article.title, href: `/city/${article.city_slug}/${article.slug}` });
 
-	// Build SEO props (title without suffix - SeoManager adds " | Moditimewatch")
+	// Build SEO props
 	const canonicalUrl = `https://moditime-watch.ru/city/${article.city_slug}/${article.slug}`;
 	const articleImage = article.image_url || 'https://moditime-watch.ru/og-default.jpg';
 
 	// Generate JSON-LD Article schema
-	const jsonLd = generateArticleSchema({
+	const articleJsonLd = generateArticleSchema({
 		headline: article.title,
 		description: article.excerpt || '',
 		image: articleImage,
@@ -90,6 +155,18 @@ export const load: PageServerLoad = async ({ params }) => {
 		url: canonicalUrl
 	});
 
+	// BreadcrumbList JSON-LD
+	const breadcrumbJsonLd = {
+		'@context': 'https://schema.org',
+		'@type': 'BreadcrumbList',
+		itemListElement: breadcrumbs.map((crumb, index) => ({
+			'@type': 'ListItem',
+			position: index + 1,
+			name: crumb.label,
+			item: `https://moditime-watch.ru${crumb.href}`
+		}))
+	};
+
 	const seo: SeoProps = {
 		title: article.meta_title || `${article.title} | Часы в ${article.name_prepositional || article.city_name}`,
 		description: article.meta_description || article.excerpt || `${article.title} - полезная информация о премиальных часах для жителей ${article.name_genitive || article.city_name}`,
@@ -97,9 +174,10 @@ export const load: PageServerLoad = async ({ params }) => {
 		openGraph: {
 			title: article.title,
 			description: article.excerpt || undefined,
-			image: articleImage
+			image: articleImage,
+			type: 'article'
 		},
-		jsonLd // Pass JSON-LD through seo prop for SeoManager to render
+		jsonLd: [articleJsonLd, breadcrumbJsonLd]
 	};
 
 	return {
@@ -110,6 +188,8 @@ export const load: PageServerLoad = async ({ params }) => {
 			excerpt: article.excerpt || '',
 			content: article.content || '',
 			image: article.image_url || 'https://picsum.photos/seed/article-main/800/400',
+			readTime: article.read_time,
+			categoryName,
 			publishedAt: article.published_at
 				? new Date(article.published_at).toLocaleDateString('ru-RU', {
 						day: '2-digit',
@@ -127,6 +207,18 @@ export const load: PageServerLoad = async ({ params }) => {
 		},
 		seo,
 		breadcrumbs,
+		media: media.map((m) => ({
+			id: m.id,
+			type: m.media_type,
+			url: m.url,
+			caption: m.caption || '',
+			position: m.position
+		})),
+		tags: tags.map((t) => ({
+			id: t.id,
+			name: t.name,
+			slug: t.slug
+		})),
 		relatedArticles
 	};
 };
