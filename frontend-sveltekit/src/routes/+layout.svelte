@@ -14,8 +14,9 @@
 	// ИСПРАВЛЕНИЕ: Получаем data из load функции!
 	let { children, data }: { children, any; data: LayoutData } = $props();
 
-	// Check if current page is admin page
+	// Check if current page is admin or city page
 	const isAdminPage = $derived($page.url.pathname.startsWith('/admin'));
+	const isCityPage = $derived($page.url.pathname.startsWith('/city/'));
 
 	// Analytics config from environment variables (for production)
 	const analyticsConfig: AnalyticsConfig | undefined =
@@ -46,16 +47,12 @@
 	analytics={analyticsConfig}
 />
 
-{#if !isAdminPage}
-	<!-- Передаем данные из БД -->
+{#if !isAdminPage && !isCityPage}
 	<SiteHeader navigationItems={data.navigationItems} siteConfig={data.siteConfig} />
 {/if}
 
-<main>
-	{@render children?.()}
-</main>
+{@render children?.()}
 
-{#if !isAdminPage}
-	<!-- Передаем данные из БД -->
+{#if !isAdminPage && !isCityPage}
 	<SiteFooter footerSections={data.footerSections} siteConfig={data.siteConfig} />
 {/if}
