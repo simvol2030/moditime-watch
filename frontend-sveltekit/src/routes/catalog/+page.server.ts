@@ -207,7 +207,9 @@ export const load: PageServerLoad = async ({ url }) => {
 		]
 	};
 
-	// Telegram content
+	// Telegram content (Session-12: use config values)
+	const telegramGroupEnabled = (queries.getConfigByKey.get('telegram_group_enabled') as any)?.value === 'true';
+	const telegramGroupUrl = (queries.getConfigByKey.get('telegram_group_url') as any)?.value || 'https://t.me/moditime_watch';
 	const telegramContent = {
 		eyebrow: 'Подписка',
 		title: 'Канал Moditimewatch в Telegram',
@@ -219,8 +221,8 @@ export const load: PageServerLoad = async ({ url }) => {
 			'Короткие обзоры новинок и советы коллекционеров'
 		],
 		ctaText: 'Подписаться',
-		ctaHref: 'https://t.me/moditimewatch',
-		channelUrl: 'https://t.me/s/moditimewatch'
+		ctaHref: telegramGroupUrl,
+		channelUrl: telegramGroupUrl
 	};
 
 	// Sort options
@@ -341,6 +343,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	return {
 		heroContent,
 		telegramContent,
+		telegramGroupEnabled,
 		controlsContent,
 		filtersContent,
 		products,

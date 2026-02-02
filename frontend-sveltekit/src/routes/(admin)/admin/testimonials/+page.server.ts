@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { queries } from '$lib/server/db/database';
+import { queries, db } from '$lib/server/db/database';
 
 interface Testimonial {
 	id: number;
@@ -32,6 +32,25 @@ export const actions: Actions = {
 			return { success: true };
 		} catch (error) {
 			return fail(500, { error: 'Failed to delete testimonial' });
+		}
+	},
+
+	reorder: async ({ request }) => {
+		const formData = await request.formData();
+		const idsJson = formData.get('ids')?.toString();
+		if (!idsJson) return fail(400, { error: 'No IDs provided' });
+
+		try {
+			const ids = JSON.parse(idsJson) as number[];
+			const reorder = db.transaction(() => {
+				for (let i = 0; i < ids.length; i++) {
+					queries.reorderTestimonial.run({ id: ids[i], display_order: i + 1 });
+				}
+			});
+			reorder();
+			return { success: true };
+		} catch {
+			return fail(500, { error: 'Failed to reorder testimonials' });
 		}
 	}
 };

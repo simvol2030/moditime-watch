@@ -4,6 +4,7 @@
 	import { toggleTheme, initializeTheme } from '$lib/stores/ui.svelte';
 	import { onMount } from 'svelte';
 	import { getNavigationHref } from '$lib/types/navigation';
+	import CallbackModal from '$lib/components/ui/CallbackModal.svelte';
 
 	let {
 		siteConfig = {},
@@ -19,8 +20,10 @@
 
 	const phone = $derived(siteConfig.contact_phone || '+7 (495) 120-00-00');
 	const phoneHref = $derived('tel:' + phone.replace(/[\s()-]/g, ''));
+	const phoneMode = $derived(siteConfig.phone_mode || 'direct');
 
 	let searchQuery = $state('');
+	let callbackOpen = $state(false);
 
 	onMount(() => {
 		initializeTheme();
@@ -35,6 +38,13 @@
 
 	function handleThemeToggle() {
 		toggleTheme();
+	}
+
+	function handlePhoneClick(e: MouseEvent) {
+		if (phoneMode === 'callback') {
+			e.preventDefault();
+			callbackOpen = true;
+		}
 	}
 </script>
 
@@ -86,7 +96,23 @@
 				</button>
 			</form>
 
-			<a href={phoneHref} class="city-header__phone">{phone}</a>
+			<!-- Desktop: full phone number -->
+			<a href={phoneHref} class="city-header__phone" onclick={handlePhoneClick}>{phone}</a>
+
+			<!-- Mobile: phone icon button (visible on small screens) -->
+			<button
+				class="icon-button city-header__phone-icon"
+				type="button"
+				aria-label="Позвонить"
+				onclick={(e) => {
+					if (phoneMode === 'callback') { callbackOpen = true; }
+					else { window.location.href = phoneHref; }
+				}}
+			>
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+				</svg>
+			</button>
 
 			<button
 				class="icon-button theme-toggle"
@@ -105,6 +131,8 @@
 		</div>
 	</div>
 </header>
+
+<CallbackModal open={callbackOpen} {phone} onclose={() => callbackOpen = false} />
 
 <style>
 	.city-header {
@@ -282,6 +310,11 @@
 	:global([data-theme='light']) .theme-toggle__icon--moon { display: none; }
 	:global([data-theme='dark']) .theme-toggle__icon--sun { display: none; }
 
+	/* Phone icon - hidden on desktop, visible on mobile */
+	.city-header__phone-icon {
+		display: none;
+	}
+
 	@media (max-width: 768px) {
 		.city-header__row {
 			flex-wrap: wrap;
@@ -296,8 +329,13 @@
 			width: 120px;
 		}
 
+		/* Hide full phone text on mobile, show icon instead */
 		.city-header__phone {
 			display: none;
+		}
+
+		.city-header__phone-icon {
+			display: flex;
 		}
 	}
 </style>

@@ -461,6 +461,14 @@ export function seedDatabase() {
     insertConfig.run('social_telegram', 'https://t.me/moditimewatch', 'string', 'Ссылка на Telegram');
     insertConfig.run('copyright_text', '© 2025 Moditimewatch. Все права защищены.', 'string', 'Текст копирайта в футере');
 
+    // Session-12: Telegram Group Link Config
+    insertConfig.run('telegram_group_enabled', 'true', 'boolean', 'Показывать ссылку на Telegram группу');
+    insertConfig.run('telegram_group_url', 'https://t.me/moditime_watch', 'string', 'URL Telegram группы');
+    insertConfig.run('telegram_group_label', 'Telegram группа Moditimewatch', 'string', 'Текст ссылки на Telegram группу');
+
+    // Session-12: Phone Mode Config
+    insertConfig.run('phone_mode', 'direct', 'string', 'Режим телефона: direct (звонок) или callback (форма обратного звонка)');
+
     // Notification Config (Session-5)
     insertConfig.run('telegram_enabled', 'false', 'boolean', 'Telegram уведомления включены');
     insertConfig.run('telegram_bot_token', '', 'string', 'Telegram Bot Token от @BotFather');
@@ -1131,7 +1139,26 @@ const createQueries = () => ({
 
   // Email Log
   insertEmailLog: db.prepare('INSERT INTO email_log (template_key, recipient_email, subject, status, error_message) VALUES (?, ?, ?, ?, ?)'),
-  adminListEmailLogs: db.prepare('SELECT * FROM email_log ORDER BY sent_at DESC LIMIT 50')
+  adminListEmailLogs: db.prepare('SELECT * FROM email_log ORDER BY sent_at DESC LIMIT 50'),
+
+  // ============================================
+  // SESSION-12: CALLBACK REQUESTS
+  // ============================================
+  insertCallbackRequest: db.prepare('INSERT INTO callback_requests (name, phone) VALUES (@name, @phone)'),
+  adminListCallbackRequests: db.prepare('SELECT * FROM callback_requests ORDER BY created_at DESC'),
+  adminUpdateCallbackStatus: db.prepare("UPDATE callback_requests SET status = ? WHERE id = ?"),
+
+  // ============================================
+  // SESSION-12: REORDER (Drag-and-drop)
+  // ============================================
+  reorderNavItem: db.prepare('UPDATE navigation_items SET position = @position WHERE id = @id'),
+  reorderFooterSection: db.prepare('UPDATE footer_sections SET position = @position WHERE id = @id'),
+  reorderFooterLink: db.prepare('UPDATE footer_links SET position = @position WHERE id = @id'),
+  reorderCollection: db.prepare('UPDATE collections SET position = @position WHERE id = @id'),
+  reorderCategory: db.prepare('UPDATE categories SET position = @position WHERE id = @id'),
+  reorderBrand: db.prepare('UPDATE brands SET position = @position WHERE id = @id'),
+  reorderTestimonial: db.prepare('UPDATE testimonials SET display_order = @display_order WHERE id = @id'),
+  reorderCityArticleCategory: db.prepare('UPDATE city_article_categories SET position = @position WHERE id = @id')
 });
 
 // Lazy queries cache

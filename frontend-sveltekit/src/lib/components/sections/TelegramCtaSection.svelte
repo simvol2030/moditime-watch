@@ -13,7 +13,7 @@
 	}: TelegramCtaSectionProps = $props();
 </script>
 
-<!-- HTML структура - точная копия из site/index.html (строки 790-809) -->
+<!-- Session-12: replaced iframe with link to avoid CSP violation -->
 <section class="telegram-cta" id="telegram">
 	<div class="container telegram-cta__grid">
 		<div class="telegram-cta__content">
@@ -33,7 +33,19 @@
 		</div>
 		<div class="telegram-cta__widget gradient-border">
 			<div class="telegram-cta__widget-inner">
-				<iframe title="Moditimewatch Telegram" src={channelUrl} loading="lazy"></iframe>
+				<div class="telegram-cta__link-card">
+					<svg class="telegram-cta__icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<circle cx="24" cy="24" r="24" fill="#229ED9"/>
+						<path d="M33.95 15.56L30.16 33.04C30.16 33.04 29.64 34.36 28.16 33.7L20.62 27.86L20.58 27.84C21.82 26.72 29.72 19.52 30.06 19.2C30.58 18.72 30.24 18.44 29.64 18.8L17.7 26.44L12.82 24.86C12.82 24.86 12.04 24.58 11.96 23.92C11.88 23.26 12.84 22.9 12.84 22.9L32.34 15.28C32.34 15.28 33.95 14.56 33.95 15.56Z" fill="white"/>
+					</svg>
+					<div class="telegram-cta__link-info">
+						<span class="telegram-cta__link-title">Moditimewatch</span>
+						<span class="telegram-cta__link-desc">Telegram канал</span>
+					</div>
+					<a href={channelUrl || ctaHref} class="telegram-cta__link-btn" target="_blank" rel="noopener noreferrer">
+						Открыть в Telegram
+					</a>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -42,15 +54,12 @@
 <style>
 	/* ============================================ */
 	/* Telegram CTA Section Styles                */
-	/* Источник: site/css/homepage.css (449-556)  */
 	/* ============================================ */
 
-	/* Основная секция */
 	.telegram-cta {
 		padding: var(--space-4xl) 0;
 	}
 
-	/* Grid layout (2 колонки на desktop) */
 	.telegram-cta__grid {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -58,7 +67,6 @@
 		align-items: stretch;
 	}
 
-	/* Контент (левая колонка) */
 	.telegram-cta__content {
 		display: flex;
 		flex-direction: column;
@@ -66,7 +74,6 @@
 		animation: fade-up 0.6s ease both;
 	}
 
-	/* Список преимуществ */
 	.telegram-cta__list {
 		margin: 0;
 		padding-left: 20px;
@@ -80,7 +87,6 @@
 		color: var(--color-text-soft);
 	}
 
-	/* Widget контейнер (правая колонка) */
 	.telegram-cta__widget {
 		display: flex;
 		align-items: stretch;
@@ -94,21 +100,67 @@
 		background-color: var(--color-background);
 		height: 100%;
 		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-2xl);
 	}
 
-	.telegram-cta__widget-inner iframe {
-		width: 100%;
-		min-height: 420px;
-		border: none;
+	/* Link card replacing iframe */
+	.telegram-cta__link-card {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-lg);
+		text-align: center;
+		padding: var(--space-xl);
 	}
 
-	/* Gradient border вокруг iframe */
-	/* Источник: site/css/components.css (363-373) */
+	.telegram-cta__icon {
+		width: 80px;
+		height: 80px;
+	}
+
+	.telegram-cta__link-info {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2xs);
+	}
+
+	.telegram-cta__link-title {
+		font-family: var(--font-accent);
+		font-size: 1.25rem;
+		font-weight: 700;
+		color: var(--color-text);
+	}
+
+	.telegram-cta__link-desc {
+		font-size: var(--font-size-body-sm);
+		color: var(--color-text-muted);
+	}
+
+	.telegram-cta__link-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-sm) var(--space-lg);
+		background: #229ED9;
+		color: white;
+		border-radius: var(--radius-md);
+		text-decoration: none;
+		font-weight: 600;
+		font-size: var(--font-size-body-sm);
+		transition: background-color var(--transition-fast);
+	}
+
+	.telegram-cta__link-btn:hover {
+		background: #1a8bc2;
+	}
+
+	/* Gradient border */
 	.gradient-border {
 		position: relative;
 		border-radius: var(--radius-xl);
 		padding: 1px;
-		/* Золотой градиент - адаптация под проект часов */
 		background: linear-gradient(
 			135deg,
 			rgba(212, 175, 55, 0.6),
@@ -121,8 +173,7 @@
 		background-color: var(--color-background);
 	}
 
-	/* Fade-up анимация */
-	/* Источник: site/css/main.css (45-54) */
+	/* Fade-up animation */
 	@keyframes fade-up {
 		from {
 			opacity: 0;
@@ -134,18 +185,15 @@
 		}
 	}
 
-	/* ============================================ */
-	/* Responsive Media Queries                    */
-	/* ============================================ */
-
-	/* Tablet и меньше */
+	/* Responsive */
 	@media (max-width: 768px) {
 		.telegram-cta__grid {
 			grid-template-columns: 1fr;
 		}
 
-		.telegram-cta__widget-inner iframe {
-			min-height: 320px;
+		.telegram-cta__icon {
+			width: 64px;
+			height: 64px;
 		}
 	}
 </style>

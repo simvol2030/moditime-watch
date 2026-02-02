@@ -3,12 +3,16 @@
 	import type { ActionData, PageData } from './$types';
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import ActionButton from '$lib/components/admin/ActionButton.svelte';
+	import DragDropList from '$lib/components/admin/DragDropList.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let editingId = $state<number | null>(null);
 	let showAddForm = $state(false);
 	let selectedMenuType = $state('header_desktop');
+	let reorderMode = $state(false);
+	let reorderFormEl = $state<HTMLFormElement | null>(null);
+	let reorderIdsInput = $state('');
 
 	const menuTypeLabels: Record<string, string> = {
 		header_desktop: 'Header (Desktop)',
@@ -44,9 +48,14 @@
 
 <PageHeader title="Navigation" description="Manage site navigation menus">
 	{#snippet actions()}
-		<ActionButton variant="primary" onclick={() => showAddForm = !showAddForm}>
-			{showAddForm ? 'Cancel' : '+ Add Item'}
+		<ActionButton variant={reorderMode ? 'primary' : 'ghost'} onclick={() => { reorderMode = !reorderMode; if (reorderMode) showAddForm = false; }}>
+			{reorderMode ? 'Exit Reorder' : 'Reorder'}
 		</ActionButton>
+		{#if !reorderMode}
+			<ActionButton variant="primary" onclick={() => showAddForm = !showAddForm}>
+				{showAddForm ? 'Cancel' : '+ Add Item'}
+			</ActionButton>
+		{/if}
 	{/snippet}
 </PageHeader>
 
@@ -106,6 +115,30 @@
 		</form>
 	</div>
 {/if}
+
+{#if reorderMode}
+	<!-- Drag-and-Drop Reorder Mode -->
+	{#each Object.entries(data.grouped) as [menuType, { topLevel }]}
+		<div class="card">
+			<h3>{menuTypeLabels[menuType] || menuType} — Drag to reorder</h3>
+			<DragDropList
+				items={topLevel.map(item => ({ id: item.id, label: item.label, href: item.href }))}
+				onreorder={(ids) => {
+					reorderIdsInput = JSON.stringify(ids);
+					// Auto-submit
+					if (reorderFormEl) {
+						const input = reorderFormEl.querySelector('input[name="ids"]') as HTMLInputElement;
+						if (input) input.value = JSON.stringify(ids);
+						reorderFormEl.requestSubmit();
+					}
+				}}
+			/>
+			<form method="POST" action="?/reorder" use:enhance bind:this={reorderFormEl} class="reorder-form">
+				<input type="hidden" name="ids" value={reorderIdsInput} />
+			</form>
+		</div>
+	{/each}
+{:else}
 
 {#each Object.entries(data.grouped) as [menuType, { topLevel, children }]}
 	<div class="card">
@@ -199,6 +232,7 @@
 		</div>
 	</div>
 {/each}
+{/if}
 
 <style>
 	.card {
@@ -387,5 +421,9 @@
 		gap: 0.25rem;
 		font-size: 0.8125rem;
 		color: #374151;
+	}
+
+	.reorder-form {
+		display: none;
 	}
 </style>

@@ -926,5 +926,20 @@ CREATE INDEX IF NOT EXISTS idx_email_log_status ON email_log(status, sent_at DES
 CREATE INDEX IF NOT EXISTS idx_email_log_recipient ON email_log(recipient_email);
 
 -- ============================================
+-- БЛОК 11: CALLBACK REQUESTS (Session-12)
+-- ============================================
+
+-- Запросы обратного звонка
+CREATE TABLE IF NOT EXISTS callback_requests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  status TEXT DEFAULT 'new', -- 'new', 'processed', 'cancelled'
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_callback_requests_status ON callback_requests(status, created_at DESC);
+
+-- ============================================
 -- КОНЕЦ СХЕМЫ
 -- ============================================
