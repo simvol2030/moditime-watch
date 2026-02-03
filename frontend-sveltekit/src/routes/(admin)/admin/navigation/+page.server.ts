@@ -109,16 +109,16 @@ export const actions: Actions = {
 
 		try {
 			// Get current item
-			const current = db.prepare('SELECT * FROM navigation WHERE id = ?').get(id) as NavItem | undefined;
+			const current = db.prepare('SELECT * FROM navigation_items WHERE id = ?').get(id) as NavItem | undefined;
 			if (!current) return fail(404, { error: 'Item not found' });
 
 			// Find sibling based on direction and parent_id
 			const siblingQuery = current.parent_id !== null
-				? `SELECT * FROM navigation
+				? `SELECT * FROM navigation_items
 				   WHERE menu_type = ? AND parent_id = ? AND position ${direction === 'up' ? '<' : '>'} ?
 				   ORDER BY position ${direction === 'up' ? 'DESC' : 'ASC'}
 				   LIMIT 1`
-				: `SELECT * FROM navigation
+				: `SELECT * FROM navigation_items
 				   WHERE menu_type = ? AND parent_id IS NULL AND position ${direction === 'up' ? '<' : '>'} ?
 				   ORDER BY position ${direction === 'up' ? 'DESC' : 'ASC'}
 				   LIMIT 1`;
@@ -135,14 +135,13 @@ export const actions: Actions = {
 
 			// Swap positions
 			const swap = db.transaction(() => {
-				db.prepare('UPDATE navigation SET position = ? WHERE id = ?').run(sibling.position, current.id);
-				db.prepare('UPDATE navigation SET position = ? WHERE id = ?').run(current.position, sibling.id);
+				db.prepare('UPDATE navigation_items SET position = ? WHERE id = ?').run(sibling.position, current.id);
+				db.prepare('UPDATE navigation_items SET position = ? WHERE id = ?').run(current.position, sibling.id);
 			});
 			swap();
 
 			return { success: true };
-		} catch (err) {
-			console.error('Move action error:', err);
+		} catch {
 			return fail(500, { error: 'Failed to move item' });
 		}
 	}
