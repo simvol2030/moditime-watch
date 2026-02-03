@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { page } from '$app/stores';
+	import { invalidateAll } from '$app/navigation';
 	import type { ActionData, PageData } from './$types';
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import ActionButton from '$lib/components/admin/ActionButton.svelte';
@@ -31,34 +31,18 @@
 		data.allItems.filter(item => item.parent_id === null && item.menu_type === selectedMenuType)
 	);
 
-	// Move functions that submit a hidden form
-	function submitMove(id: number, direction: 'up' | 'down') {
-		const formEl = document.createElement('form');
-		formEl.method = 'POST';
-		formEl.action = '?/move';
-		formEl.style.display = 'none';
+	// Move function using fetch to avoid page reload
+	async function submitMove(id: number, direction: 'up' | 'down') {
+		const formData = new FormData();
+		formData.append('id', String(id));
+		formData.append('direction', direction);
 
-		const idInput = document.createElement('input');
-		idInput.type = 'hidden';
-		idInput.name = 'id';
-		idInput.value = String(id);
-		formEl.appendChild(idInput);
+		await fetch('?/move', {
+			method: 'POST',
+			body: formData
+		});
 
-		const dirInput = document.createElement('input');
-		dirInput.type = 'hidden';
-		dirInput.name = 'direction';
-		dirInput.value = direction;
-		formEl.appendChild(dirInput);
-
-		// Add CSRF token
-		const csrfInput = document.createElement('input');
-		csrfInput.type = 'hidden';
-		csrfInput.name = 'csrf_token';
-		csrfInput.value = $page.data.csrfToken || '';
-		formEl.appendChild(csrfInput);
-
-		document.body.appendChild(formEl);
-		formEl.submit();
+		await invalidateAll();
 	}
 </script>
 
