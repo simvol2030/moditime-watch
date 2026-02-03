@@ -34,22 +34,39 @@ export const actions: Actions = {
 		}
 	},
 
-	reorder: async ({ request }) => {
+	move: async ({ request }) => {
 		const formData = await request.formData();
-		const idsJson = formData.get('ids')?.toString();
-		if (!idsJson) return fail(400, { error: 'No IDs provided' });
+		const id = Number(formData.get('id'));
+		const direction = formData.get('direction')?.toString() as 'up' | 'down';
+
+		if (!id || !direction) {
+			return fail(400, { error: 'ID and direction are required' });
+		}
 
 		try {
-			const ids = JSON.parse(idsJson) as number[];
-			const reorder = db.transaction(() => {
-				for (let i = 0; i < ids.length; i++) {
-					queries.reorderCategory.run({ id: ids[i], position: i + 1 });
-				}
+			const current = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined;
+			if (!current) return fail(404, { error: 'Category not found' });
+
+			// Find sibling at the same level (same parent_id)
+			const sibling = db.prepare(`
+				SELECT * FROM categories
+				WHERE position ${direction === 'up' ? '<' : '>'} ?
+				AND ${current.parent_id ? 'parent_id = ?' : 'parent_id IS NULL'}
+				ORDER BY position ${direction === 'up' ? 'DESC' : 'ASC'}
+				LIMIT 1
+			`).get(current.position, ...(current.parent_id ? [current.parent_id] : [])) as Category | undefined;
+
+			if (!sibling) return { success: true };
+
+			const swap = db.transaction(() => {
+				db.prepare('UPDATE categories SET position = ? WHERE id = ?').run(sibling.position, current.id);
+				db.prepare('UPDATE categories SET position = ? WHERE id = ?').run(current.position, sibling.id);
 			});
-			reorder();
+			swap();
+
 			return { success: true };
 		} catch {
-			return fail(500, { error: 'Failed to reorder categories' });
+			return fail(500, { error: 'Failed to move category' });
 		}
 	}
 };

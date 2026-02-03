@@ -3,7 +3,7 @@
 	import type { ActionData, PageData } from './$types';
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import ActionButton from '$lib/components/admin/ActionButton.svelte';
-	import DragDropList from '$lib/components/admin/DragDropList.svelte';
+	import ReorderButtons from '$lib/components/admin/ReorderButtons.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -11,19 +11,25 @@
 	let editingSectionId = $state<number | null>(null);
 	let addingLinkSectionId = $state<number | null>(null);
 	let editingLinkId = $state<number | null>(null);
-	let reorderMode = $state(false);
-	let reorderFormEl = $state<HTMLFormElement | null>(null);
 
-	function submitReorder(action: string, ids: number[]) {
+	function submitMove(action: string, id: number, direction: 'up' | 'down') {
 		const form = document.createElement('form');
 		form.method = 'POST';
 		form.action = `?/${action}`;
 		form.style.display = 'none';
-		const input = document.createElement('input');
-		input.type = 'hidden';
-		input.name = 'ids';
-		input.value = JSON.stringify(ids);
-		form.appendChild(input);
+
+		const idInput = document.createElement('input');
+		idInput.type = 'hidden';
+		idInput.name = 'id';
+		idInput.value = String(id);
+		form.appendChild(idInput);
+
+		const dirInput = document.createElement('input');
+		dirInput.type = 'hidden';
+		dirInput.name = 'direction';
+		dirInput.value = direction;
+		form.appendChild(dirInput);
+
 		document.body.appendChild(form);
 		form.submit();
 	}
@@ -35,14 +41,9 @@
 
 <PageHeader title="Footer Management" description="Manage footer sections and links">
 	{#snippet actions()}
-		<ActionButton variant={reorderMode ? 'primary' : 'ghost'} onclick={() => { reorderMode = !reorderMode; if (reorderMode) showAddSection = false; }}>
-			{reorderMode ? 'Exit Reorder' : 'Reorder'}
+		<ActionButton variant="primary" onclick={() => showAddSection = !showAddSection}>
+			{showAddSection ? 'Cancel' : '+ Add Section'}
 		</ActionButton>
-		{#if !reorderMode}
-			<ActionButton variant="primary" onclick={() => showAddSection = !showAddSection}>
-				{showAddSection ? 'Cancel' : '+ Add Section'}
-			</ActionButton>
-		{/if}
 	{/snippet}
 </PageHeader>
 
@@ -63,10 +64,7 @@
 					<label for="new-title">Title</label>
 					<input type="text" id="new-title" name="title" required placeholder="Section title" />
 				</div>
-				<div class="form-group">
-					<label for="new-position">Position</label>
-					<input type="number" id="new-position" name="position" value="0" />
-				</div>
+				<input type="hidden" name="position" value="999" />
 				<div class="form-group">
 					<label for="new-column">Column</label>
 					<input type="number" id="new-column" name="column_number" value="1" min="1" max="4" />
@@ -82,36 +80,14 @@
 	</div>
 {/if}
 
-{#if reorderMode}
-	<div class="card">
-		<h3>Drag sections to reorder</h3>
-		<DragDropList
-			items={data.sections.map(s => ({ id: s.id, label: s.title }))}
-			onreorder={(ids) => submitReorder('reorderSections', ids)}
-		/>
-	</div>
-
-	{#each data.sections as section}
-		{#if section.links.length > 0}
-			<div class="card">
-				<h3>{section.title} — Reorder links</h3>
-				<DragDropList
-					items={section.links.map(l => ({ id: l.id, label: l.label, href: l.href }))}
-					onreorder={(ids) => submitReorder('reorderLinks', ids)}
-				/>
-			</div>
-		{/if}
-	{/each}
-{:else}
-
-{#each data.sections as section}
+{#each data.sections as section, sectionIdx}
 	<div class="card section-card">
 		<!-- Section Header -->
 		{#if editingSectionId === section.id}
 			<form method="POST" action="?/updateSection" use:enhance class="section-edit-form">
 				<input type="hidden" name="id" value={section.id} />
 				<input type="text" name="title" value={section.title} class="input-sm" />
-				<input type="number" name="position" value={section.position} class="input-xs" />
+				<input type="hidden" name="position" value={section.position} />
 				<label class="input-label-inline">Col:</label>
 				<input type="number" name="column_number" value={section.column_number} class="input-xs" min="1" max="4" />
 				<label class="checkbox-inline">
@@ -123,8 +99,15 @@
 		{:else}
 			<div class="section-header">
 				<div class="section-info">
+					<ReorderButtons
+						itemId={section.id}
+						isFirst={sectionIdx === 0}
+						isLast={sectionIdx === data.sections.length - 1}
+						onMoveUp={(id) => submitMove('moveSection', id, 'up')}
+						onMoveDown={(id) => submitMove('moveSection', id, 'down')}
+					/>
 					<h3>{section.title}</h3>
-					<span class="section-meta">Column {section.column_number} | Position {section.position}</span>
+					<span class="section-meta">Column {section.column_number} | #{section.position}</span>
 					<span class="status-badge" class:active={section.is_active === 1}>
 						{section.is_active ? 'Active' : 'Inactive'}
 					</span>
@@ -166,10 +149,7 @@
 							<label for="link-href-{section.id}">URL</label>
 							<input type="text" id="link-href-{section.id}" name="href" required placeholder="/path or https://..." />
 						</div>
-						<div class="form-group">
-							<label for="link-pos-{section.id}">Position</label>
-							<input type="number" id="link-pos-{section.id}" name="position" value="0" />
-						</div>
+						<input type="hidden" name="position" value="999" />
 						<div class="form-group checkbox">
 							<label><input type="checkbox" name="is_main_domain_only" checked /> Main Domain</label>
 						</div>
@@ -184,14 +164,14 @@
 		<!-- Links List -->
 		{#if section.links.length > 0}
 			<div class="links-list">
-				{#each section.links as link}
+				{#each section.links as link, linkIdx}
 					<div class="link-item">
 						{#if editingLinkId === link.id}
 							<form method="POST" action="?/updateLink" use:enhance class="link-edit-form">
 								<input type="hidden" name="id" value={link.id} />
 								<input type="text" name="label" value={link.label} class="input-sm" />
 								<input type="text" name="href" value={link.href} class="input-sm" />
-								<input type="number" name="position" value={link.position} class="input-xs" />
+								<input type="hidden" name="position" value={link.position} />
 								<label class="checkbox-inline">
 									<input type="checkbox" name="is_main_domain_only" checked={link.is_main_domain_only === 1} /> Main
 								</label>
@@ -200,6 +180,13 @@
 							</form>
 						{:else}
 							<div class="link-content">
+								<ReorderButtons
+									itemId={link.id}
+									isFirst={linkIdx === 0}
+									isLast={linkIdx === section.links.length - 1}
+									onMoveUp={(id) => submitMove('moveLink', id, 'up')}
+									onMoveDown={(id) => submitMove('moveLink', id, 'down')}
+								/>
 								<span class="link-label">{link.label}</span>
 								<span class="link-href">{link.href}</span>
 								<span class="link-position">#{link.position}</span>
@@ -233,7 +220,6 @@
 		{/if}
 	</div>
 {/each}
-{/if}
 
 <style>
 	.card {
