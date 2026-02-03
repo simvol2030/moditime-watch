@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { page } from '$app/stores';
 	import type { ActionData, PageData } from './$types';
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import ActionButton from '$lib/components/admin/ActionButton.svelte';
@@ -13,25 +14,32 @@
 	let editingLinkId = $state<number | null>(null);
 
 	function submitMove(action: string, id: number, direction: 'up' | 'down') {
-		const form = document.createElement('form');
-		form.method = 'POST';
-		form.action = `?/${action}`;
-		form.style.display = 'none';
+		const formEl = document.createElement('form');
+		formEl.method = 'POST';
+		formEl.action = `?/${action}`;
+		formEl.style.display = 'none';
 
 		const idInput = document.createElement('input');
 		idInput.type = 'hidden';
 		idInput.name = 'id';
 		idInput.value = String(id);
-		form.appendChild(idInput);
+		formEl.appendChild(idInput);
 
 		const dirInput = document.createElement('input');
 		dirInput.type = 'hidden';
 		dirInput.name = 'direction';
 		dirInput.value = direction;
-		form.appendChild(dirInput);
+		formEl.appendChild(dirInput);
 
-		document.body.appendChild(form);
-		form.submit();
+		// Add CSRF token
+		const csrfInput = document.createElement('input');
+		csrfInput.type = 'hidden';
+		csrfInput.name = 'csrf_token';
+		csrfInput.value = $page.data.csrfToken || '';
+		formEl.appendChild(csrfInput);
+
+		document.body.appendChild(formEl);
+		formEl.submit();
 	}
 </script>
 
