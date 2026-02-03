@@ -3,16 +3,13 @@
 	import type { ActionData, PageData } from './$types';
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import ActionButton from '$lib/components/admin/ActionButton.svelte';
-	import DragDropList from '$lib/components/admin/DragDropList.svelte';
+	import ReorderButtons from '$lib/components/admin/ReorderButtons.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let editingId = $state<number | null>(null);
 	let showAddForm = $state(false);
 	let selectedMenuType = $state('header_desktop');
-	let reorderMode = $state(false);
-	let reorderFormEl = $state<HTMLFormElement | null>(null);
-	let reorderIdsInput = $state('');
 
 	const menuTypeLabels: Record<string, string> = {
 		header_desktop: 'Header (Desktop)',
@@ -29,17 +26,32 @@
 		editingId = null;
 	}
 
-	function getItem(id: number) {
-		return data.allItems.find(item => item.id === id);
-	}
-
-	const topLevelItems = $derived(
-		data.allItems.filter(item => item.parent_id === null)
-	);
-
 	const parentOptionsForAdd = $derived(
 		data.allItems.filter(item => item.parent_id === null && item.menu_type === selectedMenuType)
 	);
+
+	// Move functions that submit a hidden form
+	function submitMove(id: number, direction: 'up' | 'down') {
+		const form = document.createElement('form');
+		form.method = 'POST';
+		form.action = '?/move';
+		form.style.display = 'none';
+
+		const idInput = document.createElement('input');
+		idInput.type = 'hidden';
+		idInput.name = 'id';
+		idInput.value = String(id);
+		form.appendChild(idInput);
+
+		const dirInput = document.createElement('input');
+		dirInput.type = 'hidden';
+		dirInput.name = 'direction';
+		dirInput.value = direction;
+		form.appendChild(dirInput);
+
+		document.body.appendChild(form);
+		form.submit();
+	}
 </script>
 
 <svelte:head>
@@ -48,14 +60,9 @@
 
 <PageHeader title="Navigation" description="Manage site navigation menus">
 	{#snippet actions()}
-		<ActionButton variant={reorderMode ? 'primary' : 'ghost'} onclick={() => { reorderMode = !reorderMode; if (reorderMode) showAddForm = false; }}>
-			{reorderMode ? 'Exit Reorder' : 'Reorder'}
+		<ActionButton variant="primary" onclick={() => showAddForm = !showAddForm}>
+			{showAddForm ? 'Cancel' : '+ Add Item'}
 		</ActionButton>
-		{#if !reorderMode}
-			<ActionButton variant="primary" onclick={() => showAddForm = !showAddForm}>
-				{showAddForm ? 'Cancel' : '+ Add Item'}
-			</ActionButton>
-		{/if}
 	{/snippet}
 </PageHeader>
 
@@ -98,10 +105,7 @@
 						{/each}
 					</select>
 				</div>
-				<div class="form-group">
-					<label for="new-position">Position</label>
-					<input type="number" id="new-position" name="position" value="0" />
-				</div>
+				<input type="hidden" name="position" value="999" />
 				<div class="form-group checkbox">
 					<label>
 						<input type="checkbox" name="is_active" checked />
@@ -116,43 +120,19 @@
 	</div>
 {/if}
 
-{#if reorderMode}
-	<!-- Drag-and-Drop Reorder Mode -->
-	{#each Object.entries(data.grouped) as [menuType, { topLevel }]}
-		<div class="card">
-			<h3>{menuTypeLabels[menuType] || menuType} — Drag to reorder</h3>
-			<DragDropList
-				items={topLevel.map(item => ({ id: item.id, label: item.label, href: item.href }))}
-				onreorder={(ids) => {
-					reorderIdsInput = JSON.stringify(ids);
-					// Auto-submit
-					if (reorderFormEl) {
-						const input = reorderFormEl.querySelector('input[name="ids"]') as HTMLInputElement;
-						if (input) input.value = JSON.stringify(ids);
-						reorderFormEl.requestSubmit();
-					}
-				}}
-			/>
-			<form method="POST" action="?/reorder" use:enhance bind:this={reorderFormEl} class="reorder-form">
-				<input type="hidden" name="ids" value={reorderIdsInput} />
-			</form>
-		</div>
-	{/each}
-{:else}
-
 {#each Object.entries(data.grouped) as [menuType, { topLevel, children }]}
 	<div class="card">
 		<h3>{menuTypeLabels[menuType] || menuType}</h3>
 
 		<div class="nav-list">
-			{#each topLevel as item}
+			{#each topLevel as item, idx}
 				<div class="nav-item">
 					{#if editingId === item.id}
 						<form method="POST" action="?/update" use:enhance class="edit-form">
 							<input type="hidden" name="id" value={item.id} />
 							<input type="text" name="label" value={item.label} class="input-sm" />
 							<input type="text" name="href" value={item.href} class="input-sm" />
-							<input type="number" name="position" value={item.position} class="input-xs" />
+							<input type="hidden" name="position" value={item.position} />
 							<label class="checkbox-inline">
 								<input type="checkbox" name="is_active" checked={item.is_active === 1} />
 								Active
@@ -162,6 +142,13 @@
 						</form>
 					{:else}
 						<div class="nav-item-content">
+							<ReorderButtons
+								itemId={item.id}
+								isFirst={idx === 0}
+								isLast={idx === topLevel.length - 1}
+								onMoveUp={(id) => submitMove(id, 'up')}
+								onMoveDown={(id) => submitMove(id, 'down')}
+							/>
 							<span class="nav-label">{item.label}</span>
 							<span class="nav-href">{item.href}</span>
 							<span class="nav-position">#{item.position}</span>
@@ -191,14 +178,14 @@
 					<!-- Children / Submenu -->
 					{#if children[item.id]?.length}
 						<div class="nav-children">
-							{#each children[item.id] as child}
+							{#each children[item.id] as child, childIdx}
 								<div class="nav-item child">
 									{#if editingId === child.id}
 										<form method="POST" action="?/update" use:enhance class="edit-form">
 											<input type="hidden" name="id" value={child.id} />
 											<input type="text" name="label" value={child.label} class="input-sm" />
 											<input type="text" name="href" value={child.href} class="input-sm" />
-											<input type="number" name="position" value={child.position} class="input-xs" />
+											<input type="hidden" name="position" value={child.position} />
 											<label class="checkbox-inline">
 												<input type="checkbox" name="is_active" checked={child.is_active === 1} />
 												Active
@@ -208,6 +195,13 @@
 										</form>
 									{:else}
 										<div class="nav-item-content">
+											<ReorderButtons
+												itemId={child.id}
+												isFirst={childIdx === 0}
+												isLast={childIdx === children[item.id].length - 1}
+												onMoveUp={(id) => submitMove(id, 'up')}
+												onMoveDown={(id) => submitMove(id, 'down')}
+											/>
 											<span class="nav-label">{child.label}</span>
 											<span class="nav-href">{child.href}</span>
 											<span class="nav-position">#{child.position}</span>
@@ -232,7 +226,6 @@
 		</div>
 	</div>
 {/each}
-{/if}
 
 <style>
 	.card {
@@ -314,6 +307,7 @@
 	}
 
 	.nav-item {
+		background: #ffffff;
 		border: 1px solid #e5e7eb;
 		border-radius: 8px;
 		overflow: hidden;
@@ -324,15 +318,17 @@
 		align-items: center;
 		gap: 1rem;
 		padding: 0.75rem 1rem;
+		background: #f9fafb;
 	}
 
 	.nav-label {
-		font-weight: 500;
+		font-weight: 600;
+		color: #1f2937;
 		min-width: 150px;
 	}
 
 	.nav-href {
-		color: #6b7280;
+		color: #4b5563;
 		font-size: 0.875rem;
 		flex: 1;
 	}
@@ -383,12 +379,24 @@
 
 	.nav-children {
 		border-top: 1px solid #e5e7eb;
-		background: #f9fafb;
+		background: #f3f4f6;
 		padding-left: 2rem;
+	}
+
+	.nav-item.child {
+		background: transparent;
+		border: none;
+		border-radius: 0;
 	}
 
 	.nav-item.child .nav-item-content {
 		padding: 0.5rem 1rem;
+		background: #f3f4f6;
+		border-bottom: 1px solid #e5e7eb;
+	}
+
+	.nav-item.child:last-child .nav-item-content {
+		border-bottom: none;
 	}
 
 	.edit-form {
@@ -396,7 +404,7 @@
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0.75rem 1rem;
-		background: #f9fafb;
+		background: #fef3c7;
 	}
 
 	.input-sm {
@@ -407,23 +415,11 @@
 		width: 150px;
 	}
 
-	.input-xs {
-		padding: 0.375rem 0.5rem;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		font-size: 0.875rem;
-		width: 60px;
-	}
-
 	.checkbox-inline {
 		display: flex;
 		align-items: center;
 		gap: 0.25rem;
 		font-size: 0.8125rem;
 		color: #374151;
-	}
-
-	.reorder-form {
-		display: none;
 	}
 </style>

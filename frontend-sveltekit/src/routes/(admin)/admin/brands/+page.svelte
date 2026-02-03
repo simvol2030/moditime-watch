@@ -4,40 +4,48 @@
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import DataTable from '$lib/components/admin/DataTable.svelte';
 	import ActionButton from '$lib/components/admin/ActionButton.svelte';
-	import StatusBadge from '$lib/components/admin/StatusBadge.svelte';
-	import DragDropList from '$lib/components/admin/DragDropList.svelte';
+	import ReorderButtons from '$lib/components/admin/ReorderButtons.svelte';
 
 	let { data }: { data: PageData } = $props();
-	let reorderMode = $state(false);
 
-	function submitReorder(ids: number[]) {
+	function submitMove(id: number, direction: 'up' | 'down') {
 		const form = document.createElement('form');
 		form.method = 'POST';
-		form.action = '?/reorder';
+		form.action = '?/move';
 		form.style.display = 'none';
-		const input = document.createElement('input');
-		input.type = 'hidden';
-		input.name = 'ids';
-		input.value = JSON.stringify(ids);
-		form.appendChild(input);
+
+		const idInput = document.createElement('input');
+		idInput.type = 'hidden';
+		idInput.name = 'id';
+		idInput.value = String(id);
+		form.appendChild(idInput);
+
+		const dirInput = document.createElement('input');
+		dirInput.type = 'hidden';
+		dirInput.name = 'direction';
+		dirInput.value = direction;
+		form.appendChild(dirInput);
+
 		document.body.appendChild(form);
 		form.submit();
 	}
 
 	const columns = [
 		{ key: 'id', label: 'ID', width: '60px' },
+		{ key: 'order', label: 'Order', width: '70px' },
 		{ key: 'name', label: 'Name' },
 		{ key: 'slug', label: 'Slug' },
 		{ key: 'country', label: 'Country' },
 		{ key: 'founded_year', label: 'Founded' },
-		{ key: 'is_active', label: 'Status', width: '100px' },
-		{ key: 'position', label: 'Position', width: '80px' }
+		{ key: 'is_active', label: 'Status', width: '100px' }
 	];
 
-	// Transform data for table display
 	const tableData = $derived(
-		data.brands.map((brand) => ({
+		data.brands.map((brand, idx) => ({
 			...brand,
+			_idx: idx,
+			_total: data.brands.length,
+			order: `#${brand.position}`,
 			is_active: `<span style="display: inline-block; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; color: white; background: ${brand.is_active ? '#22c55e' : '#ef4444'}">${brand.is_active ? 'Active' : 'Inactive'}</span>`
 		}))
 	);
@@ -49,27 +57,20 @@
 
 <PageHeader title="Brands" description="Manage watch brands">
 	{#snippet actions()}
-		<ActionButton variant={reorderMode ? 'primary' : 'ghost'} onclick={() => reorderMode = !reorderMode}>
-			{reorderMode ? 'Exit Reorder' : 'Reorder'}
-		</ActionButton>
-		{#if !reorderMode}
-			<ActionButton href="/admin/brands/new" variant="primary">+ Add Brand</ActionButton>
-		{/if}
+		<ActionButton href="/admin/brands/new" variant="primary">+ Add Brand</ActionButton>
 	{/snippet}
 </PageHeader>
 
-{#if reorderMode}
-	<div class="card" style="background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
-		<h3 style="font-size: 1rem; font-weight: 600; color: #1f2937; margin: 0 0 1rem;">Drag to reorder brands</h3>
-		<DragDropList
-			items={data.brands.map(b => ({ id: b.id, label: b.name, slug: b.slug }))}
-			onreorder={submitReorder}
-		/>
-	</div>
-{:else}
 <DataTable columns={columns} data={tableData} emptyMessage="No brands found">
 	{#snippet actions(item)}
 		<div class="action-buttons">
+			<ReorderButtons
+				itemId={item.id}
+				isFirst={item._idx === 0}
+				isLast={item._idx === item._total - 1}
+				onMoveUp={(id) => submitMove(id, 'up')}
+				onMoveDown={(id) => submitMove(id, 'down')}
+			/>
 			<ActionButton href="/admin/brands/{item.id}" variant="ghost" size="sm">Edit</ActionButton>
 			<form
 				method="POST"
@@ -88,12 +89,12 @@
 		</div>
 	{/snippet}
 </DataTable>
-{/if}
 
 <style>
 	.action-buttons {
 		display: flex;
 		gap: 0.5rem;
+		align-items: center;
 	}
 
 	.action-buttons form {

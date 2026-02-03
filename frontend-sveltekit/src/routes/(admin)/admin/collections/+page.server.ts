@@ -38,22 +38,37 @@ export const actions: Actions = {
 		}
 	},
 
-	reorder: async ({ request }) => {
+	move: async ({ request }) => {
 		const formData = await request.formData();
-		const idsJson = formData.get('ids')?.toString();
-		if (!idsJson) return fail(400, { error: 'No IDs provided' });
+		const id = Number(formData.get('id'));
+		const direction = formData.get('direction')?.toString() as 'up' | 'down';
+
+		if (!id || !direction) {
+			return fail(400, { error: 'ID and direction are required' });
+		}
 
 		try {
-			const ids = JSON.parse(idsJson) as number[];
-			const reorder = db.transaction(() => {
-				for (let i = 0; i < ids.length; i++) {
-					queries.reorderCollection.run({ id: ids[i], position: i + 1 });
-				}
+			const current = db.prepare('SELECT * FROM collections WHERE id = ?').get(id) as Collection | undefined;
+			if (!current) return fail(404, { error: 'Collection not found' });
+
+			const sibling = db.prepare(`
+				SELECT * FROM collections
+				WHERE position ${direction === 'up' ? '<' : '>'} ?
+				ORDER BY position ${direction === 'up' ? 'DESC' : 'ASC'}
+				LIMIT 1
+			`).get(current.position) as Collection | undefined;
+
+			if (!sibling) return { success: true };
+
+			const swap = db.transaction(() => {
+				db.prepare('UPDATE collections SET position = ? WHERE id = ?').run(sibling.position, current.id);
+				db.prepare('UPDATE collections SET position = ? WHERE id = ?').run(current.position, sibling.id);
 			});
-			reorder();
+			swap();
+
 			return { success: true };
 		} catch {
-			return fail(500, { error: 'Failed to reorder collections' });
+			return fail(500, { error: 'Failed to move collection' });
 		}
 	}
 };

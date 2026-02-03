@@ -98,22 +98,51 @@ export const actions: Actions = {
 		}
 	},
 
-	reorder: async ({ request }) => {
+	move: async ({ request }) => {
 		const formData = await request.formData();
-		const idsJson = formData.get('ids')?.toString();
-		if (!idsJson) return fail(400, { error: 'No IDs provided' });
+		const id = Number(formData.get('id'));
+		const direction = formData.get('direction')?.toString() as 'up' | 'down';
+
+		if (!id || !direction) {
+			return fail(400, { error: 'ID and direction are required' });
+		}
 
 		try {
-			const ids = JSON.parse(idsJson) as number[];
-			const reorder = db.transaction(() => {
-				for (let i = 0; i < ids.length; i++) {
-					queries.reorderNavItem.run({ id: ids[i], position: i + 1 });
-				}
+			// Get current item
+			const current = db.prepare('SELECT * FROM navigation WHERE id = ?').get(id) as NavItem | undefined;
+			if (!current) return fail(404, { error: 'Item not found' });
+
+			// Find sibling based on direction and parent_id
+			const siblingQuery = current.parent_id !== null
+				? `SELECT * FROM navigation
+				   WHERE menu_type = ? AND parent_id = ? AND position ${direction === 'up' ? '<' : '>'} ?
+				   ORDER BY position ${direction === 'up' ? 'DESC' : 'ASC'}
+				   LIMIT 1`
+				: `SELECT * FROM navigation
+				   WHERE menu_type = ? AND parent_id IS NULL AND position ${direction === 'up' ? '<' : '>'} ?
+				   ORDER BY position ${direction === 'up' ? 'DESC' : 'ASC'}
+				   LIMIT 1`;
+
+			const siblingParams = current.parent_id !== null
+				? [current.menu_type, current.parent_id, current.position]
+				: [current.menu_type, current.position];
+
+			const sibling = db.prepare(siblingQuery).get(...siblingParams) as NavItem | undefined;
+
+			if (!sibling) {
+				return { success: true }; // Already at edge
+			}
+
+			// Swap positions
+			const swap = db.transaction(() => {
+				db.prepare('UPDATE navigation SET position = ? WHERE id = ?').run(sibling.position, current.id);
+				db.prepare('UPDATE navigation SET position = ? WHERE id = ?').run(current.position, sibling.id);
 			});
-			reorder();
+			swap();
+
 			return { success: true };
 		} catch {
-			return fail(500, { error: 'Failed to reorder items' });
+			return fail(500, { error: 'Failed to move item' });
 		}
 	}
 };

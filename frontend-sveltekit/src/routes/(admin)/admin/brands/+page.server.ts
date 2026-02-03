@@ -35,22 +35,37 @@ export const actions: Actions = {
 		}
 	},
 
-	reorder: async ({ request }) => {
+	move: async ({ request }) => {
 		const formData = await request.formData();
-		const idsJson = formData.get('ids')?.toString();
-		if (!idsJson) return fail(400, { error: 'No IDs provided' });
+		const id = Number(formData.get('id'));
+		const direction = formData.get('direction')?.toString() as 'up' | 'down';
+
+		if (!id || !direction) {
+			return fail(400, { error: 'ID and direction are required' });
+		}
 
 		try {
-			const ids = JSON.parse(idsJson) as number[];
-			const reorder = db.transaction(() => {
-				for (let i = 0; i < ids.length; i++) {
-					queries.reorderBrand.run({ id: ids[i], position: i + 1 });
-				}
+			const current = db.prepare('SELECT * FROM brands WHERE id = ?').get(id) as Brand | undefined;
+			if (!current) return fail(404, { error: 'Brand not found' });
+
+			const sibling = db.prepare(`
+				SELECT * FROM brands
+				WHERE position ${direction === 'up' ? '<' : '>'} ?
+				ORDER BY position ${direction === 'up' ? 'DESC' : 'ASC'}
+				LIMIT 1
+			`).get(current.position) as Brand | undefined;
+
+			if (!sibling) return { success: true };
+
+			const swap = db.transaction(() => {
+				db.prepare('UPDATE brands SET position = ? WHERE id = ?').run(sibling.position, current.id);
+				db.prepare('UPDATE brands SET position = ? WHERE id = ?').run(current.position, sibling.id);
 			});
-			reorder();
+			swap();
+
 			return { success: true };
 		} catch {
-			return fail(500, { error: 'Failed to reorder brands' });
+			return fail(500, { error: 'Failed to move brand' });
 		}
 	}
 };

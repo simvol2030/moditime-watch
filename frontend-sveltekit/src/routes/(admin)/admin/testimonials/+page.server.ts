@@ -35,22 +35,37 @@ export const actions: Actions = {
 		}
 	},
 
-	reorder: async ({ request }) => {
+	move: async ({ request }) => {
 		const formData = await request.formData();
-		const idsJson = formData.get('ids')?.toString();
-		if (!idsJson) return fail(400, { error: 'No IDs provided' });
+		const id = Number(formData.get('id'));
+		const direction = formData.get('direction')?.toString() as 'up' | 'down';
+
+		if (!id || !direction) {
+			return fail(400, { error: 'ID and direction are required' });
+		}
 
 		try {
-			const ids = JSON.parse(idsJson) as number[];
-			const reorder = db.transaction(() => {
-				for (let i = 0; i < ids.length; i++) {
-					queries.reorderTestimonial.run({ id: ids[i], display_order: i + 1 });
-				}
+			const current = db.prepare('SELECT * FROM testimonials WHERE id = ?').get(id) as Testimonial | undefined;
+			if (!current) return fail(404, { error: 'Testimonial not found' });
+
+			const sibling = db.prepare(`
+				SELECT * FROM testimonials
+				WHERE display_order ${direction === 'up' ? '<' : '>'} ?
+				ORDER BY display_order ${direction === 'up' ? 'DESC' : 'ASC'}
+				LIMIT 1
+			`).get(current.display_order) as Testimonial | undefined;
+
+			if (!sibling) return { success: true };
+
+			const swap = db.transaction(() => {
+				db.prepare('UPDATE testimonials SET display_order = ? WHERE id = ?').run(sibling.display_order, current.id);
+				db.prepare('UPDATE testimonials SET display_order = ? WHERE id = ?').run(current.display_order, sibling.id);
 			});
-			reorder();
+			swap();
+
 			return { success: true };
 		} catch {
-			return fail(500, { error: 'Failed to reorder testimonials' });
+			return fail(500, { error: 'Failed to move testimonial' });
 		}
 	}
 };
