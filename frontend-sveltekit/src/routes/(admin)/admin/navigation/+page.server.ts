@@ -141,7 +141,8 @@ export const actions: Actions = {
 			swap();
 
 			return { success: true };
-		} catch {
+		} catch (err) {
+			console.error('Move action error:', err);
 			return fail(500, { error: 'Failed to move item' });
 		}
 	}
