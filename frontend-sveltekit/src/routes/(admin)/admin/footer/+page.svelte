@@ -362,6 +362,7 @@
 	.link-label {
 		font-weight: 500;
 		min-width: 140px;
+		color: #1f2937;
 	}
 
 	.link-href {
