@@ -151,6 +151,9 @@ const csrfProtection: Handle = async ({ event, resolve }) => {
 
 			const submittedToken = headerToken || formToken;
 
+			// Debug logging for CSRF
+			console.log(`CSRF Debug: cookie="${cookieToken}", submitted="${submittedToken}", match=${cookieToken === submittedToken}`);
+
 			// Проверяем токен
 			if (!cookieToken || !submittedToken || cookieToken !== submittedToken) {
 				// Публичные endpoints без защиты
