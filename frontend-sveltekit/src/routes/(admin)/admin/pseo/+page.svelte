@@ -188,7 +188,7 @@
 
 	table { width: 100%; border-collapse: collapse; }
 	th { text-align: left; padding: 0.75rem; border-bottom: 2px solid #e5e7eb; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; }
-	td { padding: 0.75rem; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+	td { padding: 0.75rem; border-bottom: 1px solid #f3f4f6; vertical-align: top; color: #374151; }
 	.slug { margin-top: 0.25rem; }
 	code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
 	.tags { display: flex; flex-wrap: wrap; gap: 0.25rem; }

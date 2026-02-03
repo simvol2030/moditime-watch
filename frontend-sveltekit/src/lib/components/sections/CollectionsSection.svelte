@@ -9,6 +9,16 @@
 		collections
 	}: CollectionsSectionProps = $props();
 
+	// Fallback image for missing collection images
+	const FALLBACK_IMAGE = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="520" height="360" viewBox="0 0 520 360"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0a2463" stop-opacity="0.08"/><stop offset="100%" stop-color="#0a2463" stop-opacity="0.03"/></linearGradient></defs><rect width="520" height="360" fill="url(#bg)"/><circle cx="260" cy="150" r="50" stroke="#0a2463" stroke-opacity="0.15" stroke-width="3" fill="none"/><line x1="260" y1="150" x2="260" y2="120" stroke="#0a2463" stroke-opacity="0.2" stroke-width="2.5" stroke-linecap="round"/><line x1="260" y1="150" x2="280" y2="158" stroke="#0a2463" stroke-opacity="0.15" stroke-width="2" stroke-linecap="round"/><text x="260" y="240" text-anchor="middle" font-family="system-ui" font-size="13" fill="#0a2463" opacity="0.25">Изображение недоступно</text></svg>')}`;
+
+	function handleImageError(e: Event) {
+		const img = e.currentTarget as HTMLImageElement;
+		if (!img.src.startsWith('data:')) {
+			img.src = FALLBACK_IMAGE;
+		}
+	}
+
 	// State for scroll container reference
 	let scrollContainer = $state<HTMLDivElement | undefined>();
 
@@ -66,7 +76,7 @@
 			>
 				{#each collections as collection (collection.id)}
 					<article class="collection-card scroll-item">
-						<img src={collection.image} alt={collection.title} width="520" height="360" />
+						<img src={collection.image} alt={collection.title} width="520" height="360" onerror={handleImageError} />
 						<div class="collection-card__content">
 							<div class="collection-card__head">
 								<span class="chip chip-primary">{collection.category}</span>

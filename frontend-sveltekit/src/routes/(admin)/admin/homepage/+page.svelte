@@ -433,6 +433,7 @@
 		align-items: center;
 		gap: 0.75rem;
 		flex: 1;
+		color: #1f2937;
 	}
 
 	.item-meta {

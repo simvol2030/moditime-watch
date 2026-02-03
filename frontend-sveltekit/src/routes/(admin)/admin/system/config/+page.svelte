@@ -257,6 +257,7 @@
 		padding: 0.75rem;
 		text-align: left;
 		border-bottom: 1px solid #e5e7eb;
+		color: #374151;
 	}
 
 	.config-table th {

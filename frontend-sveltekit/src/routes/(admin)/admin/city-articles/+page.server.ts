@@ -20,9 +20,9 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	let articles: CityArticle[];
 	if (cityFilter) {
-		articles = queries.listArticlesByCity.all(Number(cityFilter)) as CityArticle[];
+		articles = queries.listCityArticlesByCity.all(Number(cityFilter)) as CityArticle[];
 	} else {
-		articles = queries.listArticles.all() as CityArticle[];
+		articles = queries.listCityArticles.all() as CityArticle[];
 	}
 
 	return { articles, cities, cityFilter };

@@ -95,7 +95,7 @@
 	.alert.success { background: #dcfce7; color: #16a34a; }
 	table { width: 100%; border-collapse: collapse; }
 	th { text-align: left; padding: 0.75rem; border-bottom: 2px solid #e5e7eb; font-size: 0.8125rem; color: #6b7280; text-transform: uppercase; }
-	td { padding: 0.75rem; border-bottom: 1px solid #f3f4f6; }
+	td { padding: 0.75rem; border-bottom: 1px solid #f3f4f6; color: #374151; }
 	code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.8125rem; }
 	.actions { display: flex; gap: 0.5rem; align-items: center; }
 	.actions form { margin: 0; }

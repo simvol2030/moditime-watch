@@ -11,6 +11,16 @@
 		showAllText = 'Вся витрина'
 	}: ShowcaseSectionProps = $props();
 
+	// Fallback image for missing product images
+	const FALLBACK_IMAGE = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="360" height="440" viewBox="0 0 360 440"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0a2463" stop-opacity="0.08"/><stop offset="100%" stop-color="#0a2463" stop-opacity="0.03"/></linearGradient></defs><rect width="360" height="440" fill="url(#bg)"/><circle cx="180" cy="190" r="60" stroke="#0a2463" stroke-opacity="0.15" stroke-width="3" fill="none"/><line x1="180" y1="190" x2="180" y2="155" stroke="#0a2463" stroke-opacity="0.2" stroke-width="2.5" stroke-linecap="round"/><line x1="180" y1="190" x2="205" y2="200" stroke="#0a2463" stroke-opacity="0.15" stroke-width="2" stroke-linecap="round"/><text x="180" y="290" text-anchor="middle" font-family="system-ui" font-size="13" fill="#0a2463" opacity="0.25">Изображение недоступно</text></svg>')}`;
+
+	function handleImageError(e: Event) {
+		const img = e.currentTarget as HTMLImageElement;
+		if (!img.src.startsWith('data:')) {
+			img.src = FALLBACK_IMAGE;
+		}
+	}
+
 	// State - reference to scroll container
 	let scrollContainer: HTMLDivElement;
 
@@ -75,6 +85,7 @@
 								width="360"
 								height="440"
 								loading="lazy"
+								onerror={handleImageError}
 							/>
 							{#if product.badge}
 								<span
