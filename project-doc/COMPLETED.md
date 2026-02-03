@@ -2,7 +2,7 @@
 
 > **Developer:** НЕ делай задачи со статусом DONE!
 > **Полный roadmap всех сессий:** см. `SESSIONS_ROADMAP.md`
-> **Статус:** ВСЕ 13 СЕССИЙ ЗАВЕРШЕНЫ!
+> **Текущая сессия:** Session-14 (8 задач)
 
 ---
 
@@ -10,11 +10,11 @@
 
 | Метрика | Значение |
 |---------|----------|
-| **Всего задач** | 80 |
-| **Выполнено** | 80 (100%) |
-| **Осталось** | 0 |
-| **Всего сессий** | 13 |
-| **Завершено сессий** | 13 (100%) |
+| **Всего задач** | 88 |
+| **Выполнено** | 80 (91%) |
+| **Осталось** | 8 (9%) |
+| **Всего сессий** | 14 |
+| **Завершено сессий** | 13 (93%) |
 
 ---
 
@@ -40,7 +40,22 @@
 
 ## Активные сессии
 
-Нет активных сессий. Все 13 сессий завершены.
+### Session-14: Admin Reorder Arrows (Replace Drag-and-Drop)
+
+> **Источник:** Moderator feedback — drag-and-drop не работает, элементы нечитаемы
+> **Приоритет:** HIGH
+> **Roadmap:** `project-doc/session-14-admin-reorder-arrows/roadmap.md`
+
+| Task | Summary | Status | Deployed |
+|------|---------|--------|----------|
+| 1 | Создать компонент ReorderButtons.svelte | ⏳ PENDING | - |
+| 2 | Исправить Navigation (стрелки + стили) | ⏳ PENDING | - |
+| 3 | Исправить Footer (sections + links) | ⏳ PENDING | - |
+| 4 | Исправить Collections | ⏳ PENDING | - |
+| 5 | Исправить Brands | ⏳ PENDING | - |
+| 6 | Исправить Categories | ⏳ PENDING | - |
+| 7 | Исправить Testimonials | ⏳ PENDING | - |
+| 8 | Удалить DragDropList и svelte-dnd-action | ⏳ PENDING | - |
 
 ---
 
