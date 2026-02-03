@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import type { PageData } from './$types';
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import DataTable from '$lib/components/admin/DataTable.svelte';
@@ -8,26 +9,18 @@
 
 	let { data }: { data: PageData } = $props();
 
-	function submitMove(id: number, direction: 'up' | 'down') {
-		const form = document.createElement('form');
-		form.method = 'POST';
-		form.action = '?/move';
-		form.style.display = 'none';
+	// Move function using fetch to avoid page reload
+	async function submitMove(id: number, direction: 'up' | 'down') {
+		const formData = new FormData();
+		formData.append('id', String(id));
+		formData.append('direction', direction);
 
-		const idInput = document.createElement('input');
-		idInput.type = 'hidden';
-		idInput.name = 'id';
-		idInput.value = String(id);
-		form.appendChild(idInput);
+		await fetch('?/move', {
+			method: 'POST',
+			body: formData
+		});
 
-		const dirInput = document.createElement('input');
-		dirInput.type = 'hidden';
-		dirInput.name = 'direction';
-		dirInput.value = direction;
-		form.appendChild(dirInput);
-
-		document.body.appendChild(form);
-		form.submit();
+		await invalidateAll();
 	}
 
 	const columns = [
