@@ -17,13 +17,13 @@ interface Article {
 
 export const load: PageServerLoad = async ({ url }) => {
 	const categoryFilter = url.searchParams.get('category') || '';
-	const categories = queries.getAllArticleCategories.all() as Array<{ id: number; name: string }>;
+	const categories = queries.adminGetAllArticleCategories.all() as Array<{ id: number; name: string }>;
 
 	let articles: Article[];
 	if (categoryFilter) {
-		articles = queries.listArticlesByCategory.all(Number(categoryFilter)) as Article[];
+		articles = queries.adminListArticlesByCategory.all(Number(categoryFilter)) as Article[];
 	} else {
-		articles = queries.listAllArticles.all() as Article[];
+		articles = queries.adminListArticles.all() as Article[];
 	}
 
 	return { articles, categories, categoryFilter };
@@ -39,7 +39,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			queries.deleteArticle.run(Number(id));
+			queries.adminDeleteArticle.run(Number(id));
 			return { success: true };
 		} catch (error) {
 			return fail(500, { error: 'Failed to delete article' });
