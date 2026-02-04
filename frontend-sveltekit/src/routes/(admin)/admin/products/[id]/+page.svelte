@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import type { ActionData, PageData } from './$types';
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import FormField from '$lib/components/admin/FormField.svelte';
@@ -7,8 +8,18 @@
 	import FormSelect from '$lib/components/admin/FormSelect.svelte';
 	import FormCheckbox from '$lib/components/admin/FormCheckbox.svelte';
 	import ActionButton from '$lib/components/admin/ActionButton.svelte';
+	import ImageGalleryUpload from '$lib/components/admin/ImageGalleryUpload.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	const galleryImages = $derived(
+		data.images.map(img => ({
+			id: img.id,
+			url: img.url,
+			alt: img.alt || '',
+			isMain: img.is_main === 1
+		}))
+	);
 	let loading = $state(false);
 
 	const product = $derived(form?.data ?? {
@@ -30,6 +41,49 @@
 		{ value: 'waitlist', label: 'Waitlist' },
 		{ value: 'out-of-stock', label: 'Out of Stock' }
 	];
+
+	// Filter assignment state
+	let selectedFilterIds = $state<Set<number>>(new Set(data.assignedFilterIds));
+	let filterSaving = $state(false);
+	let filterMessage = $state('');
+
+	// Group filter values by attribute
+	const filterGroups = $derived(
+		data.filterAttributes.map(attr => ({
+			...attr,
+			values: data.filterValues.filter(v => v.attribute_id === attr.id)
+		})).filter(g => g.values.length > 0)
+	);
+
+	function toggleFilter(valueId: number) {
+		const next = new Set(selectedFilterIds);
+		if (next.has(valueId)) {
+			next.delete(valueId);
+		} else {
+			next.add(valueId);
+		}
+		selectedFilterIds = next;
+	}
+
+	async function saveFilters() {
+		filterSaving = true;
+		filterMessage = '';
+		try {
+			const body = new FormData();
+			body.append('filter_value_ids', JSON.stringify([...selectedFilterIds]));
+			const res = await fetch('?/updateFilters', { method: 'POST', body });
+			if (res.ok) {
+				await invalidateAll();
+				filterMessage = 'Filters saved';
+				setTimeout(() => { filterMessage = ''; }, 2000);
+			} else {
+				filterMessage = 'Failed to save filters';
+			}
+		} catch {
+			filterMessage = 'Failed to save filters';
+		}
+		filterSaving = false;
+	}
 </script>
 
 <svelte:head>
@@ -140,6 +194,17 @@
 			rows={4}
 		/>
 
+		<h3 class="section-title">Images</h3>
+
+		<ImageGalleryUpload
+			label="Product Images"
+			name="images"
+			images={galleryImages}
+			entity="products"
+			slug={product.slug || 'product'}
+			hint="Upload product images. First image marked as main is used as thumbnail."
+		/>
+
 		<h3 class="section-title">Settings</h3>
 
 		<div class="form-grid">
@@ -243,6 +308,44 @@
 		</div>
 	</form>
 </div>
+
+<!-- Filter Assignment -->
+{#if filterGroups.length > 0}
+	<div class="form-card" style="margin-top: 1.5rem">
+		<h3 class="section-title" style="margin-top: 0; padding-top: 0; border-top: none;">
+			Filter Assignment ({selectedFilterIds.size} selected)
+		</h3>
+
+		<div class="filter-groups">
+			{#each filterGroups as group}
+				<div class="filter-group">
+					<div class="filter-group-label">{group.name}</div>
+					<div class="filter-values">
+						{#each group.values as val}
+							<label class="filter-value-checkbox">
+								<input
+									type="checkbox"
+									checked={selectedFilterIds.has(val.id)}
+									onchange={() => toggleFilter(val.id)}
+								/>
+								<span>{val.label || val.value}</span>
+							</label>
+						{/each}
+					</div>
+				</div>
+			{/each}
+		</div>
+
+		<div class="filter-actions">
+			{#if filterMessage}
+				<span class="filter-msg" class:success={filterMessage === 'Filters saved'}>{filterMessage}</span>
+			{/if}
+			<ActionButton variant="primary" size="sm" disabled={filterSaving} onclick={saveFilters}>
+				{filterSaving ? 'Saving...' : 'Save Filters'}
+			</ActionButton>
+		</div>
+	</div>
+{/if}
 
 <style>
 	.form-card {
@@ -357,5 +460,64 @@
 		display: flex;
 		justify-content: flex-end;
 		margin-top: 0.5rem;
+	}
+
+	.filter-groups {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.filter-group {
+		border: 1px solid #e5e7eb;
+		border-radius: 8px;
+		padding: 0.75rem 1rem;
+	}
+
+	.filter-group-label {
+		font-weight: 600;
+		font-size: 0.8125rem;
+		color: #374151;
+		margin-bottom: 0.5rem;
+	}
+
+	.filter-values {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1rem;
+	}
+
+	.filter-value-checkbox {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		font-size: 0.875rem;
+		color: #4b5563;
+		cursor: pointer;
+	}
+
+	.filter-value-checkbox input[type='checkbox'] {
+		width: 16px;
+		height: 16px;
+		accent-color: #3b82f6;
+		cursor: pointer;
+	}
+
+	.filter-actions {
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		gap: 0.75rem;
+		margin-top: 1rem;
+		padding-top: 1rem;
+		border-top: 1px solid #e5e7eb;
+	}
+
+	.filter-msg {
+		font-size: 0.8125rem;
+		color: #ef4444;
+	}
+
+	.filter-msg.success {
+		color: #16a34a;
 	}
 </style>

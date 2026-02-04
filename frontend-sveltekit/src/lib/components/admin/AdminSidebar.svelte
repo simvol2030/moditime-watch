@@ -23,6 +23,7 @@
 		{ label: 'Brands', href: '/admin/brands', icon: '🏷️', group: 'E-commerce' },
 		{ label: 'Categories', href: '/admin/categories', icon: '📁', group: 'E-commerce' },
 		{ label: 'Collections', href: '/admin/collections', icon: '🎁', group: 'E-commerce' },
+		{ label: 'Filters', href: '/admin/filters', icon: '🔍', group: 'E-commerce' },
 		{ label: 'Orders', href: '/admin/orders', icon: '📦', group: 'Operations' },
 		{ label: 'Cities', href: '/admin/cities', icon: '🏙️', group: 'pSEO' },
 		{ label: 'City Articles', href: '/admin/city-articles', icon: '📰', group: 'pSEO' },

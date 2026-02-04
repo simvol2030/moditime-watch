@@ -1,6 +1,6 @@
 import { fail, redirect, error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { queries } from '$lib/server/db/database';
+import { queries, db } from '$lib/server/db/database';
 
 interface Product {
 	id: number;
@@ -30,8 +30,31 @@ export const load: PageServerLoad = async ({ params }) => {
 	const brands = queries.adminSelectActiveBrands.all() as { id: number; name: string }[];
 	const categories = queries.adminSelectActiveCategories.all() as { id: number; name: string }[];
 	const options = queries.getProductOptions.all(Number(params.id)) as any[];
+	const images = queries.getProductImages.all(Number(params.id)) as {
+		id: number; url: string; alt: string | null; position: number; is_main: number;
+	}[];
 
-	return { product, brands, categories, options };
+	// Filter attributes with values + current product assignments
+	const filterAttributes = db.prepare(`
+		SELECT fa.id, fa.slug, fa.name, fa.type
+		FROM filter_attributes fa
+		WHERE fa.is_active = 1
+		ORDER BY fa.position
+	`).all() as { id: number; slug: string; name: string; type: string }[];
+
+	const filterValues = db.prepare(`
+		SELECT fv.id, fv.attribute_id, fv.value, fv.label
+		FROM filter_values fv
+		ORDER BY fv.position
+	`).all() as { id: number; attribute_id: number; value: string; label: string }[];
+
+	const assignedFilterIds = db.prepare(`
+		SELECT filter_value_id FROM product_filters WHERE product_id = ?
+	`).all(Number(params.id)) as { filter_value_id: number }[];
+
+	const assignedIds = new Set(assignedFilterIds.map(r => r.filter_value_id));
+
+	return { product, brands, categories, options, images, filterAttributes, filterValues, assignedFilterIds: [...assignedIds] };
 };
 
 export const actions: Actions = {
@@ -95,6 +118,28 @@ export const actions: Actions = {
 			return fail(500, { error: 'Failed to update product' });
 		}
 
+		// Handle images
+		const imagesJson = formData.get('images')?.toString();
+		if (imagesJson) {
+			try {
+				const images = JSON.parse(imagesJson) as { id?: number; url: string; alt: string; isMain: boolean }[];
+				const syncImages = db.transaction(() => {
+					// Delete existing images
+					db.prepare('DELETE FROM product_images WHERE product_id = ?').run(id);
+					// Insert new ones
+					const insertStmt = db.prepare(
+						'INSERT INTO product_images (product_id, url, alt, position, is_main) VALUES (?, ?, ?, ?, ?)'
+					);
+					for (let i = 0; i < images.length; i++) {
+						insertStmt.run(id, images[i].url, images[i].alt || '', i + 1, images[i].isMain ? 1 : 0);
+					}
+				});
+				syncImages();
+			} catch {
+				// If image parsing fails, skip silently
+			}
+		}
+
 		throw redirect(302, '/admin/products');
 	},
 
@@ -146,5 +191,27 @@ export const actions: Actions = {
 		}
 
 		return { success: true };
+	},
+
+	updateFilters: async ({ request, params }) => {
+		const formData = await request.formData();
+		const productId = Number(params.id);
+		const filterIdsJson = formData.get('filter_value_ids')?.toString() || '[]';
+
+		try {
+			const filterValueIds = JSON.parse(filterIdsJson) as number[];
+			const syncFilters = db.transaction(() => {
+				db.prepare('DELETE FROM product_filters WHERE product_id = ?').run(productId);
+				const insertStmt = db.prepare('INSERT INTO product_filters (product_id, filter_value_id) VALUES (?, ?)');
+				for (const valueId of filterValueIds) {
+					insertStmt.run(productId, valueId);
+				}
+			});
+			syncFilters();
+		} catch {
+			return fail(500, { error: 'Failed to update filters' });
+		}
+
+		return { success: true, filtersUpdated: true };
 	}
 };
