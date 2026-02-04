@@ -2,7 +2,7 @@
 
 > **Developer:** НЕ делай задачи со статусом DONE!
 > **Полный roadmap всех сессий:** см. `SESSIONS_ROADMAP.md`
-> **Текущая сессия:** Session-14 (8 задач)
+> **Текущая сессия:** Session-15 (16 задач)
 
 ---
 
@@ -10,11 +10,11 @@
 
 | Метрика | Значение |
 |---------|----------|
-| **Всего задач** | 88 |
-| **Выполнено** | 80 (91%) |
-| **Осталось** | 8 (9%) |
-| **Всего сессий** | 14 |
-| **Завершено сессий** | 13 (93%) |
+| **Всего задач** | 104 |
+| **Выполнено** | 80 (77%) |
+| **Осталось** | 24 (23%) |
+| **Всего сессий** | 15 |
+| **Завершено сессий** | 13 (87%) |
 
 ---
 
@@ -59,6 +59,33 @@
 
 ---
 
+### Session-15: Import/Export v2 — Full Round-Trip with Images
+
+> **Источник:** Moderator — полноценный import/export с изображениями, WebP, ZIP
+> **Приоритет:** HIGH
+> **Roadmap:** `project-doc/session-15-import-export-v2/roadmap-start.md`
+
+| Task | Summary | Status | Deployed |
+|------|---------|--------|----------|
+| 1 | Image processing: sharp + WebP pipeline | ⏳ PENDING | - |
+| 2 | Media serving endpoint | ⏳ PENDING | - |
+| 3 | Upload API endpoint | ⏳ PENDING | - |
+| 4 | ImageUpload компонент | ⏳ PENDING | - |
+| 5 | ImageGalleryUpload компонент | ⏳ PENDING | - |
+| 6 | Интеграция изображений в Products | ⏳ PENDING | - |
+| 7 | Интеграция изображений в Brands, Categories, Cities | ⏳ PENDING | - |
+| 8 | Экспорт Categories | ⏳ PENDING | - |
+| 9 | Экспорт Filters | ⏳ PENDING | - |
+| 10 | Экспорт City Articles | ⏳ PENDING | - |
+| 11 | ZIP processing для импорта | ⏳ PENDING | - |
+| 12 | Обновить UI импорта (CSV + ZIP) | ⏳ PENDING | - |
+| 13 | Обновить импортеры: обработка изображений из ZIP | ⏳ PENDING | - |
+| 14 | Каскадный импорт: auto-create brands/categories | ⏳ PENDING | - |
+| 15 | Filters CRUD: страницы админки | ⏳ PENDING | - |
+| 16 | Filters: sidebar навигация + queries | ⏳ PENDING | - |
+
+---
+
 **Статусы:** DONE | IN_PROGRESS | PENDING
 
 **История выполнения:**
@@ -75,3 +102,5 @@
 11. Session-11 (bugfixes после Session-8) ✅
 12. Session-12 (bugfixes после Session-8) ✅
 13. Session-13 (bugfixes после Session-12) ✅
+14. Session-14 (admin reorder arrows) 🔄
+15. Session-15 (import/export v2) 🔄
