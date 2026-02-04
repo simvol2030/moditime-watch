@@ -6,6 +6,7 @@
 	import FormTextarea from '$lib/components/admin/FormTextarea.svelte';
 	import FormCheckbox from '$lib/components/admin/FormCheckbox.svelte';
 	import ActionButton from '$lib/components/admin/ActionButton.svelte';
+	import ImageUpload from '$lib/components/admin/ImageUpload.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let loading = $state(false);
@@ -65,7 +66,14 @@
 		</div>
 
 		<h3 class="section-title">Hero Section</h3>
-		<FormField label="Hero Image URL" name="hero_image_url" value={form?.data?.hero_image_url ?? c.hero_image_url ?? ''} type="url" />
+		<ImageUpload
+			label="Hero Image"
+			name="hero_image_url"
+			value={form?.data?.hero_image_url ?? c.hero_image_url ?? ''}
+			entity="cities"
+			slug={c.slug || 'city'}
+			hint="City hero banner image"
+		/>
 		<div class="form-grid">
 			<FormField label="Hero Title" name="hero_title" value={form?.data?.hero_title ?? c.hero_title ?? ''} />
 			<FormField label="Hero Subtitle" name="hero_subtitle" value={form?.data?.hero_subtitle ?? c.hero_subtitle ?? ''} />

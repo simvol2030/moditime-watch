@@ -26,6 +26,15 @@
 		city_articles: '/admin/import/templates/city_articles',
 		filters: '/admin/import/templates/filters'
 	};
+
+	const exportUrls: { label: string; url: string }[] = [
+		{ label: 'Products', url: '/admin/export/products' },
+		{ label: 'Brands', url: '/admin/export/brands' },
+		{ label: 'Categories', url: '/admin/export/categories' },
+		{ label: 'Cities', url: '/admin/export/cities' },
+		{ label: 'Filters', url: '/admin/export/filters' },
+		{ label: 'City Articles', url: '/admin/export/city_articles' }
+	];
 </script>
 
 <svelte:head>
@@ -48,6 +57,9 @@
 	<div class="alert success">
 		<strong>Import Complete!</strong>
 		Added: {form.result.added} | Updated: {form.result.updated}
+		{#if form.imagesProcessed}
+			| Images: {form.imagesProcessed}
+		{/if}
 		{#if form.result.errors.length > 0}
 			| Errors: {form.result.errors.length}
 		{/if}
@@ -77,6 +89,16 @@
 		</div>
 	{/if}
 {/if}
+
+<div class="card">
+	<h3>Export Data</h3>
+	<p class="export-desc">Download current data as CSV files</p>
+	<div class="export-grid">
+		{#each exportUrls as exp}
+			<a href={exp.url} download class="export-btn">{exp.label}</a>
+		{/each}
+	</div>
+</div>
 
 <div class="card">
 	<h3>1. Select Data Type</h3>
@@ -109,12 +131,12 @@
 			<input
 				type="file"
 				name="file"
-				accept=".csv"
+				accept=".csv,.zip"
 				required
 				bind:this={fileInput}
 				class="file-input"
 			/>
-			<p class="upload-hint">CSV file, max 10MB. UTF-8 encoding recommended.</p>
+			<p class="upload-hint">CSV or ZIP file (with CSV + images), max 50MB. UTF-8 encoding.</p>
 		</div>
 		<div class="upload-actions">
 			<ActionButton type="submit" variant="secondary" disabled={loading}>
@@ -162,11 +184,17 @@
 			<input
 				type="file"
 				name="file"
-				accept=".csv"
+				accept=".csv,.zip"
 				required
 				class="file-input"
 			/>
 			<p class="import-note">Please re-select the same file to proceed with import.</p>
+			{#if form.dataType === 'products'}
+				<label class="cascade-option">
+					<input type="checkbox" name="cascade" value="1" />
+					<span>Cascade import: auto-create missing brands and categories</span>
+				</label>
+			{/if}
 			<div class="import-actions">
 				<ActionButton type="submit" variant="primary" disabled={loading}>
 					{loading ? 'Importing...' : `Import ${form.totalRows} rows`}
@@ -323,6 +351,21 @@
 		margin: 0.5rem 0;
 	}
 
+	.cascade-option {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0.75rem 0;
+		font-size: 0.875rem;
+		color: #374151;
+		cursor: pointer;
+	}
+
+	.cascade-option input[type='checkbox'] {
+		width: 1rem;
+		height: 1rem;
+	}
+
 	.import-actions {
 		display: flex;
 		justify-content: flex-end;
@@ -358,6 +401,36 @@
 		padding: 0.125rem 0.375rem;
 		border-radius: 4px;
 		font-size: 0.75rem;
+	}
+
+	.export-desc {
+		font-size: 0.8125rem;
+		color: #6b7280;
+		margin: 0 0 0.75rem;
+	}
+
+	.export-grid {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.export-btn {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.375rem 0.875rem;
+		background: #f0fdf4;
+		border: 1px solid #86efac;
+		border-radius: 6px;
+		font-size: 0.8125rem;
+		color: #15803d;
+		text-decoration: none;
+		transition: all 0.2s;
+	}
+
+	.export-btn:hover {
+		background: #dcfce7;
+		border-color: #22c55e;
 	}
 
 	.template-btn {

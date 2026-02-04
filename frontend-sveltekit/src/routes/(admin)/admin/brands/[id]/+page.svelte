@@ -6,6 +6,7 @@
 	import FormTextarea from '$lib/components/admin/FormTextarea.svelte';
 	import FormCheckbox from '$lib/components/admin/FormCheckbox.svelte';
 	import ActionButton from '$lib/components/admin/ActionButton.svelte';
+	import ImageUpload from '$lib/components/admin/ImageUpload.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let loading = $state(false);
@@ -83,15 +84,16 @@
 			/>
 		</div>
 
-		<div class="form-grid">
-			<FormField
-				label="Logo URL"
-				name="logo_url"
-				type="url"
-				value={brand.logo_url ?? ''}
-				placeholder="https://..."
-			/>
+		<ImageUpload
+			label="Logo"
+			name="logo_url"
+			value={brand.logo_url ?? ''}
+			entity="brands"
+			slug={brand.slug || 'brand'}
+			hint="Brand logo image (JPEG, PNG, WebP)"
+		/>
 
+		<div class="form-grid">
 			<FormField
 				label="Website URL"
 				name="website_url"

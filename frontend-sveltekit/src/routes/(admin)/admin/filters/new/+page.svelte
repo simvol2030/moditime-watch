@@ -1,31 +1,29 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import type { ActionData, PageData } from './$types';
+	import type { ActionData } from './$types';
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import FormField from '$lib/components/admin/FormField.svelte';
-	import FormTextarea from '$lib/components/admin/FormTextarea.svelte';
 	import FormSelect from '$lib/components/admin/FormSelect.svelte';
 	import FormCheckbox from '$lib/components/admin/FormCheckbox.svelte';
 	import ActionButton from '$lib/components/admin/ActionButton.svelte';
-	import ImageUpload from '$lib/components/admin/ImageUpload.svelte';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { form }: { form: ActionData } = $props();
 	let loading = $state(false);
 
-	const category = $derived(form?.data ?? data.category);
-
-	const parentOptions = $derived(
-		data.categories.map((c) => ({ value: c.id, label: c.name }))
-	);
+	const typeOptions = [
+		{ value: 'checkbox', label: 'Checkbox' },
+		{ value: 'range', label: 'Range' },
+		{ value: 'select', label: 'Select' }
+	];
 </script>
 
 <svelte:head>
-	<title>Edit {data.category.name} - Moditime Admin</title>
+	<title>New Filter - Moditime Admin</title>
 </svelte:head>
 
-<PageHeader title="Edit Category" description="Update category details">
+<PageHeader title="New Filter" description="Create a new filter attribute">
 	{#snippet actions()}
-		<ActionButton href="/admin/categories" variant="secondary">Cancel</ActionButton>
+		<ActionButton href="/admin/filters" variant="secondary">Cancel</ActionButton>
 	{/snippet}
 </PageHeader>
 
@@ -48,65 +46,47 @@
 			<FormField
 				label="Name"
 				name="name"
-				value={category.name}
+				value={form?.data?.name ?? ''}
 				required
-				placeholder="e.g. Mens Watches"
+				placeholder="e.g. Case Material"
 			/>
 
 			<FormField
 				label="Slug"
 				name="slug"
-				value={category.slug}
+				value={form?.data?.slug ?? ''}
 				required
-				placeholder="e.g. mens"
+				placeholder="e.g. case-material"
 				hint="URL-friendly identifier"
 			/>
 		</div>
 
-		<FormTextarea
-			label="Description"
-			name="description"
-			value={category.description ?? ''}
-			placeholder="Category description..."
-			rows={3}
-		/>
-
-		<FormSelect
-			label="Parent Category"
-			name="parent_id"
-			options={parentOptions}
-			value={category.parent_id ?? ''}
-			placeholder="None (top-level)"
-		/>
-
-		<ImageUpload
-			label="Category Image"
-			name="image_url"
-			value={category.image_url ?? ''}
-			entity="categories"
-			slug={category.slug || 'category'}
-			hint="Category image (JPEG, PNG, WebP)"
-		/>
-
 		<div class="form-grid">
+			<FormSelect
+				label="Type"
+				name="type"
+				options={typeOptions}
+				value={form?.data?.type ?? 'checkbox'}
+			/>
+
 			<FormField
 				label="Position"
 				name="position"
 				type="number"
-				value={category.position}
-			/>
-
-			<FormCheckbox
-				label="Active"
-				name="is_active"
-				checked={category.is_active === 1}
+				value={form?.data?.position ?? 0}
 			/>
 		</div>
 
+		<FormCheckbox
+			label="Active"
+			name="is_active"
+			checked={form?.data?.is_active !== 0}
+		/>
+
 		<div class="form-actions">
-			<ActionButton href="/admin/categories" variant="secondary">Cancel</ActionButton>
+			<ActionButton href="/admin/filters" variant="secondary">Cancel</ActionButton>
 			<ActionButton type="submit" variant="primary" disabled={loading}>
-				{loading ? 'Saving...' : 'Save Changes'}
+				{loading ? 'Creating...' : 'Create Filter'}
 			</ActionButton>
 		</div>
 	</form>
