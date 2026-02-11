@@ -1,118 +1,223 @@
-# Moditime Watch - E-commerce для премиальных часов
+# Moditime Watch — Codebase Context
 
 **URL:** https://moditime-watch.ru
-**Тип:** SvelteKit E-commerce + AdminJS панель
-**Workflow Developer:** см. `CLAUDE.web.md`
+**Тип:** E-commerce для премиальных часов (SvelteKit fullstack)
+**Workflow Developer:** см. `CLAUDE.web.md` (в этой директории)
+**Workflow CLI:** см. `../CLAUDE.local.md` (в parent директории)
 
 ---
 
-## Пути проекта
+## ПРАВИЛО: Безопасность портов
 
-| Среда | Путь |
-|-------|------|
-| **WSL** | `/home/solo18/dev/watch/project/project-box-v2` |
-| **Windows** | `\\wsl$\Ubuntu\home\solo18\dev\watch\project\project-box-v2` |
-| **GitHub** | https://github.com/simvol2030/moditime-watch |
-| **GitHub ветка** | `main` (единственная) |
-| **Сервер** | `/opt/websites/moditime-watch.ru/repo` |
-
----
-
-## PM2 (Production)
-
-| Процесс | Порт | Описание |
-|---------|------|----------|
-| `moditime-watch` | 4173 | SvelteKit frontend |
-| `moditime-backend` | 3000 | Express + AdminJS |
-
-```bash
-source ~/.nvm/nvm.sh && pm2 restart moditime-watch moditime-backend
-```
+> **СТРОГОЕ ПРАВИЛО:** При развёртывании проекта с нуля (новый сервер, VPS-Dev и т.д.)
+> ЗАПРЕЩЕНО занимать порты других проектов.
+>
+> **Обязательный порядок:**
+> 1. Проверить занятые порты: `ss -tlnp | grep LISTEN`
+> 2. Выбрать СВОБОДНЫЕ порты
+> 3. Обновить конфигурацию с выбранными портами
+> 4. Задокументировать выбранные порты
 
 ---
 
-## Доступы
-
-**Admin Panel:** https://moditime-watch.ru/admin
-- Email: `admin@moditime-watch.ru`
-- Password: `ModitimeAdmin2024!SecurePass`
-
-**Database:** SQLite → `/opt/websites/moditime-watch.ru/repo/data/db/sqlite/app.db`
-
----
-
-## Структура
+## Структура проекта
 
 ```
 moditime-watch/
-├── frontend-sveltekit/   # SvelteKit 2.x + Svelte 5
-├── backend-expressjs/    # Express.js + AdminJS
-├── data/db/sqlite/       # SQLite DB (WAL mode)
-└── schema.sql            # 36 таблиц
+├── frontend-sveltekit/          # SvelteKit 2.x + Svelte 5 (основное приложение)
+│   ├── src/routes/              # Маршруты (public + admin)
+│   │   ├── (admin)/             # Admin panel (protected)
+│   │   ├── (city)/              # City-specific pages (pSEO)
+│   │   ├── api/                 # API endpoints
+│   │   ├── catalog/             # Каталог товаров
+│   │   ├── product/             # Страница товара
+│   │   ├── cart/                # Корзина
+│   │   ├── checkout/            # Оформление заказа
+│   │   ├── order/               # Статус заказа
+│   │   ├── journal/             # Статьи/блог
+│   │   ├── search/              # Поиск
+│   │   └── sitemap*.xml/        # Sitemaps
+│   ├── src/lib/                 # Shared библиотеки
+│   │   ├── components/          # Svelte компоненты
+│   │   ├── server/              # Серверная логика (auth, db, validation)
+│   │   └── stores/              # Svelte stores
+│   └── static/                  # Статика (images → symlink на сервере)
+│
+├── backend-expressjs/           # Express.js (НЕ деплоится отдельно на prod)
+│   ├── src/                     # TypeScript source
+│   └── components/              # AdminJS React компоненты
+│
+├── data/                        # Персистентные данные
+│   ├── db/sqlite/               # SQLite БД (app.db, WAL mode)
+│   ├── logs/                    # Логи
+│   └── media/                   # Загруженные медиа-файлы
+│
+├── project-doc/                 # Документация сессий
+│   ├── COMPLETED.md             # Статусы всех сессий
+│   ├── SESSIONS_ROADMAP.md      # Roadmap всех сессий
+│   ├── session-N-*/             # Спеки и roadmaps по сессиям
+│   └── archive/                 # Архив завершённых
+│
+├── feedbacks/                   # Feedback для Developer
+│   └── qa-reports/              # QA отчёты субагентов
+│
+├── .claude/                     # Claude Code hooks (в git!)
+│   ├── settings.json            # Hook конфигурация
+│   └── hooks/notify.sh          # Telegram уведомления
+│
+├── migrations/                  # Миграции БД
+├── scripts/                     # Вспомогательные скрипты
+├── schema.sql                   # Полная схема БД (46 таблиц)
+└── docker-compose.yml           # Docker для локальной проверки
 ```
 
 ---
 
 ## Tech Stack
 
-- **Frontend:** SvelteKit 2.x, Svelte 5 (runes), TypeScript, Vite
-- **Backend:** Express.js 5.x, AdminJS 6.8.7, Sequelize
-- **Database:** SQLite (better-sqlite3, WAL mode, FTS5)
-- **Security:** bcrypt, AES-256-GCM, CSRF protection
-- **DevOps:** PM2, Nginx, SSH-MCP, GitHub MCP
+| Компонент | Технологии |
+|-----------|------------|
+| **Frontend** | SvelteKit 2.x, Svelte 5 (runes), TypeScript, Vite |
+| **Backend** | SvelteKit server routes (hooks, load, actions), Express.js (legacy) |
+| **Database** | SQLite (better-sqlite3, WAL mode, FTS5) |
+| **Admin** | Custom admin panel в SvelteKit (`/admin` routes) |
+| **Security** | bcrypt, AES-256-GCM, CSRF protection, rate limiting |
+| **Styling** | CSS (custom), responsive design |
+| **DevOps** | PM2, Nginx, Docker (local), SSH-MCP |
 
 ---
 
-## Deploy
+## Архитектура
 
-```bash
-# На сервере (через SSH MCP или deploy.sh)
-cd /opt/websites/moditime-watch.ru
-./deploy.sh
+**SvelteKit обрабатывает ВСЁ** (fullstack monolith):
+- Публичные страницы (каталог, товары, корзина, checkout)
+- Admin panel (CRUD для всех сущностей)
+- API endpoints (`/api/*`)
+- Auth (сессии, bcrypt, CSRF)
+- БД (better-sqlite3, prepared statements)
+- SEO (sitemaps, meta, pSEO по городам)
 
-# Или вручную:
-cd /opt/websites/moditime-watch.ru/repo && git pull origin main
-cd frontend-sveltekit && npm install && npm run build
-cd ../backend-expressjs && npm install && npm run build
-source ~/.nvm/nvm.sh && pm2 restart moditime-watch moditime-backend
+**backend-expressjs** — legacy компонент, существует в репо но НЕ деплоится отдельно на production.
+
+---
+
+## База данных (SQLite, 46 таблиц)
+
+### Блок 1: Глобальные настройки
+| Таблица | Описание |
+|---------|----------|
+| `site_config` | Настройки сайта (key-value) |
+| `navigation_items` | Навигация (header + footer menus) |
+| `widgets` | Переиспользуемые виджеты |
+
+### Блок 2: Layout
+| Таблица | Описание |
+|---------|----------|
+| `footer_sections` | Секции футера |
+| `footer_links` | Ссылки в футере |
+
+### Блок 3: Homepage
+| Таблица | Описание |
+|---------|----------|
+| `home_hero` | Hero-секция главной |
+| `collections` / `collection_products` | Коллекции товаров |
+| `home_services` / `home_service_stats` | Сервисы и статистика |
+| `testimonials` | Отзывы |
+
+### Блок 4: Каталог
+| Таблица | Описание |
+|---------|----------|
+| `brands` | Бренды часов |
+| `categories` | Категории |
+| `products` | Товары |
+| `product_images` | Изображения товаров |
+| `product_specs` / `product_options` | Характеристики и опции |
+| `product_highlights` / `product_tabs` / `product_benefits` | Доп. контент товара |
+| `filter_attributes` / `filter_values` / `product_filters` | Фильтры каталога |
+| `reviews` | Отзывы о товарах |
+| `catalog_config` | Настройки каталога |
+
+### Блок 5: Контент
+| Таблица | Описание |
+|---------|----------|
+| `articles` / `article_categories` | Статьи и категории |
+| `article_tags` / `article_tag_relations` | Теги статей |
+| `article_related_products` | Связь статей с товарами |
+
+### Блок 6: pSEO (города)
+| Таблица | Описание |
+|---------|----------|
+| `cities` | Города |
+| `city_articles` | Статьи по городам |
+| `city_article_products` / `city_article_categories` | Связи |
+| `city_article_tags` / `city_article_tag_relations` | Теги |
+| `city_article_related` / `city_article_media` | Связи и медиа |
+
+### Блок 7: E-commerce
+| Таблица | Описание |
+|---------|----------|
+| `orders` / `order_items` | Заказы |
+| `order_status_history` | История статусов |
+| `callback_requests` | Запросы обратного звонка |
+
+### Блок 8: Система
+| Таблица | Описание |
+|---------|----------|
+| `seo_meta` | SEO мета-теги |
+| `pages` | Статические страницы |
+| `email_templates` / `email_log` | Email шаблоны и лог |
+
+---
+
+## API Endpoints (основные)
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| GET | `/api/products` | Список товаров |
+| GET | `/api/brands` | Список брендов |
+| GET | `/api/categories` | Список категорий |
+| GET | `/api/collections` | Коллекции |
+| POST | `/api/orders` | Создание заказа |
+| POST | `/api/callback` | Запрос обратного звонка |
+| GET | `/api/search` | Поиск товаров |
+| GET | `/sitemap.xml` | Индексный sitemap |
+
+---
+
+## .gitignore (важное)
+
+```gitignore
+# Build
+node_modules/
+frontend-sveltekit/.svelte-kit/
+frontend-sveltekit/build/
+backend-expressjs/dist/
+
+# Database
+data/db/sqlite/*.db
+
+# Media & images
+data/logs/*
+data/media/*
+frontend-sveltekit/static/images/**/*
+frontend-sveltekit/static/fonts/**/*
+
+# Environment
+.env
 ```
 
 ---
 
-## Статус проекта
+## Безопасность (hooks.server.ts)
 
-| Компонент | Dev | Production |
-|-----------|-----|------------|
-| Frontend UI | 100% | 75% |
-| Database schema | 100% | 85% |
-| E-commerce flow | 90% | 50% |
-| Admin panel | 100% | 70% |
-| **Общая готовность** | **78%** | — |
-
-### Что требует доработки
-1. Email/Telegram notifications (mock → real)
-2. Фильтры каталога → подключить к БД
-3. FTS5 поиск → создать endpoint
-4. Header submenu → исправить рендеринг
+1. **Security headers** (CSP, X-Frame-Options, HSTS)
+2. **CSRF protection** (токен в cookie + hidden field)
+3. **Rate limiting** (login brute-force protection)
+4. **Input validation** (SQL injection, XSS patterns)
+5. **Session encryption** (AES-256-GCM)
+6. **Prepared statements** (все SQL запросы)
 
 ---
 
-## Nginx конфигурация
-
-| URL | Прокси |
-|-----|--------|
-| `https://moditime-watch.ru` | → `localhost:4173` |
-| `https://moditime-watch.ru/admin` | → `localhost:3000` |
-
----
-
-## Особенности сервера
-
-- **Static images:** `/opt/websites/moditime-watch.ru/static-images` (symlink в `static/images`)
-- **Backups:** `/opt/websites/moditime-watch.ru/backups`
-- **Deploy script:** `/opt/websites/moditime-watch.ru/deploy.sh`
-
----
-
-*Версия: 1.0 | Обновлено: 2025-12-24*
-*Используется с: CLAUDE.local.md (Workflow v4.2)*
+*Версия: 2.0 | 2025-02-11*
+*Используется с: CLAUDE.web.md (v2.6), CLAUDE.local.md (v6.1)*
