@@ -13,6 +13,10 @@ export const load: PageServerLoad = async ({ url }) => {
 	const sectionConfigs = queries.getAllSectionConfigs.all() as any[];
 	const collections = queries.adminListCollections.all() as any[];
 	const showcaseItems = queries.getShowcaseItems.all() as any[];
+	const testimonials = queries.listTestimonials.all() as any[];
+	const editorialItems = queries.getEditorialItems.all() as any[];
+	const telegramEnabled = (queries.getConfigByKey.get('telegram_group_enabled') as any)?.value === 'true';
+	const telegramUrl = (queries.getConfigByKey.get('telegram_group_url') as any)?.value || 'https://t.me/moditime_watch';
 
 	// Parse hero JSON fields for the UI
 	let heroStats: { value: string; label: string }[] = [];
@@ -40,6 +44,10 @@ export const load: PageServerLoad = async ({ url }) => {
 		sectionConfigs: sectionMap,
 		collections,
 		showcaseItems,
+		testimonials,
+		editorialItems,
+		telegramEnabled,
+		telegramUrl,
 		telegramWidget: telegramWidget ? {
 			id: telegramWidget.id,
 			is_active: telegramWidget.is_active,
@@ -480,6 +488,313 @@ export const actions: Actions = {
 			return { searchResults: results, tab };
 		} catch {
 			return { searchResults: [], tab };
+		}
+	},
+
+	// ============================================
+	// SESSION-19: Services tab actions
+	// ============================================
+	saveExperienceConfig: async ({ request }) => {
+		const formData = await request.formData();
+		const eyebrow = formData.get('eyebrow')?.toString() || '';
+		const title = formData.get('title')?.toString() || '';
+		const description = formData.get('description')?.toString() || '';
+		const cta_text = formData.get('cta_text')?.toString() || 'Запланировать консультацию';
+		const cta_href = formData.get('cta_href')?.toString() || '/contacts';
+		const is_active = formData.get('is_active') ? 1 : 0;
+
+		const extra_json = JSON.stringify({ cta_text, cta_href });
+
+		try {
+			queries.updateSectionConfig.run({ section_key: 'experience', eyebrow, title, description, extra_json, is_active });
+			return { success: true, tab: 'services' };
+		} catch {
+			return fail(500, { error: 'Failed to update experience config', tab: 'services' });
+		}
+	},
+
+	moveService: async ({ request }) => {
+		const formData = await request.formData();
+		const id = Number(formData.get('id'));
+		const direction = formData.get('direction')?.toString();
+
+		const services = queries.adminGetHomeServices.all() as any[];
+		const idx = services.findIndex((s: any) => s.id === id);
+		if (idx === -1) return fail(400, { error: 'Service not found', tab: 'services' });
+
+		const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+		if (swapIdx < 0 || swapIdx >= services.length) return { success: true, tab: 'services' };
+
+		const current = services[idx];
+		const swap = services[swapIdx];
+
+		try {
+			db.transaction(() => {
+				queries.reorderService.run({ id: current.id, position: swap.position });
+				queries.reorderService.run({ id: swap.id, position: current.position });
+			})();
+			return { success: true, tab: 'services' };
+		} catch {
+			return fail(500, { error: 'Failed to reorder service', tab: 'services' });
+		}
+	},
+
+	moveStat: async ({ request }) => {
+		const formData = await request.formData();
+		const id = Number(formData.get('id'));
+		const direction = formData.get('direction')?.toString();
+
+		const stats = queries.adminGetHomeStats.all() as any[];
+		const idx = stats.findIndex((s: any) => s.id === id);
+		if (idx === -1) return fail(400, { error: 'Stat not found', tab: 'services' });
+
+		const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+		if (swapIdx < 0 || swapIdx >= stats.length) return { success: true, tab: 'services' };
+
+		const current = stats[idx];
+		const swap = stats[swapIdx];
+
+		try {
+			db.transaction(() => {
+				queries.reorderStat.run({ id: current.id, position: swap.position });
+				queries.reorderStat.run({ id: swap.id, position: current.position });
+			})();
+			return { success: true, tab: 'services' };
+		} catch {
+			return fail(500, { error: 'Failed to reorder stat', tab: 'services' });
+		}
+	},
+
+	// ============================================
+	// SESSION-19: Testimonials tab actions
+	// ============================================
+	saveTestimonialsConfig: async ({ request }) => {
+		const formData = await request.formData();
+		const eyebrow = formData.get('eyebrow')?.toString() || '';
+		const title = formData.get('title')?.toString() || '';
+		const description = formData.get('description')?.toString() || '';
+		const is_active = formData.get('is_active') ? 1 : 0;
+
+		try {
+			queries.updateSectionConfig.run({ section_key: 'testimonials', eyebrow, title, description, extra_json: '{}', is_active });
+			return { success: true, tab: 'testimonials' };
+		} catch {
+			return fail(500, { error: 'Failed to update testimonials config', tab: 'testimonials' });
+		}
+	},
+
+	createTestimonialAdmin: async ({ request }) => {
+		const formData = await request.formData();
+		const name = formData.get('name')?.toString() || '';
+		const position = formData.get('position_text')?.toString() || '';
+		const text = formData.get('text')?.toString() || '';
+		const avatar_url = formData.get('avatar_url')?.toString() || '';
+		const choice = formData.get('choice')?.toString() || '';
+		const is_active = formData.get('is_active') ? 1 : 0;
+
+		if (!name || !text) return fail(400, { error: 'Name and text are required', tab: 'testimonials' });
+
+		try {
+			const nextOrder = (queries.getMaxTestimonialOrder.get() as any).next_order;
+			queries.createTestimonial.run({ name, position, text, avatar_url, choice, is_active, display_order: nextOrder });
+			return { success: true, tab: 'testimonials' };
+		} catch {
+			return fail(500, { error: 'Failed to create testimonial', tab: 'testimonials' });
+		}
+	},
+
+	updateTestimonialAdmin: async ({ request }) => {
+		const formData = await request.formData();
+		const id = Number(formData.get('id'));
+		const name = formData.get('name')?.toString() || '';
+		const position = formData.get('position_text')?.toString() || '';
+		const text = formData.get('text')?.toString() || '';
+		const avatar_url = formData.get('avatar_url')?.toString() || '';
+		const choice = formData.get('choice')?.toString() || '';
+		const is_active = formData.get('is_active') ? 1 : 0;
+		const display_order = Number(formData.get('display_order') || 0);
+
+		if (!name || !text) return fail(400, { error: 'Name and text are required', tab: 'testimonials' });
+
+		try {
+			queries.updateTestimonial.run({ id, name, position, text, avatar_url, choice, is_active, display_order });
+			return { success: true, tab: 'testimonials' };
+		} catch {
+			return fail(500, { error: 'Failed to update testimonial', tab: 'testimonials' });
+		}
+	},
+
+	deleteTestimonialAdmin: async ({ request }) => {
+		const formData = await request.formData();
+		const id = Number(formData.get('id'));
+
+		try {
+			queries.deleteTestimonial.run(id);
+			return { success: true, tab: 'testimonials' };
+		} catch {
+			return fail(500, { error: 'Failed to delete testimonial', tab: 'testimonials' });
+		}
+	},
+
+	moveTestimonial: async ({ request }) => {
+		const formData = await request.formData();
+		const id = Number(formData.get('id'));
+		const direction = formData.get('direction')?.toString();
+
+		const testimonials = queries.listTestimonials.all() as any[];
+		const idx = testimonials.findIndex((t: any) => t.id === id);
+		if (idx === -1) return fail(400, { error: 'Testimonial not found', tab: 'testimonials' });
+
+		const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+		if (swapIdx < 0 || swapIdx >= testimonials.length) return { success: true, tab: 'testimonials' };
+
+		const current = testimonials[idx];
+		const swap = testimonials[swapIdx];
+
+		try {
+			db.transaction(() => {
+				queries.reorderTestimonial.run({ id: current.id, display_order: swap.display_order });
+				queries.reorderTestimonial.run({ id: swap.id, display_order: current.display_order });
+			})();
+			return { success: true, tab: 'testimonials' };
+		} catch {
+			return fail(500, { error: 'Failed to reorder testimonial', tab: 'testimonials' });
+		}
+	},
+
+	// ============================================
+	// SESSION-19: Editorial (Journal) tab actions
+	// ============================================
+	saveEditorialConfig: async ({ request }) => {
+		const formData = await request.formData();
+		const eyebrow = formData.get('eyebrow')?.toString() || '';
+		const title = formData.get('title')?.toString() || '';
+		const mode = formData.get('editorial_mode')?.toString() || 'auto';
+		const is_active = formData.get('is_active') ? 1 : 0;
+
+		const extra_json = JSON.stringify({ mode });
+
+		try {
+			queries.updateSectionConfig.run({ section_key: 'editorial', eyebrow, title, description: '', extra_json, is_active });
+			return { success: true, tab: 'editorial' };
+		} catch {
+			return fail(500, { error: 'Failed to update editorial config', tab: 'editorial' });
+		}
+	},
+
+	addEditorialItem: async ({ request }) => {
+		const formData = await request.formData();
+		const article_id = Number(formData.get('article_id'));
+
+		if (!article_id) return fail(400, { error: 'Article is required', tab: 'editorial' });
+
+		const items = queries.getEditorialItems.all() as any[];
+		if (items.length >= 8) return fail(400, { error: 'Maximum 8 articles allowed', tab: 'editorial' });
+		if (items.some((i: any) => i.article_id === article_id)) {
+			return fail(400, { error: 'Article already added', tab: 'editorial' });
+		}
+
+		try {
+			const pos = (queries.getMaxEditorialPosition.get() as any).next_position;
+			queries.addEditorialItem.run({ article_id, position: pos });
+			return { success: true, tab: 'editorial' };
+		} catch {
+			return fail(500, { error: 'Failed to add editorial item', tab: 'editorial' });
+		}
+	},
+
+	removeEditorialItem: async ({ request }) => {
+		const formData = await request.formData();
+		const id = Number(formData.get('id'));
+
+		try {
+			queries.removeEditorialItem.run(id);
+			return { success: true, tab: 'editorial' };
+		} catch {
+			return fail(500, { error: 'Failed to remove editorial item', tab: 'editorial' });
+		}
+	},
+
+	moveEditorialItem: async ({ request }) => {
+		const formData = await request.formData();
+		const id = Number(formData.get('id'));
+		const direction = formData.get('direction')?.toString();
+
+		const items = queries.getEditorialItems.all() as any[];
+		const idx = items.findIndex((i: any) => i.id === id);
+		if (idx === -1) return fail(400, { error: 'Item not found', tab: 'editorial' });
+
+		const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+		if (swapIdx < 0 || swapIdx >= items.length) return { success: true, tab: 'editorial' };
+
+		const current = items[idx];
+		const swap = items[swapIdx];
+
+		try {
+			db.transaction(() => {
+				queries.reorderEditorialItem.run({ id: current.id, position: swap.position });
+				queries.reorderEditorialItem.run({ id: swap.id, position: current.position });
+			})();
+			return { success: true, tab: 'editorial' };
+		} catch {
+			return fail(500, { error: 'Failed to reorder', tab: 'editorial' });
+		}
+	},
+
+	searchArticles: async ({ request }) => {
+		const formData = await request.formData();
+		const query = formData.get('query')?.toString() || '';
+
+		if (query.length < 2) return { articleSearchResults: [], tab: 'editorial' };
+
+		try {
+			const results = queries.searchArticles.all({ q: `%${query}%` }) as any[];
+			return { articleSearchResults: results, tab: 'editorial' };
+		} catch {
+			return { articleSearchResults: [], tab: 'editorial' };
+		}
+	},
+
+	// ============================================
+	// SESSION-19: Telegram tab actions
+	// ============================================
+	saveTelegramConfig: async ({ request }) => {
+		const formData = await request.formData();
+		const enabled = formData.get('telegram_enabled') ? 'true' : 'false';
+		const eyebrow = formData.get('eyebrow')?.toString() || '';
+		const title = formData.get('title')?.toString() || '';
+		const description = formData.get('description')?.toString() || '';
+		const ctaText = formData.get('cta_text')?.toString() || 'Подписаться';
+		const channelUrl = formData.get('channel_url')?.toString() || '';
+
+		// Features (dynamic list)
+		const featureValues = formData.getAll('feature_text');
+		const features = featureValues.map(f => f.toString().trim()).filter(f => f.length > 0);
+
+		try {
+			// Update site_config
+			queries.updateConfigByKey.run(enabled, 'telegram_group_enabled');
+			if (channelUrl) {
+				queries.updateConfigByKey.run(channelUrl, 'telegram_group_url');
+			}
+
+			// Update section config
+			queries.updateSectionConfig.run({
+				section_key: 'telegram', eyebrow, title, description, extra_json: '{}', is_active: 1
+			});
+
+			// Update or create widget
+			const widgetData = JSON.stringify({ eyebrow, title, description, features, ctaText, ctaHref: channelUrl, channelUrl });
+			const existingWidget = queries.getTelegramWidgetForAdmin.get() as any;
+			if (existingWidget) {
+				queries.adminUpdateWidget.run({ id: existingWidget.id, data_json: widgetData, is_active: enabled === 'true' ? 1 : 0 });
+			} else {
+				db.prepare("INSERT INTO widgets (type, title, data_json, is_active) VALUES ('telegram_cta', 'Telegram CTA', ?, ?)").run(widgetData, enabled === 'true' ? 1 : 0);
+			}
+
+			return { success: true, tab: 'telegram' };
+		} catch {
+			return fail(500, { error: 'Failed to update telegram config', tab: 'telegram' });
 		}
 	}
 };

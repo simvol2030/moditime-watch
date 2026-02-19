@@ -18,10 +18,10 @@
 		{ key: 'hero', label: 'Hero', active: true },
 		{ key: 'collections', label: 'Коллекции', active: true },
 		{ key: 'showcase', label: 'Бестселлеры', active: true },
-		{ key: 'services', label: 'Сервисы', active: false },
-		{ key: 'testimonials', label: 'Отзывы', active: false },
-		{ key: 'editorial', label: 'Журнал', active: false },
-		{ key: 'telegram', label: 'Telegram', active: false }
+		{ key: 'services', label: 'Сервисы', active: true },
+		{ key: 'testimonials', label: 'Отзывы', active: true },
+		{ key: 'editorial', label: 'Журнал', active: true },
+		{ key: 'telegram', label: 'Telegram', active: true }
 	];
 
 	function switchTab(key: string) {
@@ -56,6 +56,41 @@
 		})()
 	);
 	let showcaseProductSearch = $state('');
+
+	// Services state
+	let editingServiceId = $state<number | null>(null);
+	let showAddService = $state(false);
+	let editingStatId = $state<number | null>(null);
+	let showAddStat = $state(false);
+
+	// Testimonials state
+	let editingTestimonialId = $state<number | null>(null);
+	let showAddTestimonial = $state(false);
+
+	// Editorial state
+	let editorialMode = $state<'auto' | 'manual'>(
+		(() => {
+			try {
+				const extra = JSON.parse(data.sectionConfigs?.editorial?.extra_json || '{}');
+				return extra.mode || 'auto';
+			} catch { return 'auto'; }
+		})()
+	);
+
+	// Telegram state
+	let telegramFeatures = $state<string[]>(
+		(() => {
+			try {
+				return data.telegramWidget?.data?.features || ['Эксклюзивные предложения', 'Подборки часов', 'Обзоры новинок'];
+			} catch { return []; }
+		})()
+	);
+	function addFeature() {
+		if (telegramFeatures.length < 6) telegramFeatures = [...telegramFeatures, ''];
+	}
+	function removeFeature(i: number) {
+		telegramFeatures = telegramFeatures.filter((_, idx) => idx !== i);
+	}
 </script>
 
 <svelte:head>
@@ -573,12 +608,608 @@
 	{/if}
 {/if}
 
-<!-- DISABLED TABS -->
-{#if data.tab === 'services' || data.tab === 'testimonials' || data.tab === 'editorial' || data.tab === 'telegram'}
-	<div class="card coming-soon">
-		<h3>Coming soon</h3>
-		<p>Эта вкладка будет реализована в Session-19</p>
+<!-- SERVICES TAB (Experience) -->
+{#if data.tab === 'services'}
+	{@const expCfg = data.sectionConfigs?.experience || { eyebrow: '', title: '', description: '', extra_json: '{}' }}
+	{@const expExtra = (() => { try { return JSON.parse(expCfg.extra_json || '{}'); } catch { return {}; } })()}
+
+	<!-- Section config + CTA -->
+	<form method="POST" action="?/saveExperienceConfig" use:enhance>
+		<input type="hidden" name="is_active" value="1" />
+		<div class="card">
+			<h3>Тексты секции</h3>
+			<div class="form-grid">
+				<div class="form-group">
+					<label for="exp-eyebrow">Eyebrow <span class="hint">max 40</span></label>
+					<input type="text" id="exp-eyebrow" name="eyebrow" value={expCfg.eyebrow} maxlength="40" />
+				</div>
+				<div class="form-group">
+					<label for="exp-title">Заголовок <span class="hint">max 100</span></label>
+					<input type="text" id="exp-title" name="title" value={expCfg.title} maxlength="100" />
+				</div>
+				<div class="form-group full">
+					<label for="exp-desc">Описание <span class="hint">max 500</span></label>
+					<textarea id="exp-desc" name="description" rows="2" maxlength="500">{expCfg.description}</textarea>
+				</div>
+				<div class="form-group">
+					<label for="exp-cta-text">CTA текст <span class="hint">max 40</span></label>
+					<input type="text" id="exp-cta-text" name="cta_text" value={expExtra.cta_text || 'Запланировать консультацию'} maxlength="40" />
+				</div>
+				<div class="form-group">
+					<label for="exp-cta-href">CTA ссылка</label>
+					<input type="text" id="exp-cta-href" name="cta_href" value={expExtra.cta_href || '/contacts'} />
+				</div>
+			</div>
+			<div class="form-actions-inline">
+				<ActionButton type="submit" variant="primary" size="sm">Сохранить тексты</ActionButton>
+			</div>
+		</div>
+	</form>
+
+	<!-- Stats CRUD -->
+	<div class="card">
+		<div class="card-header">
+			<h3>Статистика ({data.stats.length})</h3>
+			<ActionButton variant="secondary" size="sm" onclick={() => showAddStat = !showAddStat}>
+				{showAddStat ? 'Отмена' : '+ Добавить'}
+			</ActionButton>
+		</div>
+
+		{#if showAddStat}
+			<form method="POST" action="?/createStat" use:enhance class="collection-edit-form">
+				<div class="form-grid">
+					<div class="form-group">
+						<label>Значение <span class="hint">max 20</span></label>
+						<input type="text" name="value" required placeholder="72 часа" maxlength="20" />
+					</div>
+					<div class="form-group">
+						<label>Label</label>
+						<input type="text" name="label" required placeholder="Поиск лимитированных серий" />
+					</div>
+					<input type="hidden" name="position" value={data.stats.length} />
+				</div>
+				<div class="form-actions-inline">
+					<ActionButton type="submit" variant="primary" size="sm">Создать</ActionButton>
+				</div>
+			</form>
+		{/if}
+
+		<div class="items-list">
+			{#each data.stats as stat, i}
+				<div class="item-row">
+					{#if editingStatId === stat.id}
+						<form method="POST" action="?/updateStat" use:enhance class="collection-edit-form">
+							<input type="hidden" name="id" value={stat.id} />
+							<input type="hidden" name="position" value={stat.position} />
+							<div class="form-grid">
+								<div class="form-group">
+									<label>Значение</label>
+									<input type="text" name="value" value={stat.value} required />
+								</div>
+								<div class="form-group">
+									<label>Label</label>
+									<input type="text" name="label" value={stat.label} required />
+								</div>
+							</div>
+							<div class="form-actions-inline">
+								<ActionButton type="submit" variant="primary" size="sm">Сохранить</ActionButton>
+								<ActionButton variant="ghost" size="sm" onclick={() => editingStatId = null}>Отмена</ActionButton>
+							</div>
+						</form>
+					{:else}
+						<div class="item-content">
+							<div class="item-info">
+								<div>
+									<strong>{stat.value}</strong>
+									<span class="item-meta">{stat.label}</span>
+								</div>
+							</div>
+							<div class="item-actions">
+								{#if i > 0}
+									<form method="POST" action="?/moveStat" use:enhance class="inline-form">
+										<input type="hidden" name="id" value={stat.id} />
+										<input type="hidden" name="direction" value="up" />
+										<button type="submit" class="btn-arrow" title="Вверх">↑</button>
+									</form>
+								{/if}
+								{#if i < data.stats.length - 1}
+									<form method="POST" action="?/moveStat" use:enhance class="inline-form">
+										<input type="hidden" name="id" value={stat.id} />
+										<input type="hidden" name="direction" value="down" />
+										<button type="submit" class="btn-arrow" title="Вниз">↓</button>
+									</form>
+								{/if}
+								<button type="button" class="btn-link" onclick={() => editingStatId = stat.id}>Ред.</button>
+								<form method="POST" action="?/deleteStat" use:enhance class="inline-form">
+									<input type="hidden" name="id" value={stat.id} />
+									<button type="submit" class="btn-link danger"
+										onclick={(e) => { if (!confirm('Удалить?')) e.preventDefault(); }}>Удал.</button>
+								</form>
+							</div>
+						</div>
+					{/if}
+				</div>
+			{/each}
+		</div>
 	</div>
+
+	<!-- Services CRUD -->
+	<div class="card">
+		<div class="card-header">
+			<h3>Карточки сервисов ({data.services.length})</h3>
+			<ActionButton variant="secondary" size="sm" onclick={() => showAddService = !showAddService}>
+				{showAddService ? 'Отмена' : '+ Добавить сервис'}
+			</ActionButton>
+		</div>
+
+		{#if showAddService}
+			<form method="POST" action="?/createService" use:enhance class="collection-edit-form">
+				<div class="form-grid">
+					<div class="form-group full">
+						<label>Иконка SVG</label>
+						<textarea name="icon_svg" rows="2" placeholder='<svg width="28" height="28">...</svg>'></textarea>
+					</div>
+					<div class="form-group full">
+						<label>Название <span class="hint">max 60</span></label>
+						<input type="text" name="title" required placeholder="Консьерж-подбор" maxlength="60" />
+					</div>
+					<div class="form-group full">
+						<label>Описание <span class="hint">max 300</span></label>
+						<textarea name="description" rows="2" maxlength="300" placeholder="Описание сервиса..."></textarea>
+					</div>
+					<div class="form-group">
+						<label>Текст ссылки <span class="hint">max 40</span></label>
+						<input type="text" name="link_text" placeholder="Узнать детали" maxlength="40" />
+					</div>
+					<div class="form-group">
+						<label>URL ссылки</label>
+						<input type="text" name="link_href" placeholder="/contacts" />
+					</div>
+					<input type="hidden" name="position" value={data.services.length} />
+					<input type="hidden" name="is_active" value="1" />
+				</div>
+				<div class="form-actions-inline">
+					<ActionButton type="submit" variant="primary" size="sm">Создать</ActionButton>
+				</div>
+			</form>
+		{/if}
+
+		<div class="items-list">
+			{#each data.services as service, i}
+				<div class="item-row">
+					{#if editingServiceId === service.id}
+						<form method="POST" action="?/updateService" use:enhance class="collection-edit-form">
+							<input type="hidden" name="id" value={service.id} />
+							<input type="hidden" name="position" value={service.position} />
+							<div class="form-grid">
+								<div class="form-group full">
+									<label>Иконка SVG</label>
+									<textarea name="icon_svg" rows="2">{service.icon_svg}</textarea>
+								</div>
+								<div class="form-group full">
+									<label>Название</label>
+									<input type="text" name="title" value={service.title} required />
+								</div>
+								<div class="form-group full">
+									<label>Описание</label>
+									<textarea name="description" rows="2">{service.description}</textarea>
+								</div>
+								<div class="form-group">
+									<label>Текст ссылки</label>
+									<input type="text" name="link_text" value={service.link_text} />
+								</div>
+								<div class="form-group">
+									<label>URL ссылки</label>
+									<input type="text" name="link_href" value={service.link_href} />
+								</div>
+								<div class="form-group checkbox">
+									<label><input type="checkbox" name="is_active" checked={service.is_active === 1} /> Активен</label>
+								</div>
+							</div>
+							<div class="form-actions-inline">
+								<ActionButton type="submit" variant="primary" size="sm">Сохранить</ActionButton>
+								<ActionButton variant="ghost" size="sm" onclick={() => editingServiceId = null}>Отмена</ActionButton>
+							</div>
+						</form>
+					{:else}
+						<div class="item-content">
+							<div class="item-info">
+								{#if service.icon_svg}
+									<div class="svg-thumb">{@html service.icon_svg}</div>
+								{/if}
+								<div>
+									<strong>{service.title}</strong>
+									<span class="item-meta">{service.link_text || ''} → {service.link_href || ''}</span>
+								</div>
+							</div>
+							<div class="item-actions">
+								<span class="status-badge" class:active={service.is_active === 1}>
+									{service.is_active ? 'Active' : 'Off'}
+								</span>
+								{#if i > 0}
+									<form method="POST" action="?/moveService" use:enhance class="inline-form">
+										<input type="hidden" name="id" value={service.id} />
+										<input type="hidden" name="direction" value="up" />
+										<button type="submit" class="btn-arrow" title="Вверх">↑</button>
+									</form>
+								{/if}
+								{#if i < data.services.length - 1}
+									<form method="POST" action="?/moveService" use:enhance class="inline-form">
+										<input type="hidden" name="id" value={service.id} />
+										<input type="hidden" name="direction" value="down" />
+										<button type="submit" class="btn-arrow" title="Вниз">↓</button>
+									</form>
+								{/if}
+								<button type="button" class="btn-link" onclick={() => editingServiceId = service.id}>Ред.</button>
+								<form method="POST" action="?/deleteService" use:enhance class="inline-form">
+									<input type="hidden" name="id" value={service.id} />
+									<button type="submit" class="btn-link danger"
+										onclick={(e) => { if (!confirm('Удалить сервис?')) e.preventDefault(); }}>Удал.</button>
+								</form>
+							</div>
+						</div>
+					{/if}
+				</div>
+			{/each}
+		</div>
+	</div>
+{/if}
+
+<!-- TESTIMONIALS TAB -->
+{#if data.tab === 'testimonials'}
+	{@const testCfg = data.sectionConfigs?.testimonials || { eyebrow: '', title: '', description: '' }}
+
+	<!-- Section config -->
+	<form method="POST" action="?/saveTestimonialsConfig" use:enhance>
+		<input type="hidden" name="is_active" value="1" />
+		<div class="card">
+			<h3>Тексты секции</h3>
+			<div class="form-grid">
+				<div class="form-group">
+					<label for="test-eyebrow">Eyebrow <span class="hint">max 40</span></label>
+					<input type="text" id="test-eyebrow" name="eyebrow" value={testCfg.eyebrow} maxlength="40" />
+				</div>
+				<div class="form-group">
+					<label for="test-title">Заголовок <span class="hint">max 100</span></label>
+					<input type="text" id="test-title" name="title" value={testCfg.title} maxlength="100" />
+				</div>
+				<div class="form-group full">
+					<label for="test-desc">Описание <span class="hint">max 300</span></label>
+					<textarea id="test-desc" name="description" rows="2" maxlength="300">{testCfg.description}</textarea>
+				</div>
+			</div>
+			<div class="form-actions-inline">
+				<ActionButton type="submit" variant="primary" size="sm">Сохранить тексты</ActionButton>
+			</div>
+		</div>
+	</form>
+
+	<!-- Testimonials list -->
+	<div class="card">
+		<div class="card-header">
+			<h3>Список отзывов ({data.testimonials.length})</h3>
+			<ActionButton variant="secondary" size="sm" onclick={() => { showAddTestimonial = !showAddTestimonial; editingTestimonialId = null; }}>
+				{showAddTestimonial ? 'Отмена' : '+ Добавить отзыв'}
+			</ActionButton>
+		</div>
+
+		<!-- Add new testimonial form -->
+		{#if showAddTestimonial}
+			<form method="POST" action="?/createTestimonialAdmin" use:enhance class="collection-edit-form">
+				<div class="form-grid">
+					<div class="form-group full">
+						<label>Аватар URL <span class="hint">рек. 128x128, jpg/webp</span></label>
+						<input type="text" name="avatar_url" placeholder="https://..." />
+					</div>
+					<div class="form-group">
+						<label>Имя <span class="hint">max 60</span></label>
+						<input type="text" name="name" required maxlength="60" placeholder="Имя Фамилия" />
+					</div>
+					<div class="form-group">
+						<label>Должность <span class="hint">max 100</span></label>
+						<input type="text" name="position_text" maxlength="100" placeholder="Партнёр фонда" />
+					</div>
+					<div class="form-group full">
+						<label>Текст отзыва <span class="hint">max 1000</span></label>
+						<textarea name="text" rows="3" required maxlength="1000" placeholder="Текст отзыва..."></textarea>
+					</div>
+					<div class="form-group">
+						<label>Выбор часов <span class="hint">max 100</span></label>
+						<input type="text" name="choice" maxlength="100" placeholder="Patek Philippe Nautilus 5811" />
+					</div>
+					<div class="form-group checkbox">
+						<label><input type="checkbox" name="is_active" checked /> Активен</label>
+					</div>
+				</div>
+				<div class="form-actions-inline">
+					<ActionButton type="submit" variant="primary" size="sm">Создать</ActionButton>
+				</div>
+			</form>
+		{/if}
+
+		<!-- Testimonials rows -->
+		<div class="items-list">
+			{#each data.testimonials as testimonial, i}
+				<div class="item-row">
+					{#if editingTestimonialId === testimonial.id}
+						<form method="POST" action="?/updateTestimonialAdmin" use:enhance class="collection-edit-form">
+							<input type="hidden" name="id" value={testimonial.id} />
+							<input type="hidden" name="display_order" value={testimonial.display_order} />
+							<div class="form-grid">
+								<div class="form-group full">
+									<label>Аватар URL</label>
+									<input type="text" name="avatar_url" value={testimonial.avatar_url} />
+								</div>
+								{#if testimonial.avatar_url}
+									<div class="form-group full">
+										<img src={testimonial.avatar_url} alt="Avatar" class="avatar-preview" />
+									</div>
+								{/if}
+								<div class="form-group">
+									<label>Имя</label>
+									<input type="text" name="name" value={testimonial.name} required />
+								</div>
+								<div class="form-group">
+									<label>Должность</label>
+									<input type="text" name="position_text" value={testimonial.position} />
+								</div>
+								<div class="form-group full">
+									<label>Текст отзыва</label>
+									<textarea name="text" rows="3" required>{testimonial.text}</textarea>
+								</div>
+								<div class="form-group">
+									<label>Выбор часов</label>
+									<input type="text" name="choice" value={testimonial.choice} />
+								</div>
+								<div class="form-group checkbox">
+									<label><input type="checkbox" name="is_active" checked={testimonial.is_active === 1} /> Активен</label>
+								</div>
+							</div>
+							<div class="form-actions-inline">
+								<ActionButton type="submit" variant="primary" size="sm">Сохранить</ActionButton>
+								<ActionButton variant="ghost" size="sm" onclick={() => editingTestimonialId = null}>Отмена</ActionButton>
+							</div>
+						</form>
+					{:else}
+						<div class="item-content">
+							<div class="item-info">
+								{#if testimonial.avatar_url}
+									<img src={testimonial.avatar_url} alt="" class="avatar-thumb" />
+								{/if}
+								<div>
+									<strong>{testimonial.name}</strong>
+									<span class="item-meta">{testimonial.position || ''}</span>
+								</div>
+							</div>
+							<div class="item-actions">
+								<span class="status-badge" class:active={testimonial.is_active === 1}>
+									{testimonial.is_active ? 'Active' : 'Off'}
+								</span>
+								{#if i > 0}
+									<form method="POST" action="?/moveTestimonial" use:enhance class="inline-form">
+										<input type="hidden" name="id" value={testimonial.id} />
+										<input type="hidden" name="direction" value="up" />
+										<button type="submit" class="btn-arrow" title="Вверх">↑</button>
+									</form>
+								{/if}
+								{#if i < data.testimonials.length - 1}
+									<form method="POST" action="?/moveTestimonial" use:enhance class="inline-form">
+										<input type="hidden" name="id" value={testimonial.id} />
+										<input type="hidden" name="direction" value="down" />
+										<button type="submit" class="btn-arrow" title="Вниз">↓</button>
+									</form>
+								{/if}
+								<button type="button" class="btn-link" onclick={() => { editingTestimonialId = testimonial.id; showAddTestimonial = false; }}>Ред.</button>
+								<form method="POST" action="?/deleteTestimonialAdmin" use:enhance class="inline-form">
+									<input type="hidden" name="id" value={testimonial.id} />
+									<button type="submit" class="btn-link danger"
+										onclick={(e) => { if (!confirm('Удалить отзыв?')) e.preventDefault(); }}>Удал.</button>
+								</form>
+							</div>
+						</div>
+					{/if}
+				</div>
+			{/each}
+		</div>
+	</div>
+{/if}
+
+<!-- EDITORIAL (JOURNAL) TAB -->
+{#if data.tab === 'editorial'}
+	{@const edCfg = data.sectionConfigs?.editorial || { eyebrow: '', title: '', extra_json: '{}' }}
+
+	<!-- Section config + mode -->
+	<form method="POST" action="?/saveEditorialConfig" use:enhance>
+		<input type="hidden" name="is_active" value="1" />
+		<div class="card">
+			<h3>Тексты секции</h3>
+			<div class="form-grid">
+				<div class="form-group">
+					<label for="ed-eyebrow">Eyebrow <span class="hint">max 40</span></label>
+					<input type="text" id="ed-eyebrow" name="eyebrow" value={edCfg.eyebrow} maxlength="40" />
+				</div>
+				<div class="form-group">
+					<label for="ed-title">Заголовок <span class="hint">max 100</span></label>
+					<input type="text" id="ed-title" name="title" value={edCfg.title} maxlength="100" />
+				</div>
+			</div>
+		</div>
+
+		<!-- Mode selector -->
+		<div class="card">
+			<h3>Режим выбора статей</h3>
+			<div class="brands-mode">
+				<label class="radio-label">
+					<input type="radio" name="editorial_mode" value="auto" checked={editorialMode === 'auto'} onchange={() => editorialMode = 'auto'} />
+					Автоматический (is_featured = 1, последние 6)
+				</label>
+				<label class="radio-label">
+					<input type="radio" name="editorial_mode" value="manual" checked={editorialMode === 'manual'} onchange={() => editorialMode = 'manual'} />
+					Ручной (выбрать конкретные статьи)
+				</label>
+			</div>
+			<div class="form-actions-inline">
+				<ActionButton type="submit" variant="primary" size="sm">Сохранить настройки</ActionButton>
+			</div>
+		</div>
+	</form>
+
+	<!-- Manual articles list -->
+	{#if editorialMode === 'manual'}
+		<div class="card">
+			<div class="card-header">
+				<h3>Статьи в журнале ({data.editorialItems.length} / 8)</h3>
+			</div>
+
+			<!-- Search and add article -->
+			{#if data.editorialItems.length < 8}
+				<form method="POST" action="?/searchArticles" use:enhance class="product-add-row">
+					<input type="text" name="query" placeholder="Поиск статьи..." class="search-input" />
+					<ActionButton type="submit" variant="secondary" size="sm">Найти</ActionButton>
+				</form>
+			{/if}
+
+			<!-- Search results -->
+			{#if (form as any)?.articleSearchResults?.length > 0}
+				<div class="search-results">
+					{#each (form as any).articleSearchResults as article}
+						<form method="POST" action="?/addEditorialItem" use:enhance class="search-result-row">
+							<input type="hidden" name="article_id" value={article.id} />
+							<div class="search-result-info">
+								<strong>{article.title}</strong>
+								<span class="item-meta">{article.category_name || 'Без категории'}</span>
+							</div>
+							<ActionButton type="submit" variant="secondary" size="sm">Добавить</ActionButton>
+						</form>
+					{/each}
+				</div>
+			{/if}
+
+			<!-- Editorial items list -->
+			<div class="items-list">
+				{#each data.editorialItems as item, i}
+					<div class="item-row">
+						<div class="item-content">
+							<div class="item-info">
+								{#if item.image_url}
+									<img src={item.image_url} alt="" class="item-thumb" />
+								{/if}
+								<div>
+									<strong>{item.title}</strong>
+									<span class="item-meta">{item.category_name || 'Без категории'}</span>
+								</div>
+							</div>
+							<div class="item-actions">
+								{#if i > 0}
+									<form method="POST" action="?/moveEditorialItem" use:enhance class="inline-form">
+										<input type="hidden" name="id" value={item.id} />
+										<input type="hidden" name="direction" value="up" />
+										<button type="submit" class="btn-arrow" title="Вверх">↑</button>
+									</form>
+								{/if}
+								{#if i < data.editorialItems.length - 1}
+									<form method="POST" action="?/moveEditorialItem" use:enhance class="inline-form">
+										<input type="hidden" name="id" value={item.id} />
+										<input type="hidden" name="direction" value="down" />
+										<button type="submit" class="btn-arrow" title="Вниз">↓</button>
+									</form>
+								{/if}
+								<form method="POST" action="?/removeEditorialItem" use:enhance class="inline-form">
+									<input type="hidden" name="id" value={item.id} />
+									<button type="submit" class="btn-link danger"
+										onclick={(e) => { if (!confirm('Убрать статью?')) e.preventDefault(); }}>Убрать</button>
+								</form>
+							</div>
+						</div>
+					</div>
+				{/each}
+			</div>
+
+			{#if data.editorialItems.length === 0}
+				<p class="coming-soon-text">Статьи не добавлены. Используйте поиск чтобы добавить статьи или переключитесь на автоматический режим.</p>
+			{/if}
+
+			<p class="editorial-note">Статьи создаются и редактируются в разделе «Статьи»</p>
+		</div>
+	{:else}
+		<div class="card">
+			<p class="auto-mode-info">В автоматическом режиме отображаются статьи с флагом <strong>is_featured = 1</strong> (последние 6). Управляйте этим флагом на странице статьи.</p>
+		</div>
+	{/if}
+{/if}
+
+<!-- TELEGRAM TAB -->
+{#if data.tab === 'telegram'}
+	{@const tgCfg = data.sectionConfigs?.telegram || { eyebrow: '', title: '', description: '' }}
+	{@const tgWidget = data.telegramWidget?.data || {}}
+
+	<form method="POST" action="?/saveTelegramConfig" use:enhance>
+		<!-- Toggle -->
+		<div class="card">
+			<div class="form-group checkbox">
+				<label>
+					<input type="checkbox" name="telegram_enabled" checked={data.telegramEnabled} />
+					Показывать секцию Telegram на главной
+				</label>
+			</div>
+		</div>
+
+		<!-- Content -->
+		<div class="card">
+			<h3>Контент</h3>
+			<div class="form-grid">
+				<div class="form-group">
+					<label for="tg-eyebrow">Eyebrow <span class="hint">max 40</span></label>
+					<input type="text" id="tg-eyebrow" name="eyebrow" value={tgCfg.eyebrow} maxlength="40" />
+				</div>
+				<div class="form-group">
+					<label for="tg-title">Заголовок <span class="hint">max 100</span></label>
+					<input type="text" id="tg-title" name="title" value={tgCfg.title} maxlength="100" />
+				</div>
+				<div class="form-group full">
+					<label for="tg-desc">Описание <span class="hint">max 300</span></label>
+					<textarea id="tg-desc" name="description" rows="2" maxlength="300">{tgCfg.description}</textarea>
+				</div>
+			</div>
+		</div>
+
+		<!-- Features -->
+		<div class="card">
+			<h3>Фичи (буллеты) <span class="hint">(макс. 6)</span></h3>
+			<div class="dynamic-list">
+				{#each telegramFeatures as feature, i}
+					<div class="dynamic-row">
+						<div class="dynamic-field grow">
+							<input type="text" name="feature_text" bind:value={feature} maxlength="60" placeholder="Эксклюзивные предложения" />
+						</div>
+						<button type="button" class="btn-remove" onclick={() => removeFeature(i)} title="Удалить">-</button>
+					</div>
+				{/each}
+			</div>
+			{#if telegramFeatures.length < 6}
+				<button type="button" class="btn-add" onclick={addFeature}>+ Добавить</button>
+			{/if}
+		</div>
+
+		<!-- CTA + URL -->
+		<div class="card">
+			<h3>CTA и ссылка</h3>
+			<div class="form-grid">
+				<div class="form-group">
+					<label for="tg-cta">Текст CTA <span class="hint">max 30</span></label>
+					<input type="text" id="tg-cta" name="cta_text" value={tgWidget.ctaText || 'Подписаться'} maxlength="30" />
+				</div>
+				<div class="form-group">
+					<label for="tg-url">URL канала</label>
+					<input type="text" id="tg-url" name="channel_url" value={data.telegramUrl} />
+				</div>
+			</div>
+		</div>
+
+		<div class="form-actions">
+			<ActionButton type="submit" variant="primary">Сохранить</ActionButton>
+		</div>
+	</form>
 {/if}
 
 <style>
@@ -1004,15 +1635,91 @@
 		margin: 0;
 	}
 
-	/* Coming soon */
-	.coming-soon {
-		background: #f9fafb;
-		border: 1px dashed #d1d5db;
-	}
-
 	.coming-soon-text {
 		color: #9ca3af;
 		font-size: 0.875rem;
+	}
+
+	/* SVG thumbnail for services */
+	.svg-thumb {
+		width: 32px;
+		height: 32px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #6b7280;
+		flex-shrink: 0;
+	}
+
+	.svg-thumb :global(svg) {
+		width: 28px;
+		height: 28px;
+	}
+
+	/* Avatar thumbnail */
+	.avatar-thumb {
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		object-fit: cover;
+		border: 1px solid #e5e7eb;
+		flex-shrink: 0;
+	}
+
+	.avatar-preview {
+		width: 64px;
+		height: 64px;
+		border-radius: 50%;
+		object-fit: cover;
+		border: 1px solid #e5e7eb;
+	}
+
+	/* Search input */
+	.search-input {
+		padding: 0.375rem 0.5rem;
+		border: 1px solid #d1d5db;
+		border-radius: 6px;
+		font-size: 0.8125rem;
+		flex: 1;
+	}
+
+	/* Search results */
+	.search-results {
+		background: #f9fafb;
+		border: 1px solid #e5e7eb;
+		border-radius: 8px;
+		padding: 0.5rem;
+		margin-bottom: 1rem;
+	}
+
+	.search-result-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.5rem;
+		gap: 0.5rem;
+	}
+
+	.search-result-row:not(:last-child) {
+		border-bottom: 1px solid #f3f4f6;
+	}
+
+	.search-result-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
+	}
+
+	.search-result-info strong {
+		font-size: 0.875rem;
+	}
+
+	/* Editorial note */
+	.editorial-note {
+		font-size: 0.8125rem;
+		color: #9ca3af;
+		font-style: italic;
+		margin-top: 0.75rem;
 	}
 
 	@media (max-width: 640px) {
