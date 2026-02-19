@@ -148,7 +148,7 @@
 				</button>
 
 				<!-- Favorites -->
-				<button class="icon-button nav-action" type="button" data-badge="3" aria-label="Избранное">
+				<button class="icon-button nav-action nav-action--favorites" type="button" data-badge="3" aria-label="Избранное">
 					<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
 						<path
 							d="M10 17.5L3.5 11C1 8.5 1 4.5 3.5 2C6 -0.5 10 1 10 4.5C10 1 14 -0.5 16.5 2C19 4.5 19 8.5 16.5 11L10 17.5Z"
@@ -538,6 +538,17 @@
 
 		.nav-shell__actions {
 			gap: 0.25rem;
+		}
+
+		/* Hide less critical icons on small mobile to prevent overflow */
+		.nav-action--favorites,
+		.theme-toggle {
+			display: none;
+		}
+
+		.icon-button {
+			width: 36px;
+			height: 36px;
 		}
 	}
 </style>
