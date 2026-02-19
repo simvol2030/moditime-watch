@@ -10,11 +10,11 @@
 
 | Метрика | Значение |
 |---------|----------|
-| **Всего задач** | 110 |
-| **Выполнено** | 80 (73%) |
-| **Осталось** | 30 (27%) |
+| **Всего задач** | 116 |
+| **Выполнено** | 86 (74%) |
+| **Осталось** | 30 (26%) |
 | **Всего сессий** | 16 |
-| **Завершено сессий** | 13 (81%) |
+| **Завершено сессий** | 14 (88%) |
 
 ---
 
@@ -35,6 +35,7 @@
 | Session-11 | Media & Layout Fixes (5 tasks) | 2025-02-02 | 8e958ee |
 | Session-12 | Communication & Admin UX (3 tasks) | 2025-02-02 | 9cebeea |
 | Session-13 | Critical Bugfixes Session-12 (3 bugfixes, QA v2 PASS) | 2025-02-03 | 4d79170 |
+| Session-16 | Smart Import — Supplier CSV Auto-detect (6 tasks) | 2026-02-19 | 12b4615 |
 
 ---
 
@@ -86,20 +87,19 @@
 
 ---
 
-### Session-16: Smart Import — Автоопределение формата CSV поставщика
+### ~~Session-16: Smart Import — Автоопределение формата CSV поставщика~~ ✅ DONE
 
-> **Источник:** Moderator — менеджер получает CSV от поставщика в другом формате, система должна автоматически его распознать и сконвертировать
-> **Приоритет:** HIGH
-> **Roadmap:** `project-doc/session-16-smart-import/roadmap-start.md`
+> **Deployed:** 2026-02-19 | **Commit:** 12b4615
+> **Result:** 170 supplier products imported (169 added, 1 updated), 2 brands auto-created (Tissot, ATOWAK), 3 categories auto-created (mens, womens, unisex)
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| 1 | CSV Format Detector + Supplier Row Converter | ✅ DONE | - |
-| 2 | Интеграция detect/convert в import pipeline | ✅ DONE | - |
-| 3 | Расширенный поиск файлов в ZIP (fuzzy filename) | ✅ DONE | - |
-| 4 | UX — Export кнопки + свёрнутая инструкция | ✅ DONE | - |
-| 5 | Preview — показать обнаруженный формат | ✅ DONE | - |
-| 6 | Supplier Template endpoint | ✅ DONE | - |
+| 1 | CSV Format Detector + Supplier Row Converter | ✅ DONE | 2026-02-19 |
+| 2 | Интеграция detect/convert в import pipeline | ✅ DONE | 2026-02-19 |
+| 3 | Расширенный поиск файлов в ZIP (fuzzy filename) | ✅ DONE | 2026-02-19 |
+| 4 | UX — Export кнопки + свёрнутая инструкция | ✅ DONE | 2026-02-19 |
+| 5 | Preview — показать обнаруженный формат | ✅ DONE | 2026-02-19 |
+| 6 | Supplier Template endpoint | ✅ DONE | 2026-02-19 |
 
 ---
 
@@ -121,4 +121,4 @@
 13. Session-13 (bugfixes после Session-12) ✅
 14. Session-14 (admin reorder arrows) 🔄
 15. Session-15 (import/export v2) 🔄
-16. Session-16 (smart import — supplier CSV format) 🔄
+16. Session-16 (smart import — supplier CSV format) ✅
