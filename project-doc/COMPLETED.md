@@ -94,12 +94,12 @@
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| 1 | CSV Format Detector + Supplier Row Converter | ⏳ PENDING | - |
-| 2 | Интеграция detect/convert в import pipeline | ⏳ PENDING | - |
-| 3 | Расширенный поиск файлов в ZIP (fuzzy filename) | ⏳ PENDING | - |
-| 4 | UX — Export кнопки + свёрнутая инструкция | ⏳ PENDING | - |
-| 5 | Preview — показать обнаруженный формат | ⏳ PENDING | - |
-| 6 | Supplier Template endpoint | ⏳ PENDING | - |
+| 1 | CSV Format Detector + Supplier Row Converter | ✅ DONE | - |
+| 2 | Интеграция detect/convert в import pipeline | ✅ DONE | - |
+| 3 | Расширенный поиск файлов в ZIP (fuzzy filename) | ✅ DONE | - |
+| 4 | UX — Export кнопки + свёрнутая инструкция | ✅ DONE | - |
+| 5 | Preview — показать обнаруженный формат | ✅ DONE | - |
+| 6 | Supplier Template endpoint | ✅ DONE | - |
 
 ---
 
