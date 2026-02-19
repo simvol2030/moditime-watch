@@ -11,10 +11,10 @@
 | Метрика | Значение |
 |---------|----------|
 | **Всего задач** | 152 |
-| **Выполнено** | 97 (64%) |
-| **Осталось** | 55 (36%) |
+| **Выполнено** | 103 (68%) |
+| **Осталось** | 49 (32%) |
 | **Всего сессий** | 22 |
-| **Завершено сессий** | 16 (73%) |
+| **Завершено сессий** | 17 (77%) |
 
 ---
 
@@ -38,6 +38,7 @@
 | Session-16 | Smart Import — Supplier CSV Auto-detect (6 tasks) | 2026-02-19 | 12b4615 |
 | Session-17 | Image Upload при импорте (6 tasks) | 2026-02-19 | 29853be |
 | Session-18 | Homepage Admin Part 1 (5 tasks) | 2026-02-19 | f2f7fe7 |
+| Session-19 | Homepage Admin Part 2 (6 tasks) | 2026-02-19 | f1fb586 |
 
 ---
 
@@ -120,22 +121,19 @@
 
 ---
 
-### Session-19: Homepage Admin Part 2 (Services + Testimonials + Journal + Telegram)
+### ~~Session-19: Homepage Admin Part 2 (Services + Testimonials + Journal + Telegram)~~ ✅ DONE
 
-> **Источник:** ASCII-спеки + Moderator planning
-> **Приоритет:** HIGH
-> **Зависит от:** Session-18
-> **Roadmap:** `project-doc/session-19-homepage-admin-part2/roadmap-start.md`
-> **ASCII:** `ASCII/templates/homepage.admin.md`
+> **Deployed:** 2026-02-19 | **Commit:** f1fb586
+> **Result:** All 7 homepage admin tabs fully functional: Services (CRUD + stats + CTA), Testimonials (CRUD + avatar + reorder), Journal (auto/manual mode + article search), Telegram (toggle + texts + features + CTA)
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| 1 | БД — homepage_editorial_items + queries | ⏳ PENDING | - |
-| 2 | Обновить главную — оставшиеся секции из БД | ⏳ PENDING | - |
-| 3 | Admin — вкладка "Сервисы" | ⏳ PENDING | - |
-| 4 | Admin — вкладка "Отзывы" | ⏳ PENDING | - |
-| 5 | Admin — вкладка "Журнал" | ⏳ PENDING | - |
-| 6 | Admin — вкладка "Telegram" | ⏳ PENDING | - |
+| 1 | БД — homepage_editorial_items + queries | ✅ DONE | 2026-02-19 |
+| 2 | Обновить главную — оставшиеся секции из БД | ✅ DONE | 2026-02-19 |
+| 3 | Admin — вкладка "Сервисы" | ✅ DONE | 2026-02-19 |
+| 4 | Admin — вкладка "Отзывы" | ✅ DONE | 2026-02-19 |
+| 5 | Admin — вкладка "Журнал" | ✅ DONE | 2026-02-19 |
+| 6 | Admin — вкладка "Telegram" | ✅ DONE | 2026-02-19 |
 
 ---
 
@@ -226,8 +224,8 @@
 15. Session-15 (import/export v2) 🔄
 16. Session-16 (smart import — supplier CSV format) ✅
 17. Session-17 (image upload при импорте) ✅
-18. Session-18 (homepage admin part 1 — hero, collections, bestsellers) ⏳
-19. Session-19 (homepage admin part 2 — services, testimonials, journal, telegram) ⏳
+18. Session-18 (homepage admin part 1 — hero, collections, bestsellers) ✅
+19. Session-19 (homepage admin part 2 — services, testimonials, journal, telegram) ✅
 20. Session-20 (site settings admin) ⏳
 21. Session-21 (menu manager admin) ⏳
 22. Session-22 (page manager admin) ⏳
