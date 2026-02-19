@@ -711,11 +711,37 @@ function seedAdditionalCities() {
   console.log(`✅ Cities seeded: ${newCount} total`);
 }
 
+// Session-20: Seed additional site_config keys (idempotent — INSERT OR IGNORE)
+function seedSiteConfigExtras() {
+  const insertOrIgnore = db.prepare('INSERT OR IGNORE INTO site_config (key, value, type, description) VALUES (?, ?, ?, ?)');
+  const seed = db.transaction(() => {
+    // Logo & branding
+    insertOrIgnore.run('logo_wordmark', 'Moditimewatch', 'string', 'Текст логотипа (wordmark)');
+    insertOrIgnore.run('logo_tagline', 'Fine Time Delivery', 'string', 'Подзаголовок логотипа');
+    insertOrIgnore.run('logo_image_url', '', 'string', 'URL изображения логотипа (SVG/PNG)');
+    insertOrIgnore.run('logo_mode', 'text', 'string', 'Режим логотипа: text / image');
+    insertOrIgnore.run('company_description', 'Сервис доставки оригинальных часов из-за рубежа с гарантией подлинности и персональными консультациями.', 'string', 'Описание компании для footer');
+    insertOrIgnore.run('favicon_url', '', 'string', 'URL favicon');
+
+    // Social links
+    insertOrIgnore.run('social_vk', '', 'string', 'Ссылка на VK');
+    insertOrIgnore.run('social_youtube', '', 'string', 'Ссылка на YouTube');
+    insertOrIgnore.run('social_whatsapp', '', 'string', 'Ссылка на WhatsApp');
+
+    // Topbar
+    insertOrIgnore.run('topbar_badge', 'Moditimewatch Delivery', 'string', 'Бейдж в topbar');
+    insertOrIgnore.run('topbar_text', 'Доставка премиальных часов по России и СНГ', 'string', 'Текст в topbar');
+    insertOrIgnore.run('topbar_visible', 'true', 'boolean', 'Показывать topbar');
+  });
+  seed();
+}
+
 // INITIALIZE DATABASE BEFORE CREATING QUERIES! (only in main thread)
 if (isMainThread) {
 	initializeDatabase();
 	seedDatabase();
 	seedAdditionalCities();
+	seedSiteConfigExtras();
 }
 
 // QUERIES (создаются ПОСЛЕ инициализации таблиц, only in main thread)
