@@ -48,7 +48,7 @@ export function importProducts(rows: Record<string, string>[]): ImportResult {
 
 	// Images
 	const deleteProductImages = db.prepare('DELETE FROM product_images WHERE product_id = ?');
-	const insertImage = db.prepare('INSERT INTO product_images (product_id, url, alt, position, is_main) VALUES (?, ?, ?, ?, ?)');
+	const insertImage = db.prepare('INSERT INTO product_images (product_id, url, thumbnail_url, alt, position, is_main) VALUES (?, ?, ?, ?, ?, ?)');
 
 	// Brand name lookup (hoisted out of loop)
 	const getBrandName = db.prepare('SELECT name FROM brands WHERE id = ?');
@@ -141,19 +141,27 @@ export function importProducts(rows: Record<string, string>[]): ImportResult {
 			}
 
 			// Images: main_image and gallery_images (pipe-separated URLs)
-			if (row.main_image?.trim() || row.gallery_images?.trim()) {
+			// Only touch images if CSV explicitly provides at least one image value.
+			// Empty fields mean "don't change existing images" — NOT "delete all images".
+			const hasMainImage = row.main_image?.trim();
+			const hasGalleryImages = row.gallery_images?.trim();
+
+			if (hasMainImage || hasGalleryImages) {
 				deleteProductImages.run(productId);
 				let imgPos = 0;
 
-				if (row.main_image?.trim()) {
-					insertImage.run(productId, row.main_image.trim(), row.name.trim(), imgPos, 1);
+				if (hasMainImage) {
+					const url = row.main_image.trim();
+					const thumbUrl = url.replace(/\.webp$/, '-thumb.webp');
+					insertImage.run(productId, url, thumbUrl, row.name.trim(), imgPos, 1);
 					imgPos++;
 				}
 
-				if (row.gallery_images?.trim()) {
+				if (hasGalleryImages) {
 					const urls = row.gallery_images.split('|').map((u) => u.trim()).filter(Boolean);
 					for (const url of urls) {
-						insertImage.run(productId, url, row.name.trim(), imgPos, 0);
+						const thumbUrl = url.replace(/\.webp$/, '-thumb.webp');
+						insertImage.run(productId, url, thumbUrl, row.name.trim(), imgPos, 0);
 						imgPos++;
 					}
 				}

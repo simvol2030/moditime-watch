@@ -42,11 +42,13 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB for ZIP files
 
 /**
  * Extract CSV text from file (CSV or ZIP).
- * If ZIP, also processes images and returns an imageMap.
+ * If ZIP, also processes images and returns imageMap + thumbMap + errors.
  */
 async function extractFileContents(file: File, dataType: string): Promise<{
 	csvText: string;
 	imageMap: Map<string, string>;
+	thumbMap: Map<string, string>;
+	imageErrors: string[];
 }> {
 	const isZip = file.name.endsWith('.zip') || file.type === 'application/zip';
 
@@ -55,11 +57,16 @@ async function extractFileContents(file: File, dataType: string): Promise<{
 		const buffer = Buffer.from(arrayBuffer);
 		const entity = ENTITY_MAP[dataType] || 'misc';
 		const result = await extractZipImport(buffer, entity);
-		return { csvText: result.csvText, imageMap: result.imageMap };
+		return {
+			csvText: result.csvText,
+			imageMap: result.imageMap,
+			thumbMap: result.thumbMap,
+			imageErrors: result.imageErrors
+		};
 	}
 
 	const csvText = await file.text();
-	return { csvText, imageMap: new Map() };
+	return { csvText, imageMap: new Map(), thumbMap: new Map(), imageErrors: [] };
 }
 
 export const actions: Actions = {
@@ -121,7 +128,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			const { csvText, imageMap } = await extractFileContents(file, dataType);
+			const { csvText, imageMap, imageErrors } = await extractFileContents(file, dataType);
 			let { rows } = parseCSV(csvText);
 
 			if (rows.length === 0) {
@@ -182,7 +189,8 @@ export const actions: Actions = {
 				success: true,
 				dataType,
 				result,
-				imagesProcessed: imageMap.size
+				imagesProcessed: imageMap.size,
+				imageErrors: imageErrors.length > 0 ? imageErrors : undefined
 			};
 		} catch (err) {
 			return { error: `Import failed: ${err instanceof Error ? err.message : 'Unknown error'}` };

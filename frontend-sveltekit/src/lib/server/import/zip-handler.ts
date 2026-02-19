@@ -7,6 +7,10 @@ export interface ZipContents {
 	csvText: string;
 	/** Map of original filename → processed media URL */
 	imageMap: Map<string, string>;
+	/** Map of original filename → thumbnail URL */
+	thumbMap: Map<string, string>;
+	/** Errors encountered during image processing */
+	imageErrors: string[];
 }
 
 /**
@@ -30,6 +34,8 @@ export async function extractZipImport(
 
 	let csvText = '';
 	const imageMap = new Map<string, string>();
+	const thumbMap = new Map<string, string>();
+	const imageErrors: string[] = [];
 
 	// Find CSV file (first .csv file found)
 	for (const entry of entries) {
@@ -62,18 +68,22 @@ export async function extractZipImport(
 				const thumbFilename = buildFilename(slug, result.hash, '-thumb');
 
 				const url = saveMedia(entity, mainFilename, result.buffer);
-				saveMedia(entity, thumbFilename, result.thumbBuffer);
+				const thumbUrl = saveMedia(entity, thumbFilename, result.thumbBuffer);
 
 				// Map both the full entry name and just the basename
 				imageMap.set(entry.entryName, url);
 				imageMap.set(basename, url);
-			} catch {
-				// Skip images that fail to process
+				thumbMap.set(entry.entryName, thumbUrl);
+				thumbMap.set(basename, thumbUrl);
+			} catch (err) {
+				const msg = `Failed to process image "${basename}": ${err instanceof Error ? err.message : 'Unknown error'}`;
+				imageErrors.push(msg);
+				console.error('[ZIP Import]', msg);
 			}
 		}
 	}
 
-	return { csvText, imageMap };
+	return { csvText, imageMap, thumbMap, imageErrors };
 }
 
 /**
@@ -89,15 +99,26 @@ export function resolveImageReferences(
 		const resolved = { ...row };
 		for (const col of imageColumns) {
 			const value = resolved[col];
-			if (value && imageMap.has(value)) {
-				resolved[col] = imageMap.get(value)!;
-			}
+			if (!value) continue;
+
+			// Skip values that are already resolved URLs (start with /media/)
+			if (value.startsWith('/media/')) continue;
+
 			// Handle pipe-separated values (gallery_images)
-			if (value && value.includes('|')) {
+			if (value.includes('|')) {
 				resolved[col] = value
 					.split('|')
-					.map(v => imageMap.get(v.trim()) || v.trim())
+					.map(v => {
+						const trimmed = v.trim();
+						if (trimmed.startsWith('/media/')) return trimmed;
+						return imageMap.get(trimmed) || trimmed;
+					})
 					.join('|');
+			} else {
+				// Single value
+				if (imageMap.has(value)) {
+					resolved[col] = imageMap.get(value)!;
+				}
 			}
 		}
 		return resolved;

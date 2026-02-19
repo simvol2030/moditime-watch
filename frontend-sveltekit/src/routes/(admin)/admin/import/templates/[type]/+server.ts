@@ -24,8 +24,8 @@ const TEMPLATES: Record<string, TemplateConfig> = {
 				description: 'Классические часы Rolex Datejust',
 				specs_json: '{"Корпус":[{"label":"Диаметр","value":"41 мм"}]}',
 				is_active: '1', is_featured: '1', is_new: '0', is_limited: '0', position: '1',
-				main_image: '/images/products/datejust-1.jpg',
-				gallery_images: '/images/products/datejust-2.jpg|/images/products/datejust-3.jpg'
+				main_image: 'datejust-1.jpg',
+				gallery_images: 'datejust-2.jpg|datejust-3.jpg'
 			},
 			{
 				slug: 'omega-seamaster-300', brand_slug: 'omega', category_slug: 'sport',
@@ -34,7 +34,7 @@ const TEMPLATES: Record<string, TemplateConfig> = {
 				description: 'Дайверские часы Omega',
 				specs_json: '{"Корпус":[{"label":"Водонепроницаемость","value":"300 м"}]}',
 				is_active: '1', is_featured: '0', is_new: '1', is_limited: '0', position: '2',
-				main_image: '/images/products/seamaster-1.jpg',
+				main_image: 'seamaster-1.jpg',
 				gallery_images: ''
 			}
 		],

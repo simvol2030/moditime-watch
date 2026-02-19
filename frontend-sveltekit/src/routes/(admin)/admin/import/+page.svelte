@@ -65,6 +65,17 @@
 		{/if}
 	</div>
 
+	{#if form.imageErrors?.length}
+		<div class="card errors-card">
+			<h3>Image Processing Warnings ({form.imageErrors.length})</h3>
+			<ul class="image-errors">
+				{#each form.imageErrors as imgErr}
+					<li>{imgErr}</li>
+				{/each}
+			</ul>
+		</div>
+	{/if}
+
 	{#if form.result.errors.length > 0}
 		<div class="card errors-card">
 			<h3>Import Errors ({form.result.errors.length})</h3>
@@ -374,6 +385,23 @@
 
 	.errors-card h3 {
 		color: #dc2626;
+	}
+
+	.image-errors {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+
+	.image-errors li {
+		padding: 0.375rem 0;
+		font-size: 0.8125rem;
+		color: #b45309;
+		border-bottom: 1px solid #fef3c7;
+	}
+
+	.image-errors li:last-child {
+		border-bottom: none;
 	}
 
 	.errors-table {
