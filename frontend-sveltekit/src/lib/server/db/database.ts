@@ -570,6 +570,15 @@ export function seedDatabase() {
       'Заказ #{{order_number}} доставлен. Спасибо за покупку!'
     );
 
+    // Homepage Section Config (Session-18)
+    const insertSectionConfig = db.prepare('INSERT INTO homepage_section_config (section_key, eyebrow, title, description) VALUES (?, ?, ?, ?)');
+    insertSectionConfig.run('collections', 'Подборки', 'Кураторские коллекции Moditimewatch', 'Авторский отбор от экспертов для тех, кто ценит детали и ищет часы с характером.');
+    insertSectionConfig.run('showcase', 'Бестселлеры', 'Топ-модели недели', '');
+    insertSectionConfig.run('experience', 'Опыт Moditimewatch', 'Премиальный сервис для ценителей часов', 'Индивидуальный подход к каждому клиенту.');
+    insertSectionConfig.run('testimonials', 'Отзывы клиентов', 'Истории владельцев Moditimewatch', 'Что говорят клиенты о сервисе Moditimewatch.');
+    insertSectionConfig.run('editorial', 'Журнал', 'Экспертиза и вдохновение', '');
+    insertSectionConfig.run('telegram', 'Подписка', 'Канал Moditimewatch в Telegram', 'Анонсы релизов и эксклюзивные предложения');
+
     console.log('✅ Database seeded successfully (с Hero, Experience, Navigation, Footer, Filters, Config, Email Templates, pSEO Schema)');
   });
   seed();
@@ -804,6 +813,7 @@ const createQueries = () => ({
   getFooterLinks: db.prepare('SELECT * FROM footer_links WHERE section_id = ? ORDER BY position'),
 
   // Homepage data
+  getHomepageSectionConfigs: db.prepare('SELECT * FROM homepage_section_config WHERE is_active = 1'),
   getHomeHero: db.prepare('SELECT * FROM home_hero WHERE is_active = 1 LIMIT 1'),
   getAllCollections: db.prepare('SELECT * FROM collections WHERE is_active = 1 ORDER BY position'),
   getAllTestimonials: db.prepare('SELECT * FROM testimonials WHERE is_active = 1 ORDER BY display_order'),
@@ -1090,6 +1100,18 @@ const createQueries = () => ({
   adminDeleteHomeStat: db.prepare('DELETE FROM home_service_stats WHERE id = ?'),
   adminUpdateWidget: db.prepare('UPDATE widgets SET data_json = @data_json, is_active = @is_active WHERE id = @id'),
 
+  // Homepage Section Config (Session-18)
+  getAllSectionConfigs: db.prepare('SELECT * FROM homepage_section_config'),
+  getSectionConfig: db.prepare('SELECT * FROM homepage_section_config WHERE section_key = ?'),
+  updateSectionConfig: db.prepare(`UPDATE homepage_section_config SET eyebrow = @eyebrow, title = @title, description = @description, extra_json = @extra_json, is_active = @is_active WHERE section_key = @section_key`),
+
+  // Homepage Showcase Items (Session-18) — manual bestsellers
+  getShowcaseItems: db.prepare(`SELECT hsi.*, p.name, p.slug, p.price, p.sku, b.name as brand_name FROM homepage_showcase_items hsi JOIN products p ON p.id = hsi.product_id LEFT JOIN brands b ON b.id = p.brand_id ORDER BY hsi.position`),
+  addShowcaseItem: db.prepare('INSERT INTO homepage_showcase_items (product_id, position) VALUES (@product_id, @position)'),
+  removeShowcaseItem: db.prepare('DELETE FROM homepage_showcase_items WHERE id = ?'),
+  clearShowcaseItems: db.prepare('DELETE FROM homepage_showcase_items'),
+  getMaxShowcasePosition: db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM homepage_showcase_items'),
+  reorderShowcaseItem: db.prepare('UPDATE homepage_showcase_items SET position = @position WHERE id = @id'),
 
   // Footer (Session-4, Task 1)
   adminGetFooterSections: db.prepare('SELECT * FROM footer_sections ORDER BY position'),
