@@ -9,8 +9,9 @@
 		features,
 		ctaText,
 		ctaHref,
-		channelUrl
-	}: TelegramCtaSectionProps = $props();
+		channelUrl,
+		telegramButtonText = 'Открыть в Telegram'
+	}: TelegramCtaSectionProps & { telegramButtonText?: string } = $props();
 </script>
 
 <!-- Session-12: replaced iframe with link to avoid CSP violation -->
@@ -43,7 +44,7 @@
 						<span class="telegram-cta__link-desc">Telegram канал</span>
 					</div>
 					<a href={channelUrl || ctaHref} class="telegram-cta__link-btn" target="_blank" rel="noopener noreferrer">
-						Открыть в Telegram
+						{telegramButtonText}
 					</a>
 				</div>
 			</div>

@@ -72,5 +72,6 @@
 		ctaText={data.telegramCtaContent.ctaText}
 		ctaHref={data.telegramCtaContent.ctaHref}
 		channelUrl={data.telegramCtaContent.channelUrl}
+		telegramButtonText={data.telegramButtonText}
 	/>
 {/if}

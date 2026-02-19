@@ -732,6 +732,15 @@ function seedSiteConfigExtras() {
     insertOrIgnore.run('topbar_badge', 'Moditimewatch Delivery', 'string', 'Бейдж в topbar');
     insertOrIgnore.run('topbar_text', 'Доставка премиальных часов по России и СНГ', 'string', 'Текст в topbar');
     insertOrIgnore.run('topbar_visible', 'true', 'boolean', 'Показывать topbar');
+
+    // UI texts (formerly hardcoded)
+    insertOrIgnore.run('experience_cta_text', 'Запланировать консультацию', 'string', 'CTA кнопка секции Сервисы');
+    insertOrIgnore.run('experience_cta_href', '/contacts', 'string', 'URL CTA секции Сервисы');
+    insertOrIgnore.run('city_back_text', 'Главный каталог', 'string', 'Текст ссылки "назад" в city header');
+    insertOrIgnore.run('city_search_placeholder', 'Поиск часов...', 'string', 'Placeholder поиска в city header');
+    insertOrIgnore.run('city_catalog_link_text', 'Перейти на главный каталог', 'string', 'Текст ссылки на каталог в city footer');
+    insertOrIgnore.run('footer_office_note', 'Посещение по записи', 'string', 'Примечание под адресом офиса');
+    insertOrIgnore.run('telegram_button_text', 'Открыть в Telegram', 'string', 'Текст кнопки Telegram CTA');
   });
   seed();
 }

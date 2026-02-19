@@ -28,7 +28,7 @@ export const load: PageServerLoad = async () => {
 			text: heroFromDb.secondary_cta_text,
 			href: heroFromDb.secondary_cta_href
 		},
-		stats: buildDynamicStats(),
+		stats: heroFromDb.stats_json ? JSON.parse(heroFromDb.stats_json) : buildDynamicStats(),
 		image: {
 			src: heroFromDb.image_url,
 			alt: heroFromDb.image_alt,
@@ -131,8 +131,8 @@ export const load: PageServerLoad = async () => {
 			linkText: s.link_text,
 			linkHref: s.link_href
 		})),
-		ctaText: 'Запланировать консультацию',
-		ctaHref: '/contacts'
+		ctaText: (queries.getConfigByKey.get('experience_cta_text') as any)?.value || 'Запланировать консультацию',
+		ctaHref: (queries.getConfigByKey.get('experience_cta_href') as any)?.value || '/contacts'
 	};
 
 	// ============================================
@@ -198,6 +198,7 @@ export const load: PageServerLoad = async () => {
 	// ============================================
 	const telegramGroupEnabled = (queries.getConfigByKey.get('telegram_group_enabled') as any)?.value === 'true';
 	const telegramGroupUrl = (queries.getConfigByKey.get('telegram_group_url') as any)?.value || 'https://t.me/moditime_watch';
+	const telegramButtonText = (queries.getConfigByKey.get('telegram_button_text') as any)?.value || 'Открыть в Telegram';
 
 	const telegramConfig = sc('telegram');
 	const telegramWidgetFromDb = queries.getTelegramWidget.get() as any;
@@ -234,7 +235,8 @@ export const load: PageServerLoad = async () => {
 		testimonialsContent,
 		editorialContent,
 		telegramCtaContent,
-		telegramGroupEnabled
+		telegramGroupEnabled,
+		telegramButtonText
 	};
 };
 

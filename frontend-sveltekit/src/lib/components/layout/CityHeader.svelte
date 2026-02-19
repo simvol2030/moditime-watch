@@ -76,7 +76,7 @@
 		<!-- Back to main catalog -->
 		<a href="/" class="city-header__back">
 			<span class="city-header__back-arrow">&larr;</span>
-			<span>Главный каталог</span>
+			<span>{siteConfig.city_back_text || 'Главный каталог'}</span>
 		</a>
 
 		<!-- City nav items -->
@@ -94,7 +94,7 @@
 			<form class="city-header__search" onsubmit={handleSearch}>
 				<input
 					type="text"
-					placeholder="Поиск часов..."
+					placeholder={siteConfig.city_search_placeholder || 'Поиск часов...'}
 					bind:value={searchQuery}
 					class="city-header__search-input"
 				/>

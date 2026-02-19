@@ -174,6 +174,41 @@
 		</div>
 	</div>
 
+	<!-- ТЕКСТЫ ИНТЕРФЕЙСА -->
+	<div class="card">
+		<h3>Тексты интерфейса</h3>
+		<div class="form-grid">
+			<div class="form-group">
+				<label for="experience_cta_text">CTA секции Сервисы <span class="hint">текст кнопки</span></label>
+				<input type="text" id="experience_cta_text" name="experience_cta_text" value={c('experience_cta_text', 'Запланировать консультацию')} maxlength="100" />
+			</div>
+			<div class="form-group">
+				<label for="experience_cta_href">CTA секции Сервисы <span class="hint">URL</span></label>
+				<input type="text" id="experience_cta_href" name="experience_cta_href" value={c('experience_cta_href', '/contacts')} maxlength="200" />
+			</div>
+			<div class="form-group">
+				<label for="telegram_button_text">Кнопка Telegram виджета</label>
+				<input type="text" id="telegram_button_text" name="telegram_button_text" value={c('telegram_button_text', 'Открыть в Telegram')} maxlength="60" />
+			</div>
+			<div class="form-group">
+				<label for="footer_office_note">Примечание офиса <span class="hint">footer</span></label>
+				<input type="text" id="footer_office_note" name="footer_office_note" value={c('footer_office_note', 'Посещение по записи')} maxlength="100" />
+			</div>
+			<div class="form-group">
+				<label for="city_back_text">Ссылка «назад» <span class="hint">city header</span></label>
+				<input type="text" id="city_back_text" name="city_back_text" value={c('city_back_text', 'Главный каталог')} maxlength="60" />
+			</div>
+			<div class="form-group">
+				<label for="city_search_placeholder">Placeholder поиска <span class="hint">city header</span></label>
+				<input type="text" id="city_search_placeholder" name="city_search_placeholder" value={c('city_search_placeholder', 'Поиск часов...')} maxlength="60" />
+			</div>
+			<div class="form-group full">
+				<label for="city_catalog_link_text">Ссылка на каталог <span class="hint">city footer</span></label>
+				<input type="text" id="city_catalog_link_text" name="city_catalog_link_text" value={c('city_catalog_link_text', 'Перейти на главный каталог')} maxlength="100" />
+			</div>
+		</div>
+	</div>
+
 	<!-- ЮРИДИЧЕСКОЕ -->
 	<div class="card">
 		<h3>Юридическое</h3>

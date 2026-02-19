@@ -55,7 +55,7 @@
 		{/if}
 
 		<div class="city-footer__catalog">
-			<a href="/" class="city-footer__catalog-link">Перейти на главный каталог &rarr;</a>
+			<a href="/" class="city-footer__catalog-link">{siteConfig.city_catalog_link_text || 'Перейти на главный каталог'} &rarr;</a>
 		</div>
 	</div>
 

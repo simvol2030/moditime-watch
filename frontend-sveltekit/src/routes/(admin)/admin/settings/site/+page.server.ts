@@ -49,6 +49,15 @@ export const actions: Actions = {
 			topbar_text: formData.get('topbar_text')?.toString() || '',
 			topbar_visible: formData.get('topbar_visible') ? 'true' : 'false',
 
+			// UI texts
+			experience_cta_text: formData.get('experience_cta_text')?.toString() || '',
+			experience_cta_href: formData.get('experience_cta_href')?.toString() || '',
+			telegram_button_text: formData.get('telegram_button_text')?.toString() || '',
+			footer_office_note: formData.get('footer_office_note')?.toString() || '',
+			city_back_text: formData.get('city_back_text')?.toString() || '',
+			city_search_placeholder: formData.get('city_search_placeholder')?.toString() || '',
+			city_catalog_link_text: formData.get('city_catalog_link_text')?.toString() || '',
+
 			// Legal
 			copyright_text: formData.get('copyright_text')?.toString() || ''
 		};

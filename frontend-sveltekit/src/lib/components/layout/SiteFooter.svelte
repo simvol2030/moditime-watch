@@ -84,7 +84,7 @@
 					{#if section.title === 'Офис'}
 						<p>{address}</p>
 						<p>{workingHours}</p>
-						<p>Посещение по записи</p>
+						<p>{siteConfig.footer_office_note || 'Посещение по записи'}</p>
 					{/if}
 				{/if}
 			</div>
