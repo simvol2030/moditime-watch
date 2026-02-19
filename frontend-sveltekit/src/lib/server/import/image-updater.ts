@@ -24,27 +24,43 @@ export interface ImageUpdateResult {
 	errors: string[];
 }
 
-// Prepared statements
-const findProductBySku = db.prepare('SELECT id, name, sku, slug FROM products WHERE sku = ?');
-const findProductBySlug = db.prepare('SELECT id, name, sku, slug FROM products WHERE slug = ?');
-const deleteProductImages = db.prepare('DELETE FROM product_images WHERE product_id = ?');
-const insertProductImage = db.prepare(
-	'INSERT INTO product_images (product_id, url, thumbnail_url, alt, position, is_main) VALUES (?, ?, ?, ?, ?, ?)'
-);
-
 /**
  * Match image filenames to existing products in DB.
  * Tries: SKU match, slug match.
  * Handles gallery suffixes (_2, _3).
  */
 export function matchImagesToProducts(filenames: string[]): ImageMatchResult {
+	const findProductBySku = db.prepare('SELECT id, name, sku, slug FROM products WHERE sku = ?');
+	const findProductBySlug = db.prepare('SELECT id, name, sku, slug FROM products WHERE slug = ?');
+
 	const matched: ImageMatch[] = [];
 	const unmatched: string[] = [];
-	const processedBases = new Set<string>();
 
-	// Separate main images from gallery images
 	// Gallery: filename contains _2, _3, _02, _03 suffix before extension
 	const galleryPattern = /^(.+?)_(\d+)\.[^.]+$/;
+
+	function findProductMatch(basename: string): { id: number; name: string; sku: string; slug: string; matchedBy: 'sku' | 'slug' | 'id' } | null {
+		// 1. Try SKU match (exact)
+		let product = findProductBySku.get(basename) as { id: number; name: string; sku: string; slug: string } | undefined;
+		if (product) return { ...product, matchedBy: 'sku' };
+
+		// 2. Try SKU match with dots (e.g., T035.617.11.051.00)
+		product = findProductBySku.get(basename.replace(/_/g, '.')) as typeof product;
+		if (product) return { ...product, matchedBy: 'sku' };
+
+		// 3. Try slug match (exact)
+		product = findProductBySlug.get(basename) as typeof product;
+		if (product) return { ...product, matchedBy: 'slug' };
+
+		// 4. Try slug match (lowercase, hyphens)
+		const slugified = basename.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+		if (slugified !== basename) {
+			product = findProductBySlug.get(slugified) as typeof product;
+			if (product) return { ...product, matchedBy: 'slug' };
+		}
+
+		return null;
+	}
 
 	for (const filename of filenames) {
 		const basename = filename.replace(/\.[^.]+$/, ''); // strip extension
@@ -67,7 +83,6 @@ export function matchImagesToProducts(filenames: string[]): ImageMatchResult {
 				matchedBy: product.matchedBy,
 				isGallery: false
 			});
-			processedBases.add(basename);
 		} else {
 			unmatched.push(filename);
 		}
@@ -79,7 +94,6 @@ export function matchImagesToProducts(filenames: string[]): ImageMatchResult {
 		if (!galleryMatch) continue;
 
 		const parentBase = galleryMatch[1];
-		// Find parent match
 		const parentMatched = matched.find(m => {
 			const mBase = m.filename.replace(/\.[^.]+$/, '');
 			return mBase === parentBase;
@@ -103,30 +117,6 @@ export function matchImagesToProducts(filenames: string[]): ImageMatchResult {
 	return { matched, unmatched };
 }
 
-function findProductMatch(basename: string): { id: number; name: string; sku: string; slug: string; matchedBy: 'sku' | 'slug' | 'id' } | null {
-	// 1. Try SKU match (exact)
-	let product = findProductBySku.get(basename) as { id: number; name: string; sku: string; slug: string } | undefined;
-	if (product) return { ...product, matchedBy: 'sku' };
-
-	// 2. Try SKU match with dots (e.g., T035.617.11.051.00)
-	// Filename might have dots replaced with other chars
-	product = findProductBySku.get(basename.replace(/_/g, '.')) as typeof product;
-	if (product) return { ...product, matchedBy: 'sku' };
-
-	// 3. Try slug match (exact)
-	product = findProductBySlug.get(basename) as typeof product;
-	if (product) return { ...product, matchedBy: 'slug' };
-
-	// 4. Try slug match (lowercase, hyphens)
-	const slugified = basename.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-	if (slugified !== basename) {
-		product = findProductBySlug.get(slugified) as typeof product;
-		if (product) return { ...product, matchedBy: 'slug' };
-	}
-
-	return null;
-}
-
 /**
  * Update product images from matched ZIP files.
  * Replaces all existing images for matched products.
@@ -136,6 +126,11 @@ export function updateProductImages(
 	imageMap: Map<string, string>,
 	thumbMap: Map<string, string>
 ): ImageUpdateResult {
+	const deleteProductImages = db.prepare('DELETE FROM product_images WHERE product_id = ?');
+	const insertProductImage = db.prepare(
+		'INSERT INTO product_images (product_id, url, thumbnail_url, alt, position, is_main) VALUES (?, ?, ?, ?, ?, ?)'
+	);
+
 	let updated = 0;
 	const errors: string[] = [];
 
