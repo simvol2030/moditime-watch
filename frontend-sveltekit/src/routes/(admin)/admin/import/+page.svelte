@@ -222,6 +222,8 @@
 				<span class="format-badge format-supplier">Supplier format (auto-converted)</span>
 			{:else if form.detectedFormat === 'native'}
 				<span class="format-badge format-native">Standard format</span>
+			{:else if form.detectedFormat === 'unknown'}
+				<span class="format-badge format-unknown">Unknown format</span>
 			{/if}
 		</div>
 
@@ -598,6 +600,12 @@
 		background: #dbeafe;
 		color: #1d4ed8;
 		border: 1px solid #93c5fd;
+	}
+
+	.format-unknown {
+		background: #fef3c7;
+		color: #92400e;
+		border: 1px solid #fcd34d;
 	}
 
 	/* Conversion info block */

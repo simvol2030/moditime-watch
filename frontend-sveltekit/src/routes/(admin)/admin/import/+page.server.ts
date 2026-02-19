@@ -49,6 +49,7 @@ async function extractFileContents(file: File, dataType: string): Promise<{
 	csvText: string;
 	imageMap: Map<string, string>;
 	thumbMap: Map<string, string>;
+	imageCount: number;
 	imageErrors: string[];
 }> {
 	const isZip = file.name.endsWith('.zip') || file.type === 'application/zip';
@@ -62,12 +63,13 @@ async function extractFileContents(file: File, dataType: string): Promise<{
 			csvText: result.csvText,
 			imageMap: result.imageMap,
 			thumbMap: result.thumbMap,
+			imageCount: result.imageCount,
 			imageErrors: result.imageErrors
 		};
 	}
 
 	const csvText = await file.text();
-	return { csvText, imageMap: new Map(), thumbMap: new Map(), imageErrors: [] };
+	return { csvText, imageMap: new Map(), thumbMap: new Map(), imageCount: 0, imageErrors: [] };
 }
 
 export const actions: Actions = {
@@ -151,7 +153,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			const { csvText, imageMap, imageErrors } = await extractFileContents(file, dataType);
+			const { csvText, imageMap, imageCount, imageErrors } = await extractFileContents(file, dataType);
 			const { rows: rawRows, headers: rawHeaders } = parseCSV(csvText);
 
 			if (rawRows.length === 0) {
@@ -232,7 +234,7 @@ export const actions: Actions = {
 				dataType,
 				result,
 				detectedFormat,
-				imagesProcessed: imageMap.size,
+				imagesProcessed: imageCount,
 				imageErrors: imageErrors.length > 0 ? imageErrors : undefined
 			};
 		} catch (err) {

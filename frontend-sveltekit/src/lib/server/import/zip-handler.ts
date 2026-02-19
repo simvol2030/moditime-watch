@@ -9,6 +9,8 @@ export interface ZipContents {
 	imageMap: Map<string, string>;
 	/** Map of original filename → thumbnail URL */
 	thumbMap: Map<string, string>;
+	/** Actual number of unique images successfully processed */
+	imageCount: number;
 	/** Errors encountered during image processing */
 	imageErrors: string[];
 }
@@ -35,6 +37,7 @@ export async function extractZipImport(
 	let csvText = '';
 	const imageMap = new Map<string, string>();
 	const thumbMap = new Map<string, string>();
+	let imageCount = 0;
 	const imageErrors: string[] = [];
 
 	// Find CSV file (first .csv file found)
@@ -78,6 +81,7 @@ export async function extractZipImport(
 				thumbMap.set(entry.entryName, thumbUrl);
 				thumbMap.set(basename, thumbUrl);
 				thumbMap.set(slug, thumbUrl);
+				imageCount++;
 			} catch (err) {
 				const msg = `Failed to process image "${basename}": ${err instanceof Error ? err.message : 'Unknown error'}`;
 				imageErrors.push(msg);
@@ -86,7 +90,7 @@ export async function extractZipImport(
 		}
 	}
 
-	return { csvText, imageMap, thumbMap, imageErrors };
+	return { csvText, imageMap, thumbMap, imageCount, imageErrors };
 }
 
 /** Image extensions for fuzzy matching */
