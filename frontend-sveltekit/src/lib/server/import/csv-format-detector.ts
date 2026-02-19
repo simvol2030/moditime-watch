@@ -144,13 +144,16 @@ export function convertSupplierRows(rows: Record<string, string>[]): ConversionR
 			categoryNames.set(categorySlug, CATEGORY_NAMES[categorySlug]);
 		}
 
-		// Photo: if numeric → "{id}.jpg", if URL → as-is, if empty → empty
+		// Photo: supports multiple values via `;` separator
+		// First value → main_image, rest → gallery_images (pipe-separated)
 		let mainImage = '';
+		let galleryImages = '';
 		if (photo) {
-			if (/^\d+$/.test(photo)) {
-				mainImage = `${photo}.jpg`;
-			} else {
-				mainImage = photo;
+			const photoIds = photo.split(';').map(p => p.trim()).filter(Boolean);
+			const resolvedPhotos = photoIds.map(p => /^\d+$/.test(p) ? `${p}.jpg` : p);
+			mainImage = resolvedPhotos[0] || '';
+			if (resolvedPhotos.length > 1) {
+				galleryImages = resolvedPhotos.slice(1).join('|');
 			}
 		}
 
@@ -177,7 +180,7 @@ export function convertSupplierRows(rows: Record<string, string>[]): ConversionR
 			is_limited: '0',
 			position: '0',
 			main_image: mainImage,
-			gallery_images: ''
+			gallery_images: galleryImages
 		};
 	});
 

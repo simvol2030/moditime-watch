@@ -3,11 +3,12 @@ import { parseCSV } from '$lib/server/import/csv-parser';
 import { detectCsvFormat, convertSupplierRows, type CsvFormat } from '$lib/server/import/csv-format-detector';
 import { importProducts } from '$lib/server/import/product-importer';
 import { importBrands } from '$lib/server/import/brand-importer';
+import { matchImagesToProducts, updateProductImages } from '$lib/server/import/image-updater';
 import { importCategories } from '$lib/server/import/category-importer';
 import { importCities } from '$lib/server/import/city-importer';
 import { importCityArticles } from '$lib/server/import/city-article-importer';
 import { importFilters } from '$lib/server/import/filter-importer';
-import { extractZipImport, resolveImageReferences } from '$lib/server/import/zip-handler';
+import { extractZipImport, extractZipImages, resolveImageReferences } from '$lib/server/import/zip-handler';
 import type { EntityType } from '$lib/server/media/storage';
 
 const IMPORTERS: Record<string, (rows: Record<string, string>[]) => { added: number; updated: number; errors: { row: number; field: string; message: string }[] }> = {
@@ -75,28 +76,39 @@ async function extractFileContents(file: File, dataType: string): Promise<{
 export const actions: Actions = {
 	preview: async ({ request }) => {
 		const formData = await request.formData();
-		const file = formData.get('file') as File | null;
+		const csvFile = (formData.get('csv_file') || formData.get('file')) as File | null;
+		const imagesZip = formData.get('images_zip') as File | null;
 		const dataType = formData.get('data_type') as string;
 
-		if (!file || file.size === 0) {
-			return { error: 'Please select a CSV or ZIP file' };
+		if (!csvFile || csvFile.size === 0) {
+			return { error: 'Please select a CSV file' };
 		}
-		if (file.size > MAX_FILE_SIZE) {
+		if (csvFile.size > MAX_FILE_SIZE) {
 			return { error: 'File exceeds 50MB limit' };
+		}
+		if (imagesZip && imagesZip.size > MAX_FILE_SIZE) {
+			return { error: 'ZIP file exceeds 50MB limit' };
 		}
 		if (!IMPORTERS[dataType]) {
 			return { error: 'Invalid data type selected' };
 		}
 
 		try {
-			const { csvText } = await extractFileContents(file, dataType);
+			// Get CSV text — from plain CSV file or from ZIP containing CSV
+			const { csvText, imageCount: previewImageCount } = await extractFileContents(csvFile, dataType);
 			const { rows: rawRows, headers: rawHeaders } = parseCSV(csvText);
 
 			if (rawRows.length === 0) {
 				return { error: 'CSV file is empty or has no data rows' };
 			}
 
-			const isZip = file.name.endsWith('.zip');
+			// Count images from separate ZIP if provided
+			let zipImageCount = 0;
+			if (imagesZip && imagesZip.size > 0) {
+				const zipBuffer = Buffer.from(await imagesZip.arrayBuffer());
+				const zipResult = await extractZipImages(zipBuffer);
+				zipImageCount = zipResult.imageCount;
+			}
 
 			// Detect CSV format and convert if supplier
 			const detectedFormat: CsvFormat = dataType === 'products'
@@ -124,8 +136,9 @@ export const actions: Actions = {
 				headers,
 				rows: rows.slice(0, 5),
 				totalRows: rows.length,
-				fileName: file.name,
-				isZip,
+				fileName: csvFile.name,
+				hasZip: !!(imagesZip && imagesZip.size > 0),
+				zipImageCount: zipImageCount || previewImageCount,
 				detectedFormat,
 				conversionInfo
 			};
@@ -136,15 +149,19 @@ export const actions: Actions = {
 
 	import: async ({ request }) => {
 		const formData = await request.formData();
-		const file = formData.get('file') as File | null;
+		const csvFile = (formData.get('csv_file') || formData.get('file')) as File | null;
+		const imagesZip = formData.get('images_zip') as File | null;
 		const dataType = formData.get('data_type') as string;
 		const cascade = formData.get('cascade') === '1';
 
-		if (!file || file.size === 0) {
-			return { error: 'Please select a CSV or ZIP file' };
+		if (!csvFile || csvFile.size === 0) {
+			return { error: 'Please select a CSV file' };
 		}
-		if (file.size > MAX_FILE_SIZE) {
+		if (csvFile.size > MAX_FILE_SIZE) {
 			return { error: 'File exceeds 50MB limit' };
+		}
+		if (imagesZip && imagesZip.size > MAX_FILE_SIZE) {
+			return { error: 'ZIP file exceeds 50MB limit' };
 		}
 
 		const importer = IMPORTERS[dataType];
@@ -153,7 +170,22 @@ export const actions: Actions = {
 		}
 
 		try {
-			const { csvText, imageMap, imageCount, imageErrors } = await extractFileContents(file, dataType);
+			// Get CSV text + images from CSV file (may be ZIP with CSV+images)
+			const csvResult = await extractFileContents(csvFile, dataType);
+			let { csvText, imageMap, imageCount, imageErrors } = csvResult;
+
+			// If separate images ZIP provided, extract images from it too
+			if (imagesZip && imagesZip.size > 0) {
+				const zipBuffer = Buffer.from(await imagesZip.arrayBuffer());
+				const entity = ENTITY_MAP[dataType] || 'misc';
+				const zipResult = await extractZipImport(zipBuffer, entity);
+				// Merge image maps (separate ZIP overrides if duplicate keys)
+				for (const [key, url] of zipResult.imageMap) {
+					imageMap.set(key, url);
+				}
+				imageCount += zipResult.imageCount;
+				imageErrors = [...imageErrors, ...zipResult.imageErrors];
+			}
 			const { rows: rawRows, headers: rawHeaders } = parseCSV(csvText);
 
 			if (rawRows.length === 0) {
@@ -177,10 +209,16 @@ export const actions: Actions = {
 			}
 
 			// Resolve image references from ZIP
+			let imagesMatched = 0;
 			if (imageMap.size > 0) {
 				const imgCols = IMAGE_COLUMNS[dataType] || [];
 				if (imgCols.length > 0) {
+					const beforeResolve = rows.map(r => r.main_image || '');
 					rows = resolveImageReferences(rows, imageMap, imgCols);
+					// Count how many rows got images resolved
+					imagesMatched = rows.filter((r, i) =>
+						r.main_image && r.main_image !== beforeResolve[i] && r.main_image.startsWith('/media/')
+					).length;
 				}
 			}
 
@@ -235,10 +273,104 @@ export const actions: Actions = {
 				result,
 				detectedFormat,
 				imagesProcessed: imageCount,
+				imagesMatched,
 				imageErrors: imageErrors.length > 0 ? imageErrors : undefined
 			};
 		} catch (err) {
 			return { error: `Import failed: ${err instanceof Error ? err.message : 'Unknown error'}` };
+		}
+	},
+
+	/**
+	 * Preview ZIP-only mode: match images to existing products without CSV.
+	 */
+	previewImages: async ({ request }) => {
+		const formData = await request.formData();
+		const zipFile = formData.get('images_only_zip') as File | null;
+
+		if (!zipFile || zipFile.size === 0) {
+			return { error: 'Please select a ZIP file with images' };
+		}
+		if (zipFile.size > MAX_FILE_SIZE) {
+			return { error: 'ZIP file exceeds 50MB limit' };
+		}
+
+		try {
+			const zipBuffer = Buffer.from(await zipFile.arrayBuffer());
+			const zipInfo = await extractZipImages(zipBuffer);
+			const matchResult = matchImagesToProducts(zipInfo.filenames);
+
+			return {
+				imagePreview: true,
+				zipFileName: zipFile.name,
+				totalImages: zipInfo.imageCount,
+				matched: matchResult.matched.map(m => ({
+					filename: m.filename,
+					productName: m.productName,
+					productSku: m.productSku,
+					matchedBy: m.matchedBy,
+					isGallery: m.isGallery
+				})),
+				unmatched: matchResult.unmatched,
+				matchedProducts: new Set(matchResult.matched.map(m => m.productId)).size
+			};
+		} catch (err) {
+			return { error: `Preview failed: ${err instanceof Error ? err.message : 'Unknown error'}` };
+		}
+	},
+
+	/**
+	 * ZIP-only import: update images for existing products.
+	 */
+	updateImages: async ({ request }) => {
+		const formData = await request.formData();
+		const zipFile = formData.get('images_only_zip') as File | null;
+
+		if (!zipFile || zipFile.size === 0) {
+			return { error: 'Please select a ZIP file with images' };
+		}
+		if (zipFile.size > MAX_FILE_SIZE) {
+			return { error: 'ZIP file exceeds 50MB limit' };
+		}
+
+		try {
+			// Process images from ZIP
+			const zipBuffer = Buffer.from(await zipFile.arrayBuffer());
+			const entity = ENTITY_MAP['products'] || 'products';
+			const zipResult = await extractZipImport(zipBuffer, entity);
+
+			// Get filenames for matching
+			const filenames = Array.from(new Set(
+				Array.from(zipResult.imageMap.keys()).map(k => k.split('/').pop() || k)
+			)).filter(f => /\.(jpg|jpeg|png|webp|gif|avif)$/i.test(f));
+
+			// Match to products
+			const matchResult = matchImagesToProducts(filenames);
+
+			if (matchResult.matched.length === 0) {
+				return { error: 'No images could be matched to existing products' };
+			}
+
+			// Update product images
+			const updateResult = updateProductImages(
+				matchResult.matched,
+				zipResult.imageMap,
+				zipResult.thumbMap
+			);
+
+			return {
+				imageUpdateSuccess: true,
+				productsUpdated: updateResult.updated,
+				imagesProcessed: zipResult.imageCount,
+				imagesMatched: matchResult.matched.length,
+				unmatched: matchResult.unmatched,
+				imageErrors: [
+					...zipResult.imageErrors,
+					...updateResult.errors
+				].filter(Boolean)
+			};
+		} catch (err) {
+			return { error: `Image update failed: ${err instanceof Error ? err.message : 'Unknown error'}` };
 		}
 	}
 };

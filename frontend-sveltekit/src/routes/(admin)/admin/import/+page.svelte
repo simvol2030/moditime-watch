@@ -106,7 +106,7 @@
 				<p><b>Products:</b> цена в рублях (без копеек). Изображения — URL через | (пайп). Характеристики — JSON в поле specs_json. Пустые поля изображений = не трогать существующие.</p>
 				<p><b>Brands/Categories:</b> обязательны slug и name. При импорте товаров бренд и категория должны уже существовать (или включите "Cascade import").</p>
 				<p><b>CSV поставщика:</b> если CSV содержит колонки "Имя", "Бренд", "Пол" — система автоматически сконвертирует данные в наш формат, создаст бренды и категории.</p>
-				<p><b>ZIP с изображениями:</b> архив с CSV + папка images/. Имена файлов указывайте в CSV без пути (например: watch-1.jpg). Числовые ID (17156) автоматически найдут файл 17156.jpg/png/webp. Изображения автоматически конвертируются в WebP.</p>
+				<p><b>ZIP с изображениями:</b> загрузите отдельный ZIP с фото (для Products). Имена файлов = числовой ID или артикул из CSV. Суффиксы _2, _3 для дополнительных фото. Изображения конвертируются в WebP автоматически.</p>
 				<p><b>Кодировка:</b> UTF-8. При сохранении из Excel выбирайте "CSV UTF-8".</p>
 			</div>
 		</details>
@@ -122,7 +122,7 @@
 		<strong>Import Complete!</strong>
 		Added: {form.result.added} | Updated: {form.result.updated}
 		{#if form.imagesProcessed}
-			| Images: {form.imagesProcessed}
+			| Images: {form.imagesProcessed} processed{#if form.imagesMatched}, {form.imagesMatched} matched{/if}
 		{/if}
 		{#if form.result.errors.length > 0}
 			| Errors: {form.result.errors.length}
@@ -186,7 +186,7 @@
 </div>
 
 <div class="card">
-	<h3>2. Upload CSV File</h3>
+	<h3>2. Upload Files</h3>
 	<form method="POST" action="?/preview" enctype="multipart/form-data" use:enhance={() => {
 		loading = true;
 		return async ({ update }) => {
@@ -195,16 +195,31 @@
 		};
 	}}>
 		<input type="hidden" name="data_type" value={selectedType} />
-		<div class="upload-area">
-			<input
-				type="file"
-				name="file"
-				accept=".csv,.zip"
-				required
-				bind:this={fileInput}
-				class="file-input"
-			/>
-			<p class="upload-hint">CSV or ZIP file (with CSV + images), max 50MB. UTF-8 encoding.</p>
+		<div class="upload-fields">
+			<div class="upload-field">
+				<label class="upload-label">CSV File <span class="required-mark">*</span></label>
+				<input
+					type="file"
+					name="csv_file"
+					accept=".csv"
+					required
+					bind:this={fileInput}
+					class="file-input"
+				/>
+				<p class="upload-hint">CSV файл (наш формат или от поставщика). UTF-8.</p>
+			</div>
+			{#if selectedType === 'products'}
+				<div class="upload-field">
+					<label class="upload-label">ZIP with Images <span class="optional-mark">(optional)</span></label>
+					<input
+						type="file"
+						name="images_zip"
+						accept=".zip"
+						class="file-input"
+					/>
+					<p class="upload-hint">Архив с фото товаров. Связь по ID/артикулу из CSV.</p>
+				</div>
+			{/if}
 		</div>
 		<div class="upload-actions">
 			<ActionButton type="submit" variant="secondary" disabled={loading}>
@@ -224,6 +239,9 @@
 				<span class="format-badge format-native">Standard format</span>
 			{:else if form.detectedFormat === 'unknown'}
 				<span class="format-badge format-unknown">Unknown format</span>
+			{/if}
+			{#if form.zipImageCount}
+				<span class="format-badge format-images">{form.zipImageCount} images in ZIP</span>
 			{/if}
 		</div>
 
@@ -276,14 +294,30 @@
 			};
 		}}>
 			<input type="hidden" name="data_type" value={form.dataType} />
-			<input
-				type="file"
-				name="file"
-				accept=".csv,.zip"
-				required
-				class="file-input"
-			/>
-			<p class="import-note">Please re-select the same file to proceed with import.</p>
+			<div class="upload-fields">
+				<div class="upload-field">
+					<label class="upload-label">CSV File <span class="required-mark">*</span></label>
+					<input
+						type="file"
+						name="csv_file"
+						accept=".csv"
+						required
+						class="file-input"
+					/>
+				</div>
+				{#if form.dataType === 'products'}
+					<div class="upload-field">
+						<label class="upload-label">ZIP with Images <span class="optional-mark">(optional)</span></label>
+						<input
+							type="file"
+							name="images_zip"
+							accept=".zip"
+							class="file-input"
+						/>
+					</div>
+				{/if}
+			</div>
+			<p class="import-note">Re-select the same files to proceed with import.</p>
 			{#if form.dataType === 'products' && form.detectedFormat !== 'supplier'}
 				<label class="cascade-option">
 					<input type="checkbox" name="cascade" value="1" />
@@ -299,6 +333,122 @@
 				</ActionButton>
 			</div>
 		</form>
+	</div>
+{/if}
+
+<!-- ZIP-only mode: update images for existing products -->
+{#if selectedType === 'products'}
+	<div class="card zip-only-card">
+		<h3>Update Photos (ZIP only)</h3>
+		<p class="zip-only-desc">Upload a ZIP with images to update photos for existing products. Files are matched by SKU or slug in filename.</p>
+
+		{#if form?.imageUpdateSuccess}
+			<div class="alert success">
+				<strong>Images Updated!</strong>
+				Products: {form.productsUpdated} | Images: {form.imagesProcessed} processed, {form.imagesMatched} matched
+				{#if form.unmatched?.length}
+					| Unmatched: {form.unmatched.length}
+				{/if}
+			</div>
+			{#if form.unmatched?.length}
+				<details class="unmatched-details">
+					<summary>Unmatched files ({form.unmatched.length})</summary>
+					<ul class="unmatched-list">
+						{#each form.unmatched as f}
+							<li>{f}</li>
+						{/each}
+					</ul>
+				</details>
+			{/if}
+		{/if}
+
+		{#if form?.imagePreview}
+			<div class="image-preview-info">
+				<p><strong>{form.zipFileName}</strong>: {form.totalImages} images, {form.matchedProducts} products matched</p>
+				{#if form.matched?.length}
+					<div class="preview-scroll">
+						<table class="preview-table">
+							<thead>
+								<tr>
+									<th>File</th>
+									<th>Product</th>
+									<th>SKU</th>
+									<th>Matched By</th>
+									<th>Type</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each form.matched as m}
+									<tr>
+										<td>{m.filename}</td>
+										<td>{m.productName}</td>
+										<td><code>{m.productSku}</code></td>
+										<td>{m.matchedBy}</td>
+										<td>{m.isGallery ? 'Gallery' : 'Main'}</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{/if}
+				{#if form.unmatched?.length}
+					<details class="unmatched-details">
+						<summary>Unmatched files ({form.unmatched.length})</summary>
+						<ul class="unmatched-list">
+							{#each form.unmatched as f}
+								<li>{f}</li>
+							{/each}
+						</ul>
+					</details>
+				{/if}
+
+				<form method="POST" action="?/updateImages" enctype="multipart/form-data" use:enhance={() => {
+					loading = true;
+					return async ({ update }) => {
+						loading = false;
+						await update();
+					};
+				}}>
+					<input
+						type="file"
+						name="images_only_zip"
+						accept=".zip"
+						required
+						class="file-input"
+					/>
+					<p class="import-note">Re-select the same ZIP to apply changes.</p>
+					<div class="import-actions">
+						<ActionButton type="submit" variant="primary" disabled={loading}>
+							{loading ? 'Updating...' : `Update ${form.matchedProducts} products`}
+						</ActionButton>
+					</div>
+				</form>
+			</div>
+		{:else}
+			<form method="POST" action="?/previewImages" enctype="multipart/form-data" use:enhance={() => {
+				loading = true;
+				return async ({ update }) => {
+					loading = false;
+					await update();
+				};
+			}}>
+				<div class="upload-field">
+					<input
+						type="file"
+						name="images_only_zip"
+						accept=".zip"
+						required
+						class="file-input"
+					/>
+					<p class="upload-hint">ZIP с фото. Имя файла = артикул (SKU) или slug товара.</p>
+				</div>
+				<div class="upload-actions">
+					<ActionButton type="submit" variant="secondary" disabled={loading}>
+						{loading ? 'Scanning...' : 'Preview Matches'}
+					</ActionButton>
+				</div>
+			</form>
+		{/if}
 	</div>
 {/if}
 
@@ -540,8 +690,44 @@
 		color: #374151;
 	}
 
-	.upload-area {
+	.upload-fields {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
 		margin-bottom: 1rem;
+	}
+
+	@media (max-width: 640px) {
+		.upload-fields {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	.upload-field {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.upload-label {
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: #374151;
+		margin-bottom: 0.375rem;
+	}
+
+	.required-mark {
+		color: #ef4444;
+	}
+
+	.optional-mark {
+		font-weight: 400;
+		color: #9ca3af;
+	}
+
+	.format-images {
+		background: #faf5ff;
+		color: #7c3aed;
+		border: 1px solid #c4b5fd;
 	}
 
 	.file-input {
@@ -782,5 +968,57 @@
 	.template-btn-supplier:hover {
 		background: #dbeafe;
 		border-color: #3b82f6;
+	}
+
+	/* ZIP-only mode card */
+	.zip-only-card {
+		background: #faf5ff;
+		border: 1px solid #c4b5fd;
+	}
+
+	.zip-only-card h3 {
+		color: #6d28d9;
+	}
+
+	.zip-only-desc {
+		font-size: 0.8125rem;
+		color: #6b7280;
+		margin: 0 0 1rem;
+	}
+
+	.image-preview-info {
+		margin-top: 0.75rem;
+	}
+
+	.image-preview-info p {
+		font-size: 0.875rem;
+		color: #374151;
+		margin: 0 0 0.75rem;
+	}
+
+	.unmatched-details {
+		margin: 0.75rem 0;
+	}
+
+	.unmatched-details summary {
+		cursor: pointer;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: #b45309;
+	}
+
+	.unmatched-details summary:hover {
+		color: #92400e;
+	}
+
+	.unmatched-list {
+		margin: 0.375rem 0 0;
+		padding-left: 1.25rem;
+		font-size: 0.8125rem;
+		color: #6b7280;
+	}
+
+	.unmatched-list li {
+		margin-bottom: 0.125rem;
 	}
 </style>

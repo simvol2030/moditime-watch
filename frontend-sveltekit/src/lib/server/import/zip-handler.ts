@@ -93,6 +93,67 @@ export async function extractZipImport(
 	return { csvText, imageMap, thumbMap, imageCount, imageErrors };
 }
 
+/**
+ * Extract only images from a ZIP (no CSV extraction).
+ * Used when images ZIP is uploaded separately from CSV.
+ * Returns image count only (for preview stats). Full processing uses extractZipImport.
+ */
+export async function extractZipImages(
+	zipBuffer: Buffer
+): Promise<{ imageCount: number; filenames: string[] }> {
+	const zip = new AdmZip(zipBuffer);
+	const entries = zip.getEntries();
+	const filenames: string[] = [];
+
+	for (const entry of entries) {
+		if (entry.isDirectory) continue;
+		const name = entry.entryName.toLowerCase();
+		if (/\.(jpg|jpeg|png|webp|gif|avif|tiff|tif|bmp|svg)$/i.test(name)) {
+			const basename = entry.entryName.split('/').pop() || '';
+			filenames.push(basename);
+		}
+	}
+
+	return { imageCount: filenames.length, filenames };
+}
+
+/**
+ * Find gallery images in imageMap by base ID with suffixes _2, _3, _02, _03, etc.
+ * Example: baseId="17503" → finds "17503_2.jpg", "17503_3.jpg" → returns their URLs
+ */
+export function resolveGalleryFromZip(
+	baseId: string,
+	imageMap: Map<string, string>
+): string[] {
+	const base = baseId.replace(/\.[^.]+$/, ''); // strip extension if present
+	if (!base) return [];
+
+	const gallery: string[] = [];
+
+	// Check suffixes _2.._20 and _02.._09
+	for (let i = 2; i <= 20; i++) {
+		const suffixes = [`${base}_${i}`, `${base}_${String(i).padStart(2, '0')}`];
+
+		for (const suffix of suffixes) {
+			// Try with various extensions in imageMap
+			if (imageMap.has(suffix)) {
+				gallery.push(imageMap.get(suffix)!);
+				break;
+			}
+			// Try with extensions
+			for (const ext of ['jpg', 'jpeg', 'png', 'webp']) {
+				const key = `${suffix}.${ext}`;
+				if (imageMap.has(key)) {
+					gallery.push(imageMap.get(key)!);
+					break;
+				}
+			}
+		}
+	}
+
+	return gallery;
+}
+
 /** Image extensions for fuzzy matching */
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'tiff', 'tif', 'bmp', 'svg'];
 
@@ -136,6 +197,7 @@ function fuzzyImageMatch(value: string, imageMap: Map<string, string>): string |
 /**
  * Replace image references in CSV rows with processed media URLs.
  * Supports fuzzy matching: numeric IDs, case-insensitive, extension variants.
+ * Auto-discovers gallery images with _2, _3 suffixes in ZIP.
  */
 export function resolveImageReferences(
 	rows: Record<string, string>[],
@@ -169,6 +231,21 @@ export function resolveImageReferences(
 				}
 			}
 		}
+
+		// Auto-discover gallery images from ZIP using _2, _3 suffixes
+		// Only if main_image was resolved and gallery_images is empty or not present
+		if (resolved.main_image && !resolved.gallery_images) {
+			// Get the base ID from the original main_image value (before resolution)
+			const originalMainImage = row.main_image || '';
+			const baseId = originalMainImage.replace(/\.[^.]+$/, ''); // strip extension
+			if (baseId) {
+				const galleryUrls = resolveGalleryFromZip(baseId, imageMap);
+				if (galleryUrls.length > 0) {
+					resolved.gallery_images = galleryUrls.join('|');
+				}
+			}
+		}
+
 		return resolved;
 	});
 }
