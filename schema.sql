@@ -140,6 +140,33 @@ CREATE TABLE IF NOT EXISTS collection_products (
 
 CREATE INDEX IF NOT EXISTS idx_collection_products_product ON collection_products(product_id);
 
+-- Конфигурация секций главной (eyebrow/title/description)
+CREATE TABLE IF NOT EXISTS homepage_section_config (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  section_key TEXT UNIQUE NOT NULL,
+  eyebrow TEXT DEFAULT '',
+  title TEXT DEFAULT '',
+  description TEXT DEFAULT '',
+  extra_json TEXT DEFAULT '{}',
+  is_active INTEGER DEFAULT 1
+);
+
+-- Ручной режим бестселлеров (showcase)
+CREATE TABLE IF NOT EXISTS homepage_showcase_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id INTEGER NOT NULL,
+  position INTEGER DEFAULT 0,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+-- Ручной режим журнала (editorial)
+CREATE TABLE IF NOT EXISTS homepage_editorial_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  article_id INTEGER NOT NULL,
+  position INTEGER DEFAULT 0,
+  FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE
+);
+
 -- Сервисы на главной (Experience Section)
 CREATE TABLE IF NOT EXISTS home_services (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

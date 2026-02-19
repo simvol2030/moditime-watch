@@ -37,6 +37,8 @@
 		{ label: 'Navigation', href: '/admin/navigation', icon: '🔗', group: 'Content' },
 		{ label: 'Footer', href: '/admin/footer', icon: '🦶', group: 'Content' },
 		{ label: 'Homepage', href: '/admin/homepage', icon: '🏠', group: 'Content' },
+		{ label: 'Menus', href: '/admin/menus', icon: '📋', group: 'Settings' },
+		{ label: 'Site Settings', href: '/admin/settings/site', icon: '🌐', group: 'Settings' },
 		{ label: 'Import', href: '/admin/import', icon: '📥', group: 'Data' },
 		{ label: 'Notifications', href: '/admin/system/notifications', icon: '🔔', group: 'System' },
 		{ label: 'Config', href: '/admin/system/config', icon: '⚙️', group: 'System' }

@@ -17,6 +17,17 @@
 	const phoneHref = $derived('tel:' + phone.replace(/[\s()-]/g, ''));
 	const phoneMode = $derived(siteConfig.phone_mode || 'direct');
 
+	// Topbar from site_config
+	const topbarVisible = $derived(siteConfig.topbar_visible !== 'false');
+	const topbarBadge = $derived(siteConfig.topbar_badge || 'Moditimewatch Delivery');
+	const topbarText = $derived(siteConfig.topbar_text || 'Доставка премиальных часов по России и СНГ');
+
+	// Logo from site_config
+	const logoMode = $derived(siteConfig.logo_mode || 'text');
+	const logoWordmark = $derived(siteConfig.logo_wordmark || 'Moditimewatch');
+	const logoTagline = $derived(siteConfig.logo_tagline || 'Fine Time Delivery');
+	const logoImageUrl = $derived(siteConfig.logo_image_url || '');
+
 	let scrolled = $state(false);
 	let isMobileMenuOpen = $state(false);
 	let searchOpen = $state(false);
@@ -72,11 +83,12 @@
 
 <header class="site-header" data-sticky>
 	<!-- Topbar -->
+	{#if topbarVisible}
 	<div class="topbar">
 		<div class="container topbar__row">
 			<div class="topbar__info">
-				<span class="topbar__badge">Moditimewatch Delivery</span>
-				<span>Доставка премиальных часов по России и СНГ</span>
+				<span class="topbar__badge">{topbarBadge}</span>
+				<span>{topbarText}</span>
 			</div>
 			<div class="topbar__contacts">
 				<a href={phoneHref} class="topbar__link" onclick={handlePhoneClick}>{phone}</a>
@@ -84,14 +96,19 @@
 			</div>
 		</div>
 	</div>
+	{/if}
 
 	<!-- Navigation Shell -->
 	<div class="nav-shell" data-sticky-anchor>
 		<div class="container nav-shell__row">
 			<!-- Logo -->
 			<a class="site-logo" href="/">
-				<span class="site-logo__wordmark">Moditimewatch</span>
-				<span class="site-logo__tagline">Fine Time Delivery</span>
+				{#if logoMode === 'image' && logoImageUrl}
+					<img src={logoImageUrl} alt={logoWordmark} class="site-logo__image" />
+				{:else}
+					<span class="site-logo__wordmark">{logoWordmark}</span>
+					<span class="site-logo__tagline">{logoTagline}</span>
+				{/if}
 			</a>
 
 			<!-- Desktop Navigation -->
@@ -398,6 +415,11 @@
 		letter-spacing: 0.15em;
 		opacity: 0.6;
 		margin-top: 2px;
+	}
+
+	.site-logo__image {
+		max-height: 40px;
+		width: auto;
 	}
 
 	/* Nav actions */

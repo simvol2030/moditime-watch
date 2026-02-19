@@ -16,6 +16,12 @@
 	const phoneHref = $derived('tel:' + phone.replace(/[\s()-]/g, ''));
 	const telegram = $derived(siteConfig.social_telegram || 'https://t.me/moditimewatch');
 
+	// Logo from site_config
+	const logoMode = $derived(siteConfig.logo_mode || 'text');
+	const logoWordmark = $derived(siteConfig.logo_wordmark || 'Moditimewatch');
+	const logoTagline = $derived(siteConfig.logo_tagline || 'Fine Time Delivery');
+	const logoImageUrl = $derived(siteConfig.logo_image_url || '');
+
 	const cityName = $derived(($page.data as any)?.city?.name || '');
 	const cityNameAccusative = $derived(($page.data as any)?.city?.nameAccusative || cityName);
 	const deliveryDays = $derived(($page.data as any)?.delivery?.days || 0);
@@ -26,8 +32,12 @@
 	<div class="container city-footer__content">
 		<div class="city-footer__brand">
 			<a class="site-logo" href="/">
-				<span class="site-logo__wordmark">Moditimewatch</span>
-				<span class="site-logo__tagline">Fine Time Delivery</span>
+				{#if logoMode === 'image' && logoImageUrl}
+					<img src={logoImageUrl} alt={logoWordmark} class="site-logo__image" />
+				{:else}
+					<span class="site-logo__wordmark">{logoWordmark}</span>
+					<span class="site-logo__tagline">{logoTagline}</span>
+				{/if}
 			</a>
 		</div>
 
@@ -105,6 +115,11 @@
 		letter-spacing: 0.15em;
 		opacity: 0.6;
 		margin-top: 2px;
+	}
+
+	.site-logo__image {
+		max-height: 36px;
+		width: auto;
 	}
 
 	.city-footer__contacts {

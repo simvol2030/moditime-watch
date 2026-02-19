@@ -570,6 +570,15 @@ export function seedDatabase() {
       'Заказ #{{order_number}} доставлен. Спасибо за покупку!'
     );
 
+    // Homepage Section Config (Session-18)
+    const insertSectionConfig = db.prepare('INSERT INTO homepage_section_config (section_key, eyebrow, title, description) VALUES (?, ?, ?, ?)');
+    insertSectionConfig.run('collections', 'Подборки', 'Кураторские коллекции Moditimewatch', 'Авторский отбор от экспертов для тех, кто ценит детали и ищет часы с характером.');
+    insertSectionConfig.run('showcase', 'Бестселлеры', 'Топ-модели недели', '');
+    insertSectionConfig.run('experience', 'Опыт Moditimewatch', 'Премиальный сервис для ценителей часов', 'Индивидуальный подход к каждому клиенту.');
+    insertSectionConfig.run('testimonials', 'Отзывы клиентов', 'Истории владельцев Moditimewatch', 'Что говорят клиенты о сервисе Moditimewatch.');
+    insertSectionConfig.run('editorial', 'Журнал', 'Экспертиза и вдохновение', '');
+    insertSectionConfig.run('telegram', 'Подписка', 'Канал Moditimewatch в Telegram', 'Анонсы релизов и эксклюзивные предложения');
+
     console.log('✅ Database seeded successfully (с Hero, Experience, Navigation, Footer, Filters, Config, Email Templates, pSEO Schema)');
   });
   seed();
@@ -702,11 +711,37 @@ function seedAdditionalCities() {
   console.log(`✅ Cities seeded: ${newCount} total`);
 }
 
+// Session-20: Seed additional site_config keys (idempotent — INSERT OR IGNORE)
+function seedSiteConfigExtras() {
+  const insertOrIgnore = db.prepare('INSERT OR IGNORE INTO site_config (key, value, type, description) VALUES (?, ?, ?, ?)');
+  const seed = db.transaction(() => {
+    // Logo & branding
+    insertOrIgnore.run('logo_wordmark', 'Moditimewatch', 'string', 'Текст логотипа (wordmark)');
+    insertOrIgnore.run('logo_tagline', 'Fine Time Delivery', 'string', 'Подзаголовок логотипа');
+    insertOrIgnore.run('logo_image_url', '', 'string', 'URL изображения логотипа (SVG/PNG)');
+    insertOrIgnore.run('logo_mode', 'text', 'string', 'Режим логотипа: text / image');
+    insertOrIgnore.run('company_description', 'Сервис доставки оригинальных часов из-за рубежа с гарантией подлинности и персональными консультациями.', 'string', 'Описание компании для footer');
+    insertOrIgnore.run('favicon_url', '', 'string', 'URL favicon');
+
+    // Social links
+    insertOrIgnore.run('social_vk', '', 'string', 'Ссылка на VK');
+    insertOrIgnore.run('social_youtube', '', 'string', 'Ссылка на YouTube');
+    insertOrIgnore.run('social_whatsapp', '', 'string', 'Ссылка на WhatsApp');
+
+    // Topbar
+    insertOrIgnore.run('topbar_badge', 'Moditimewatch Delivery', 'string', 'Бейдж в topbar');
+    insertOrIgnore.run('topbar_text', 'Доставка премиальных часов по России и СНГ', 'string', 'Текст в topbar');
+    insertOrIgnore.run('topbar_visible', 'true', 'boolean', 'Показывать topbar');
+  });
+  seed();
+}
+
 // INITIALIZE DATABASE BEFORE CREATING QUERIES! (only in main thread)
 if (isMainThread) {
 	initializeDatabase();
 	seedDatabase();
 	seedAdditionalCities();
+	seedSiteConfigExtras();
 }
 
 // QUERIES (создаются ПОСЛЕ инициализации таблиц, only in main thread)
@@ -804,6 +839,7 @@ const createQueries = () => ({
   getFooterLinks: db.prepare('SELECT * FROM footer_links WHERE section_id = ? ORDER BY position'),
 
   // Homepage data
+  getHomepageSectionConfigs: db.prepare('SELECT * FROM homepage_section_config WHERE is_active = 1'),
   getHomeHero: db.prepare('SELECT * FROM home_hero WHERE is_active = 1 LIMIT 1'),
   getAllCollections: db.prepare('SELECT * FROM collections WHERE is_active = 1 ORDER BY position'),
   getAllTestimonials: db.prepare('SELECT * FROM testimonials WHERE is_active = 1 ORDER BY display_order'),
@@ -956,6 +992,9 @@ const createQueries = () => ({
     VALUES (@label, @href, @parent_id, @position, @menu_type, @is_active, 1)
   `),
   adminDeleteNavItem: db.prepare('DELETE FROM navigation_items WHERE id = ?'),
+  adminDeleteNavItemChildren: db.prepare('DELETE FROM navigation_items WHERE parent_id = ?'),
+  adminGetNavItemsByMenuType: db.prepare('SELECT * FROM navigation_items WHERE menu_type = ? ORDER BY position, id'),
+  adminCountNavItemsByMenuType: db.prepare('SELECT menu_type, COUNT(*) as cnt FROM navigation_items GROUP BY menu_type'),
 
   // ============================================
   // ADMIN - PAGES
@@ -1090,6 +1129,18 @@ const createQueries = () => ({
   adminDeleteHomeStat: db.prepare('DELETE FROM home_service_stats WHERE id = ?'),
   adminUpdateWidget: db.prepare('UPDATE widgets SET data_json = @data_json, is_active = @is_active WHERE id = @id'),
 
+  // Homepage Section Config (Session-18)
+  getAllSectionConfigs: db.prepare('SELECT * FROM homepage_section_config'),
+  getSectionConfig: db.prepare('SELECT * FROM homepage_section_config WHERE section_key = ?'),
+  updateSectionConfig: db.prepare(`UPDATE homepage_section_config SET eyebrow = @eyebrow, title = @title, description = @description, extra_json = @extra_json, is_active = @is_active WHERE section_key = @section_key`),
+
+  // Homepage Showcase Items (Session-18) — manual bestsellers
+  getShowcaseItems: db.prepare(`SELECT hsi.*, p.name, p.slug, p.price, p.sku, b.name as brand_name FROM homepage_showcase_items hsi JOIN products p ON p.id = hsi.product_id LEFT JOIN brands b ON b.id = p.brand_id ORDER BY hsi.position`),
+  addShowcaseItem: db.prepare('INSERT INTO homepage_showcase_items (product_id, position) VALUES (@product_id, @position)'),
+  removeShowcaseItem: db.prepare('DELETE FROM homepage_showcase_items WHERE id = ?'),
+  clearShowcaseItems: db.prepare('DELETE FROM homepage_showcase_items'),
+  getMaxShowcasePosition: db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM homepage_showcase_items'),
+  reorderShowcaseItem: db.prepare('UPDATE homepage_showcase_items SET position = @position WHERE id = @id'),
 
   // Footer (Session-4, Task 1)
   adminGetFooterSections: db.prepare('SELECT * FROM footer_sections ORDER BY position'),
@@ -1141,7 +1192,37 @@ const createQueries = () => ({
   reorderCategory: db.prepare('UPDATE categories SET position = @position WHERE id = @id'),
   reorderBrand: db.prepare('UPDATE brands SET position = @position WHERE id = @id'),
   reorderTestimonial: db.prepare('UPDATE testimonials SET display_order = @display_order WHERE id = @id'),
-  reorderCityArticleCategory: db.prepare('UPDATE city_article_categories SET position = @position WHERE id = @id')
+  reorderCityArticleCategory: db.prepare('UPDATE city_article_categories SET position = @position WHERE id = @id'),
+
+  // ============================================
+  // SESSION-19: Homepage Admin Part 2
+  // ============================================
+
+  // Homepage Editorial Items — manual journal mode
+  getEditorialItems: db.prepare(`SELECT hei.*, a.title, a.slug, a.excerpt, a.image_url, ac.name as category_name FROM homepage_editorial_items hei JOIN articles a ON a.id = hei.article_id LEFT JOIN article_categories ac ON ac.id = a.category_id ORDER BY hei.position`),
+  addEditorialItem: db.prepare('INSERT INTO homepage_editorial_items (article_id, position) VALUES (@article_id, @position)'),
+  removeEditorialItem: db.prepare('DELETE FROM homepage_editorial_items WHERE id = ?'),
+  clearEditorialItems: db.prepare('DELETE FROM homepage_editorial_items'),
+  getMaxEditorialPosition: db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM homepage_editorial_items'),
+  reorderEditorialItem: db.prepare('UPDATE homepage_editorial_items SET position = @position WHERE id = @id'),
+
+  // Article search for editorial manual mode
+  searchArticles: db.prepare(`SELECT a.id, a.title, a.slug, a.excerpt, a.image_url, ac.name as category_name FROM articles a LEFT JOIN article_categories ac ON ac.id = a.category_id WHERE a.is_published = 1 AND (a.title LIKE @q OR a.slug LIKE @q) ORDER BY a.published_at DESC LIMIT 10`),
+
+  // Service reorder
+  reorderService: db.prepare('UPDATE home_services SET position = @position WHERE id = @id'),
+  adminGetMaxServicePosition: db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM home_services'),
+
+  // Stat reorder
+  reorderStat: db.prepare('UPDATE home_service_stats SET position = @position WHERE id = @id'),
+  adminGetMaxStatPosition: db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM home_service_stats'),
+
+  // Site Config — update by key
+  updateConfigByKey: db.prepare('UPDATE site_config SET value = ? WHERE key = ?'),
+
+  // Telegram widget — upsert
+  upsertTelegramWidget: db.prepare(`INSERT INTO widgets (type, title, data_json, is_active) VALUES ('telegram_cta', 'Telegram CTA', @data_json, @is_active) ON CONFLICT(id) DO UPDATE SET data_json = @data_json, is_active = @is_active`),
+  getTelegramWidgetForAdmin: db.prepare("SELECT * FROM widgets WHERE type = 'telegram_cta' LIMIT 1")
 });
 
 // Lazy queries cache

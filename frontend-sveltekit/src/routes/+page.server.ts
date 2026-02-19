@@ -7,6 +7,11 @@ import type { TestimonialsSectionProps } from '$lib/types/testimonials';
 import type { TelegramCtaSectionProps } from '$lib/types/telegram-cta';
 
 export const load: PageServerLoad = async () => {
+	// Section configs from homepage_section_config table
+	const sectionConfigs = queries.getHomepageSectionConfigs.all() as any[];
+	const sectionMap = new Map(sectionConfigs.map((s: any) => [s.section_key, s]));
+	const sc = (key: string) => sectionMap.get(key) || { eyebrow: '', title: '', description: '', extra_json: '{}' };
+
 	// ============================================
 	// 1. HERO - из БД ✅
 	// ============================================
@@ -42,11 +47,11 @@ export const load: PageServerLoad = async () => {
 	// 2. COLLECTIONS - из БД ✅
 	// ============================================
 	const collectionsFromDb = queries.getAllCollections.all() as any[];
+	const collectionsConfig = sc('collections');
 	const collectionsContent: CollectionsSectionProps = {
-		eyebrow: 'Подборки',
-		title: 'Кураторские коллекции Moditimewatch',
-		description:
-			'Каждая подборка создаётся командой сервиса: учитываем силу бренда, инвестиционный потенциал, редкость референса и сценарии ношения.',
+		eyebrow: collectionsConfig.eyebrow || 'Подборки',
+		title: collectionsConfig.title || 'Кураторские коллекции Moditimewatch',
+		description: collectionsConfig.description || 'Каждая подборка создаётся командой сервиса: учитываем силу бренда, инвестиционный потенциал, редкость референса и сценарии ношения.',
 		collections: collectionsFromDb.map((c) => ({
 			id: c.slug,
 			image: c.image_url,
@@ -61,14 +66,37 @@ export const load: PageServerLoad = async () => {
 	// ============================================
 	// 3. SHOWCASE (Бестселлеры) - из БД ✅
 	// ============================================
-	const featuredProductsFromDb = queries.getFeaturedProducts.all(8) as any[];
+	const showcaseConfig = sc('showcase');
+	const showcaseExtra = JSON.parse(showcaseConfig.extra_json || '{}');
+
+	// Manual mode: use homepage_showcase_items; Auto mode: use is_featured products
+	let showcaseProducts: any[];
+	if (showcaseExtra.mode === 'manual') {
+		const manualItems = queries.getShowcaseItems.all() as any[];
+		if (manualItems.length > 0) {
+			showcaseProducts = manualItems.map((item: any) => ({
+				slug: item.slug,
+				brand_name: item.brand_name,
+				name: item.name,
+				price: item.price,
+				id: item.product_id,
+				is_new: 0,
+				is_limited: 0
+			}));
+		} else {
+			showcaseProducts = queries.getFeaturedProducts.all(8) as any[];
+		}
+	} else {
+		showcaseProducts = queries.getFeaturedProducts.all(8) as any[];
+	}
+
 	const showcaseContent: ShowcaseSectionProps = {
-		eyebrow: 'Бестселлеры',
-		title: 'Топ-модели недели',
+		eyebrow: showcaseConfig.eyebrow || 'Бестселлеры',
+		title: showcaseConfig.title || 'Топ-модели недели',
 		showAllButton: true,
-		showAllHref: '/catalog',
-		showAllText: 'Вся витрина',
-		products: featuredProductsFromDb.map((p) => ({
+		showAllHref: showcaseExtra.link_href || '/catalog',
+		showAllText: showcaseExtra.link_text || 'Вся витрина',
+		products: showcaseProducts.map((p) => ({
 			id: p.slug,
 			brand: p.brand_name,
 			name: p.name,
@@ -86,11 +114,11 @@ export const load: PageServerLoad = async () => {
 	const servicesFromDb = queries.getHomeServices.all() as any[];
 	const statsFromDb = queries.getHomeServiceStats.all() as any[];
 
+	const experienceConfig = sc('experience');
 	const experienceContent = {
-		eyebrow: 'Опыт Moditimewatch',
-		title: 'Премиальный сервис для ценителей часов',
-		description:
-			'Команда сервиса сопровождает на каждом этапе: от консультации и поиска редких моделей до постгарантийного обслуживания и оценки коллекций.',
+		eyebrow: experienceConfig.eyebrow || 'Опыт Moditimewatch',
+		title: experienceConfig.title || 'Премиальный сервис для ценителей часов',
+		description: experienceConfig.description || 'Команда сервиса сопровождает на каждом этапе: от консультации и поиска редких моделей до постгарантийного обслуживания и оценки коллекций.',
 		stats: statsFromDb.map((s) => ({
 			label: s.label,
 			value: s.value
@@ -111,11 +139,11 @@ export const load: PageServerLoad = async () => {
 	// 5. TESTIMONIALS - из БД ✅
 	// ============================================
 	const testimonialsFromDb = queries.getAllTestimonials.all() as any[];
+	const testimonialsConfig = sc('testimonials');
 	const testimonialsContent: TestimonialsSectionProps = {
-		eyebrow: 'Отзывы клиентов',
-		title: 'Истории владельцев Moditimewatch',
-		description:
-			'Мы строим долгосрочные отношения: подбираем часы для особых событий, поддерживаем коллекции и сопровождаем на каждом этапе.',
+		eyebrow: testimonialsConfig.eyebrow || 'Отзывы клиентов',
+		title: testimonialsConfig.title || 'Истории владельцев Moditimewatch',
+		description: testimonialsConfig.description || 'Мы строим долгосрочные отношения: подбираем часы для особых событий, поддерживаем коллекции и сопровождаем на каждом этапе.',
 		testimonials: testimonialsFromDb.map((t) => ({
 			id: String(t.id),
 			name: t.name,
@@ -129,48 +157,74 @@ export const load: PageServerLoad = async () => {
 	// ============================================
 	// 6. EDITORIAL (Журнал) - из БД ✅
 	// ============================================
-	const articlesFromDb = queries.getFeaturedArticles.all(6) as any[];
+	const editorialConfig = sc('editorial');
+	const editorialExtra = JSON.parse(editorialConfig.extra_json || '{}');
+
+	// Manual mode: use homepage_editorial_items; Auto mode: use is_featured articles
+	let editorialArticles: any[];
+	if (editorialExtra.mode === 'manual') {
+		const manualItems = queries.getEditorialItems.all() as any[];
+		if (manualItems.length > 0) {
+			editorialArticles = manualItems.map((item: any) => ({
+				id: item.slug,
+				tag: item.category_name || 'Статья',
+				title: item.title,
+				description: item.excerpt,
+				image: item.image_url,
+				link: `/journal/${item.slug}`,
+				linkText: 'Читать'
+			}));
+		} else {
+			editorialArticles = (queries.getFeaturedArticles.all(6) as any[]).map((a) => ({
+				id: a.slug, tag: a.category_name || 'Статья', title: a.title,
+				description: a.excerpt, image: a.image_url, link: `/journal/${a.slug}`, linkText: 'Читать'
+			}));
+		}
+	} else {
+		editorialArticles = (queries.getFeaturedArticles.all(6) as any[]).map((a) => ({
+			id: a.slug, tag: a.category_name || 'Статья', title: a.title,
+			description: a.excerpt, image: a.image_url, link: `/journal/${a.slug}`, linkText: 'Читать'
+		}));
+	}
+
 	const editorialContent = {
-		eyebrow: 'Журнал',
-		title: 'Экспертиза и вдохновение',
-		articles: articlesFromDb.map((a) => ({
-			id: a.slug,
-			tag: a.category_name || 'Статья',
-			title: a.title,
-			description: a.excerpt,
-			image: a.image_url,
-			link: `/journal/${a.slug}`,
-			linkText: 'Читать'
-		}))
+		eyebrow: editorialConfig.eyebrow || 'Журнал',
+		title: editorialConfig.title || 'Экспертиза и вдохновение',
+		articles: editorialArticles
 	};
 
 	// ============================================
-	// 7. TELEGRAM CTA - из config + виджет (Session-12: link instead of iframe)
+	// 7. TELEGRAM CTA - из config + виджет + section_config (Session-19)
 	// ============================================
 	const telegramGroupEnabled = (queries.getConfigByKey.get('telegram_group_enabled') as any)?.value === 'true';
 	const telegramGroupUrl = (queries.getConfigByKey.get('telegram_group_url') as any)?.value || 'https://t.me/moditime_watch';
-	const telegramGroupLabel = (queries.getConfigByKey.get('telegram_group_label') as any)?.value || 'Telegram группа Moditimewatch';
 
+	const telegramConfig = sc('telegram');
 	const telegramWidgetFromDb = queries.getTelegramWidget.get() as any;
 	let telegramCtaContent: TelegramCtaSectionProps;
 
 	if (telegramWidgetFromDb?.data_json) {
-		telegramCtaContent = JSON.parse(telegramWidgetFromDb.data_json);
+		const widgetData = JSON.parse(telegramWidgetFromDb.data_json);
+		telegramCtaContent = {
+			eyebrow: telegramConfig.eyebrow || widgetData.eyebrow || 'Подписка',
+			title: telegramConfig.title || widgetData.title || 'Канал Moditimewatch в Telegram',
+			description: telegramConfig.description || widgetData.description || 'Анонсы релизов и эксклюзивные предложения',
+			features: widgetData.features || ['Эксклюзивные предложения', 'Подборки часов', 'Обзоры новинок'],
+			ctaText: widgetData.ctaText || 'Подписаться',
+			ctaHref: telegramGroupUrl,
+			channelUrl: telegramGroupUrl
+		};
 	} else {
 		telegramCtaContent = {
-			eyebrow: 'Подписка',
-			title: 'Канал Moditimewatch в Telegram',
-			description: 'Анонсы релизов и эксклюзивные предложения',
+			eyebrow: telegramConfig.eyebrow || 'Подписка',
+			title: telegramConfig.title || 'Канал Moditimewatch в Telegram',
+			description: telegramConfig.description || 'Анонсы релизов и эксклюзивные предложения',
 			features: ['Эксклюзивные предложения', 'Подборки часов', 'Обзоры новинок'],
 			ctaText: 'Подписаться',
 			ctaHref: telegramGroupUrl,
 			channelUrl: telegramGroupUrl
 		};
 	}
-
-	// Override with config values
-	telegramCtaContent.ctaHref = telegramGroupUrl;
-	telegramCtaContent.channelUrl = telegramGroupUrl;
 
 	return {
 		heroContent,

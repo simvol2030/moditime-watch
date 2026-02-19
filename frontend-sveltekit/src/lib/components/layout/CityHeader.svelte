@@ -22,6 +22,12 @@
 	const phoneHref = $derived('tel:' + phone.replace(/[\s()-]/g, ''));
 	const phoneMode = $derived(siteConfig.phone_mode || 'direct');
 
+	// Logo from site_config
+	const logoMode = $derived(siteConfig.logo_mode || 'text');
+	const logoWordmark = $derived(siteConfig.logo_wordmark || 'Moditimewatch');
+	const logoTagline = $derived(siteConfig.logo_tagline || 'Fine Time Delivery');
+	const logoImageUrl = $derived(siteConfig.logo_image_url || '');
+
 	let searchQuery = $state('');
 	let callbackOpen = $state(false);
 
@@ -52,8 +58,12 @@
 	<div class="container city-header__row">
 		<!-- Logo -->
 		<a class="site-logo" href="/">
-			<span class="site-logo__wordmark">Moditimewatch</span>
-			<span class="site-logo__tagline">Fine Time Delivery</span>
+			{#if logoMode === 'image' && logoImageUrl}
+				<img src={logoImageUrl} alt={logoWordmark} class="site-logo__image" />
+			{:else}
+				<span class="site-logo__wordmark">{logoWordmark}</span>
+				<span class="site-logo__tagline">{logoTagline}</span>
+			{/if}
 		</a>
 
 		<!-- City name badge -->
@@ -180,6 +190,11 @@
 		letter-spacing: 0.15em;
 		opacity: 0.6;
 		margin-top: 2px;
+	}
+
+	.site-logo__image {
+		max-height: 36px;
+		width: auto;
 	}
 
 	.city-header__city-badge {
