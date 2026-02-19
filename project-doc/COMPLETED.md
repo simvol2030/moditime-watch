@@ -11,10 +11,10 @@
 | Метрика | Значение |
 |---------|----------|
 | **Всего задач** | 152 |
-| **Выполнено** | 115 (76%) |
-| **Осталось** | 37 (24%) |
+| **Выполнено** | 118 (78%) |
+| **Осталось** | 34 (22%) |
 | **Всего сессий** | 22 |
-| **Завершено сессий** | 19 (86%) |
+| **Завершено сессий** | 20 (91%) |
 
 ---
 
@@ -41,6 +41,7 @@
 | Session-19 | Homepage Admin Part 2 (6 tasks) | 2026-02-19 | f1fb586 |
 | Session-20 | Site Settings Admin (6 tasks) | 2026-02-19 | — |
 | Session-21 | Menu Manager Admin (6 tasks) | 2026-02-19 | — |
+| Session-22 | Page Manager Admin (3 tasks) | 2026-02-19 | — |
 
 ---
 
@@ -171,18 +172,16 @@
 
 ---
 
-### Session-22: Page Manager Admin
+### ~~Session-22: Page Manager Admin~~ ✅ DONE
 
-> **Источник:** ASCII-спеки + Moderator planning
-> **Приоритет:** MEDIUM
-> **Roadmap:** `project-doc/session-22-page-manager/roadmap-start.md`
-> **ASCII:** `ASCII/admin/page-manager.md`
+> **Deployed:** 2026-02-19 | **Commit:** —
+> **Result:** Navigation hub at /admin/pages — singleton pages table (6 fixed pages with deeplinks), content pages aggregation (articles + city_articles) with search, filter by type, pagination. Sidebar link already existed.
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| 1 | Server load — агрегация данных страниц | ⏳ PENDING | - |
-| 2 | UI — страница Page Manager | ⏳ PENDING | - |
-| 3 | Sidebar — ссылка "Страницы" | ⏳ PENDING | - |
+| 1 | Server load — агрегация данных страниц | ✅ DONE | 2026-02-19 |
+| 2 | UI — страница Page Manager | ✅ DONE | 2026-02-19 |
+| 3 | Sidebar — ссылка "Страницы" | ✅ DONE (existed) | 2026-02-19 |
 
 ---
 
@@ -226,4 +225,4 @@
 19. Session-19 (homepage admin part 2 — services, testimonials, journal, telegram) ✅
 20. Session-20 (site settings admin) ✅
 21. Session-21 (menu manager admin) ✅
-22. Session-22 (page manager admin) ⏳
+22. Session-22 (page manager admin) ✅
