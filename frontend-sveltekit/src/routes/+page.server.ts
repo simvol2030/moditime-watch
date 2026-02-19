@@ -66,16 +66,37 @@ export const load: PageServerLoad = async () => {
 	// ============================================
 	// 3. SHOWCASE (Бестселлеры) - из БД ✅
 	// ============================================
-	const featuredProductsFromDb = queries.getFeaturedProducts.all(8) as any[];
 	const showcaseConfig = sc('showcase');
 	const showcaseExtra = JSON.parse(showcaseConfig.extra_json || '{}');
+
+	// Manual mode: use homepage_showcase_items; Auto mode: use is_featured products
+	let showcaseProducts: any[];
+	if (showcaseExtra.mode === 'manual') {
+		const manualItems = queries.getShowcaseItems.all() as any[];
+		if (manualItems.length > 0) {
+			showcaseProducts = manualItems.map((item: any) => ({
+				slug: item.slug,
+				brand_name: item.brand_name,
+				name: item.name,
+				price: item.price,
+				id: item.product_id,
+				is_new: 0,
+				is_limited: 0
+			}));
+		} else {
+			showcaseProducts = queries.getFeaturedProducts.all(8) as any[];
+		}
+	} else {
+		showcaseProducts = queries.getFeaturedProducts.all(8) as any[];
+	}
+
 	const showcaseContent: ShowcaseSectionProps = {
 		eyebrow: showcaseConfig.eyebrow || 'Бестселлеры',
 		title: showcaseConfig.title || 'Топ-модели недели',
 		showAllButton: true,
 		showAllHref: showcaseExtra.link_href || '/catalog',
 		showAllText: showcaseExtra.link_text || 'Вся витрина',
-		products: featuredProductsFromDb.map((p) => ({
+		products: showcaseProducts.map((p) => ({
 			id: p.slug,
 			brand: p.brand_name,
 			name: p.name,

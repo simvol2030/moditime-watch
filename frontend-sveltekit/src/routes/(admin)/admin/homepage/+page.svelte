@@ -456,12 +456,121 @@
 	</div>
 {/if}
 
-<!-- SHOWCASE TAB (Task 5) -->
+<!-- SHOWCASE TAB -->
 {#if data.tab === 'showcase'}
-	<div class="card">
-		<h3>Бестселлеры</h3>
-		<p class="coming-soon-text">Вкладка реализуется в Task 5...</p>
-	</div>
+	{@const scfg = data.sectionConfigs?.showcase || { eyebrow: '', title: '', extra_json: '{}' }}
+	{@const scExtra = (() => { try { return JSON.parse(scfg.extra_json || '{}'); } catch { return {}; } })()}
+
+	<!-- Section config -->
+	<form method="POST" action="?/saveShowcaseConfig" use:enhance>
+		<input type="hidden" name="is_active" value="1" />
+		<div class="card">
+			<h3>Тексты секции</h3>
+			<div class="form-grid">
+				<div class="form-group">
+					<label for="sc-eyebrow">Eyebrow <span class="hint">max 40</span></label>
+					<input type="text" id="sc-eyebrow" name="eyebrow" value={scfg.eyebrow} maxlength="40" />
+				</div>
+				<div class="form-group">
+					<label for="sc-title">Заголовок <span class="hint">max 100</span></label>
+					<input type="text" id="sc-title" name="title" value={scfg.title} maxlength="100" />
+				</div>
+				<div class="form-group">
+					<label for="sc-link-text">Текст ссылки</label>
+					<input type="text" id="sc-link-text" name="link_text" value={scExtra.link_text || 'Вся витрина'} maxlength="40" />
+				</div>
+				<div class="form-group">
+					<label for="sc-link-href">URL ссылки</label>
+					<input type="text" id="sc-link-href" name="link_href" value={scExtra.link_href || '/catalog'} />
+				</div>
+			</div>
+		</div>
+
+		<!-- Mode selector -->
+		<div class="card">
+			<h3>Режим выбора товаров</h3>
+			<div class="brands-mode">
+				<label class="radio-label">
+					<input type="radio" name="showcase_mode" value="auto" checked={showcaseMode === 'auto'} onchange={() => showcaseMode = 'auto'} />
+					Автоматический (is_featured = 1, LIMIT 8)
+				</label>
+				<label class="radio-label">
+					<input type="radio" name="showcase_mode" value="manual" checked={showcaseMode === 'manual'} onchange={() => showcaseMode = 'manual'} />
+					Ручной (выбрать конкретные товары)
+				</label>
+			</div>
+			<div class="form-actions-inline">
+				<ActionButton type="submit" variant="primary" size="sm">Сохранить настройки</ActionButton>
+			</div>
+		</div>
+	</form>
+
+	<!-- Manual products list -->
+	{#if showcaseMode === 'manual'}
+		<div class="card">
+			<div class="card-header">
+				<h3>Товары в витрине ({data.showcaseItems.length} / 12)</h3>
+			</div>
+
+			<!-- Add product -->
+			<form method="POST" action="?/addShowcaseItem" use:enhance class="product-add-row">
+				<select name="product_id">
+					<option value="">Выберите товар...</option>
+					{#each data.brands as brand}
+						{@const brandName = brand.name}
+						<option disabled>--- {brandName} ---</option>
+					{/each}
+				</select>
+				<ActionButton type="submit" variant="secondary" size="sm">Добавить</ActionButton>
+			</form>
+
+			<!-- Showcase items list -->
+			<div class="items-list">
+				{#each data.showcaseItems as item, i}
+					<div class="item-row">
+						<div class="item-content">
+							<div class="item-info">
+								<div>
+									<strong>{item.brand_name} {item.name}</strong>
+									<span class="item-meta">{item.sku || ''}</span>
+								</div>
+							</div>
+							<div class="item-actions">
+								<span class="item-count">{item.price ? `${Math.round(item.price / 100).toLocaleString('ru-RU')} ₽` : ''}</span>
+								{#if i > 0}
+									<form method="POST" action="?/moveShowcaseItem" use:enhance class="inline-form">
+										<input type="hidden" name="id" value={item.id} />
+										<input type="hidden" name="direction" value="up" />
+										<button type="submit" class="btn-arrow" title="Вверх">↑</button>
+									</form>
+								{/if}
+								{#if i < data.showcaseItems.length - 1}
+									<form method="POST" action="?/moveShowcaseItem" use:enhance class="inline-form">
+										<input type="hidden" name="id" value={item.id} />
+										<input type="hidden" name="direction" value="down" />
+										<button type="submit" class="btn-arrow" title="Вниз">↓</button>
+									</form>
+								{/if}
+								<form method="POST" action="?/removeShowcaseItem" use:enhance class="inline-form">
+									<input type="hidden" name="id" value={item.id} />
+									<button type="submit" class="btn-link danger"
+										onclick={(e) => { if (!confirm('Убрать товар?')) e.preventDefault(); }}>Убрать</button>
+								</form>
+							</div>
+						</div>
+					</div>
+				{/each}
+			</div>
+
+			{#if data.showcaseItems.length === 0}
+				<p class="coming-soon-text">Товары не добавлены. Добавьте товары вручную или переключитесь на автоматический режим.</p>
+			{/if}
+		</div>
+	{:else}
+		<div class="card">
+			<p class="auto-mode-info">В автоматическом режиме отображаются товары с флагом <strong>is_featured = 1</strong> (первые 8). Управляйте этим флагом на странице товара.</p>
+		</div>
+	{/if}
 {/if}
 
 <!-- DISABLED TABS -->
@@ -887,6 +996,12 @@
 		border-radius: 6px;
 		font-size: 0.8125rem;
 		flex: 1;
+	}
+
+	.auto-mode-info {
+		font-size: 0.875rem;
+		color: #6b7280;
+		margin: 0;
 	}
 
 	/* Coming soon */
