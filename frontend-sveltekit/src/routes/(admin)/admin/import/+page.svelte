@@ -49,6 +49,46 @@
 	{/snippet}
 </PageHeader>
 
+<div class="card guide-card">
+	<h3>Как пользоваться импортом</h3>
+	<div class="guide-steps">
+		<div class="guide-step">
+			<span class="step-num">1</span>
+			<div>
+				<strong>Подготовьте CSV-файл</strong>
+				<p>Два способа:</p>
+				<ul>
+					<li><b>Экспорт + редактирование</b> — скачайте текущие данные (кнопки Export ниже), отредактируйте в Excel/Google Sheets, добавьте новые строки</li>
+					<li><b>Шаблон</b> — скачайте пустой шаблон (кнопка "Download Template" вверху), заполните по образцу</li>
+				</ul>
+			</div>
+		</div>
+		<div class="guide-step">
+			<span class="step-num">2</span>
+			<div>
+				<strong>Загрузите и проверьте</strong>
+				<p>Выберите тип данных, загрузите файл, нажмите Preview. Проверьте таблицу — всё ли на месте.</p>
+			</div>
+		</div>
+		<div class="guide-step">
+			<span class="step-num">3</span>
+			<div>
+				<strong>Импортируйте</strong>
+				<p>Выберите файл повторно и нажмите Import. Существующие записи обновятся (по SKU или slug), новые — добавятся.</p>
+			</div>
+		</div>
+	</div>
+	<details class="guide-details">
+		<summary>Подробнее о форматах и правилах</summary>
+		<div class="guide-details-content">
+			<p><b>Products:</b> цена в рублях (без копеек). Изображения — URL через | (пайп). Характеристики — JSON в поле specs_json. Пустые поля изображений = не трогать существующие.</p>
+			<p><b>Brands/Categories:</b> обязательны slug и name. При импорте товаров бренд и категория должны уже существовать (или включите "Cascade import").</p>
+			<p><b>ZIP с изображениями:</b> архив с CSV + папка images/. Имена файлов указывайте в CSV без пути (например: watch-1.jpg). Изображения автоматически конвертируются в WebP.</p>
+			<p><b>Кодировка:</b> UTF-8. При сохранении из Excel выбирайте "CSV UTF-8".</p>
+		</div>
+	</details>
+</div>
+
 {#if form?.error}
 	<div class="alert error">{form.error}</div>
 {/if}
@@ -477,5 +517,91 @@
 	.template-btn:hover {
 		background: #f9fafb;
 		border-color: #9ca3af;
+	}
+
+	.guide-card {
+		background: #f0f9ff;
+		border: 1px solid #bae6fd;
+	}
+
+	.guide-card h3 {
+		color: #0369a1;
+	}
+
+	.guide-steps {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.guide-step {
+		display: flex;
+		gap: 0.75rem;
+		align-items: flex-start;
+	}
+
+	.step-num {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.75rem;
+		height: 1.75rem;
+		min-width: 1.75rem;
+		background: #0284c7;
+		color: white;
+		border-radius: 50%;
+		font-size: 0.8125rem;
+		font-weight: 700;
+		margin-top: 0.125rem;
+	}
+
+	.guide-step p {
+		margin: 0.25rem 0;
+		font-size: 0.8125rem;
+		color: #4b5563;
+	}
+
+	.guide-step ul {
+		margin: 0.25rem 0 0;
+		padding-left: 1.25rem;
+		font-size: 0.8125rem;
+		color: #4b5563;
+	}
+
+	.guide-step li {
+		margin-bottom: 0.25rem;
+	}
+
+	.guide-step strong {
+		color: #1f2937;
+		font-size: 0.875rem;
+	}
+
+	.guide-details {
+		margin-top: 1rem;
+		border-top: 1px solid #bae6fd;
+		padding-top: 0.75rem;
+	}
+
+	.guide-details summary {
+		cursor: pointer;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: #0369a1;
+	}
+
+	.guide-details summary:hover {
+		color: #0284c7;
+	}
+
+	.guide-details-content {
+		margin-top: 0.75rem;
+	}
+
+	.guide-details-content p {
+		font-size: 0.8125rem;
+		color: #4b5563;
+		margin: 0.5rem 0;
+		line-height: 1.5;
 	}
 </style>
