@@ -7,7 +7,7 @@ import { importCategories } from '$lib/server/import/category-importer';
 import { importCities } from '$lib/server/import/city-importer';
 import { importCityArticles } from '$lib/server/import/city-article-importer';
 import { importFilters } from '$lib/server/import/filter-importer';
-import { extractZipImport, resolveImageReferences } from '$lib/server/import/zip-handler';
+import { extractZipImport, extractZipImages, resolveImageReferences } from '$lib/server/import/zip-handler';
 import type { EntityType } from '$lib/server/media/storage';
 
 const IMPORTERS: Record<string, (rows: Record<string, string>[]) => { added: number; updated: number; errors: { row: number; field: string; message: string }[] }> = {
@@ -105,7 +105,6 @@ export const actions: Actions = {
 			let zipImageCount = 0;
 			if (imagesZip && imagesZip.size > 0) {
 				const zipBuffer = Buffer.from(await imagesZip.arrayBuffer());
-				const { extractZipImages } = await import('$lib/server/import/zip-handler');
 				const zipResult = await extractZipImages(zipBuffer);
 				zipImageCount = zipResult.imageCount;
 			}
@@ -209,10 +208,16 @@ export const actions: Actions = {
 			}
 
 			// Resolve image references from ZIP
+			let imagesMatched = 0;
 			if (imageMap.size > 0) {
 				const imgCols = IMAGE_COLUMNS[dataType] || [];
 				if (imgCols.length > 0) {
+					const beforeResolve = rows.map(r => r.main_image || '');
 					rows = resolveImageReferences(rows, imageMap, imgCols);
+					// Count how many rows got images resolved
+					imagesMatched = rows.filter((r, i) =>
+						r.main_image && r.main_image !== beforeResolve[i] && r.main_image.startsWith('/media/')
+					).length;
 				}
 			}
 
@@ -267,6 +272,7 @@ export const actions: Actions = {
 				result,
 				detectedFormat,
 				imagesProcessed: imageCount,
+				imagesMatched,
 				imageErrors: imageErrors.length > 0 ? imageErrors : undefined
 			};
 		} catch (err) {

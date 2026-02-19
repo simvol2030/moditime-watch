@@ -122,7 +122,7 @@
 		<strong>Import Complete!</strong>
 		Added: {form.result.added} | Updated: {form.result.updated}
 		{#if form.imagesProcessed}
-			| Images: {form.imagesProcessed}
+			| Images: {form.imagesProcessed} processed{#if form.imagesMatched}, {form.imagesMatched} matched{/if}
 		{/if}
 		{#if form.result.errors.length > 0}
 			| Errors: {form.result.errors.length}
