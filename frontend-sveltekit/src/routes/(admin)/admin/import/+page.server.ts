@@ -75,28 +75,40 @@ async function extractFileContents(file: File, dataType: string): Promise<{
 export const actions: Actions = {
 	preview: async ({ request }) => {
 		const formData = await request.formData();
-		const file = formData.get('file') as File | null;
+		const csvFile = (formData.get('csv_file') || formData.get('file')) as File | null;
+		const imagesZip = formData.get('images_zip') as File | null;
 		const dataType = formData.get('data_type') as string;
 
-		if (!file || file.size === 0) {
-			return { error: 'Please select a CSV or ZIP file' };
+		if (!csvFile || csvFile.size === 0) {
+			return { error: 'Please select a CSV file' };
 		}
-		if (file.size > MAX_FILE_SIZE) {
+		if (csvFile.size > MAX_FILE_SIZE) {
 			return { error: 'File exceeds 50MB limit' };
+		}
+		if (imagesZip && imagesZip.size > MAX_FILE_SIZE) {
+			return { error: 'ZIP file exceeds 50MB limit' };
 		}
 		if (!IMPORTERS[dataType]) {
 			return { error: 'Invalid data type selected' };
 		}
 
 		try {
-			const { csvText } = await extractFileContents(file, dataType);
+			// Get CSV text — from plain CSV file or from ZIP containing CSV
+			const { csvText, imageCount: previewImageCount } = await extractFileContents(csvFile, dataType);
 			const { rows: rawRows, headers: rawHeaders } = parseCSV(csvText);
 
 			if (rawRows.length === 0) {
 				return { error: 'CSV file is empty or has no data rows' };
 			}
 
-			const isZip = file.name.endsWith('.zip');
+			// Count images from separate ZIP if provided
+			let zipImageCount = 0;
+			if (imagesZip && imagesZip.size > 0) {
+				const zipBuffer = Buffer.from(await imagesZip.arrayBuffer());
+				const { extractZipImages } = await import('$lib/server/import/zip-handler');
+				const zipResult = await extractZipImages(zipBuffer);
+				zipImageCount = zipResult.imageCount;
+			}
 
 			// Detect CSV format and convert if supplier
 			const detectedFormat: CsvFormat = dataType === 'products'
@@ -124,8 +136,9 @@ export const actions: Actions = {
 				headers,
 				rows: rows.slice(0, 5),
 				totalRows: rows.length,
-				fileName: file.name,
-				isZip,
+				fileName: csvFile.name,
+				hasZip: !!(imagesZip && imagesZip.size > 0),
+				zipImageCount: zipImageCount || previewImageCount,
 				detectedFormat,
 				conversionInfo
 			};
@@ -136,15 +149,19 @@ export const actions: Actions = {
 
 	import: async ({ request }) => {
 		const formData = await request.formData();
-		const file = formData.get('file') as File | null;
+		const csvFile = (formData.get('csv_file') || formData.get('file')) as File | null;
+		const imagesZip = formData.get('images_zip') as File | null;
 		const dataType = formData.get('data_type') as string;
 		const cascade = formData.get('cascade') === '1';
 
-		if (!file || file.size === 0) {
-			return { error: 'Please select a CSV or ZIP file' };
+		if (!csvFile || csvFile.size === 0) {
+			return { error: 'Please select a CSV file' };
 		}
-		if (file.size > MAX_FILE_SIZE) {
+		if (csvFile.size > MAX_FILE_SIZE) {
 			return { error: 'File exceeds 50MB limit' };
+		}
+		if (imagesZip && imagesZip.size > MAX_FILE_SIZE) {
+			return { error: 'ZIP file exceeds 50MB limit' };
 		}
 
 		const importer = IMPORTERS[dataType];
@@ -153,7 +170,22 @@ export const actions: Actions = {
 		}
 
 		try {
-			const { csvText, imageMap, imageCount, imageErrors } = await extractFileContents(file, dataType);
+			// Get CSV text + images from CSV file (may be ZIP with CSV+images)
+			const csvResult = await extractFileContents(csvFile, dataType);
+			let { csvText, imageMap, imageCount, imageErrors } = csvResult;
+
+			// If separate images ZIP provided, extract images from it too
+			if (imagesZip && imagesZip.size > 0) {
+				const zipBuffer = Buffer.from(await imagesZip.arrayBuffer());
+				const entity = ENTITY_MAP[dataType] || 'misc';
+				const zipResult = await extractZipImport(zipBuffer, entity);
+				// Merge image maps (separate ZIP overrides if duplicate keys)
+				for (const [key, url] of zipResult.imageMap) {
+					imageMap.set(key, url);
+				}
+				imageCount += zipResult.imageCount;
+				imageErrors = [...imageErrors, ...zipResult.imageErrors];
+			}
 			const { rows: rawRows, headers: rawHeaders } = parseCSV(csvText);
 
 			if (rawRows.length === 0) {

@@ -93,6 +93,30 @@ export async function extractZipImport(
 	return { csvText, imageMap, thumbMap, imageCount, imageErrors };
 }
 
+/**
+ * Extract only images from a ZIP (no CSV extraction).
+ * Used when images ZIP is uploaded separately from CSV.
+ * Returns image count only (for preview stats). Full processing uses extractZipImport.
+ */
+export async function extractZipImages(
+	zipBuffer: Buffer
+): Promise<{ imageCount: number; filenames: string[] }> {
+	const zip = new AdmZip(zipBuffer);
+	const entries = zip.getEntries();
+	const filenames: string[] = [];
+
+	for (const entry of entries) {
+		if (entry.isDirectory) continue;
+		const name = entry.entryName.toLowerCase();
+		if (/\.(jpg|jpeg|png|webp|gif|avif|tiff|tif|bmp|svg)$/i.test(name)) {
+			const basename = entry.entryName.split('/').pop() || '';
+			filenames.push(basename);
+		}
+	}
+
+	return { imageCount: filenames.length, filenames };
+}
+
 /** Image extensions for fuzzy matching */
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'tiff', 'tif', 'bmp', 'svg'];
 
