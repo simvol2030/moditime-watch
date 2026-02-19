@@ -438,7 +438,14 @@
 								<select name="product_id">
 									<option value="">Выберите товар...</option>
 									{#each data.brands as brand}
-										{@const brandProducts = data.showcaseItems}
+										{@const brandProducts = data.allProducts.filter((p: any) => p.brand_id === brand.id && p.is_active)}
+										{#if brandProducts.length > 0}
+											<optgroup label={brand.name}>
+												{#each brandProducts as product}
+													<option value={product.id}>{product.name}</option>
+												{/each}
+											</optgroup>
+										{/if}
 									{/each}
 								</select>
 								<ActionButton type="submit" variant="secondary" size="sm">Добавить</ActionButton>
@@ -552,8 +559,14 @@
 				<select name="product_id">
 					<option value="">Выберите товар...</option>
 					{#each data.brands as brand}
-						{@const brandName = brand.name}
-						<option disabled>--- {brandName} ---</option>
+						{@const brandProducts = data.allProducts.filter((p: any) => p.brand_id === brand.id && p.is_active)}
+						{#if brandProducts.length > 0}
+							<optgroup label={brand.name}>
+								{#each brandProducts as product}
+									<option value={product.id}>{product.name}</option>
+								{/each}
+							</optgroup>
+						{/if}
 					{/each}
 				</select>
 				<ActionButton type="submit" variant="secondary" size="sm">Добавить</ActionButton>

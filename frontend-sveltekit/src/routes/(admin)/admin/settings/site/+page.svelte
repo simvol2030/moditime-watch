@@ -57,7 +57,7 @@
 						Текст (wordmark + tagline)
 					</label>
 					<label class="radio-label">
-						<input type="radio" name="logo_mode" value="image" checked={c('logo_mode', 'text') === 'image'} />
+						<input type="radio" name="logo_mode" value="image" checked={c('logo_mode') === 'image'} />
 						Изображение (logo_image_url)
 					</label>
 				</div>
@@ -101,7 +101,7 @@
 						Прямой звонок (tel:)
 					</label>
 					<label class="radio-label">
-						<input type="radio" name="phone_mode" value="callback" checked={c('phone_mode', 'direct') === 'callback'} />
+						<input type="radio" name="phone_mode" value="callback" checked={c('phone_mode') === 'callback'} />
 						Форма обратного звонка (callback modal)
 					</label>
 				</div>

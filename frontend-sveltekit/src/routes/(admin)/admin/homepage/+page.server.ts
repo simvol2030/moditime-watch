@@ -10,6 +10,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const stats = queries.adminGetHomeStats.all() as any[];
 	const telegramWidget = queries.adminGetTelegramWidget.get() as any;
 	const brands = queries.adminListBrands.all() as any[];
+	const allProducts = queries.adminListProducts.all() as any[];
 	const sectionConfigs = queries.getAllSectionConfigs.all() as any[];
 	const collections = queries.adminListCollections.all() as any[];
 	const showcaseItems = queries.getShowcaseItems.all() as any[];
@@ -41,6 +42,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		services,
 		stats,
 		brands,
+		allProducts,
 		sectionConfigs: sectionMap,
 		collections,
 		showcaseItems,
@@ -110,8 +112,8 @@ export const actions: Actions = {
 		}
 
 		// If secondary CTA is hidden, clear its fields but keep them stored
-		const finalSecondaryCta = show_secondary ? secondary_cta_text : secondary_cta_text;
-		const finalSecondaryHref = show_secondary ? secondary_cta_href : secondary_cta_href;
+		const finalSecondaryCta = show_secondary ? secondary_cta_text : '';
+		const finalSecondaryHref = show_secondary ? secondary_cta_href : '';
 
 		try {
 			queries.adminUpdateHomeHero.run({

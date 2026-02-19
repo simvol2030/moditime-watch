@@ -18,8 +18,8 @@
 
 	function goToPage(page: number) {
 		const params = new URLSearchParams();
-		if (data.search) params.set('q', data.search);
-		if (data.filter !== 'all') params.set('type', data.filter);
+		if (searchValue) params.set('q', searchValue);
+		if (filterValue !== 'all') params.set('type', filterValue);
 		if (page > 1) params.set('page', String(page));
 		const qs = params.toString();
 		goto(`/admin/pages${qs ? '?' + qs : ''}`, { invalidateAll: true });
