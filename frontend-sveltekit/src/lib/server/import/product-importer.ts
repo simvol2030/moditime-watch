@@ -50,6 +50,40 @@ export function importProducts(rows: Record<string, string>[]): ImportResult {
 	const deleteProductImages = db.prepare('DELETE FROM product_images WHERE product_id = ?');
 	const insertImage = db.prepare('INSERT INTO product_images (product_id, url, thumbnail_url, alt, position, is_main) VALUES (?, ?, ?, ?, ?, ?)');
 
+	// FTS5 workaround: products_fts has content='products' but uses brand_name
+	// which doesn't exist in products table (it has brand_id). Any FTS trigger
+	// that fires during INSERT/UPDATE causes "no such column: T.brand_name".
+	// Solution: drop triggers before import, rebuild FTS manually after.
+	const dropFTSTriggers = () => {
+		db.exec('DROP TRIGGER IF EXISTS products_fts_insert');
+		db.exec('DROP TRIGGER IF EXISTS products_fts_update');
+		db.exec('DROP TRIGGER IF EXISTS products_fts_delete');
+	};
+
+	const rebuildFTS = () => {
+		db.exec('DROP TABLE IF EXISTS products_fts');
+		db.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS products_fts USING fts5(
+			name, description, brand_name,
+			content='products', content_rowid='id',
+			tokenize='porter unicode61 remove_diacritics 1'
+		)`);
+		db.exec(`INSERT INTO products_fts(rowid, name, description, brand_name)
+			SELECT p.id, p.name, p.description, b.name
+			FROM products p JOIN brands b ON b.id = p.brand_id`);
+		db.exec(`CREATE TRIGGER IF NOT EXISTS products_fts_insert AFTER INSERT ON products BEGIN
+			INSERT INTO products_fts(rowid, name, description, brand_name)
+			SELECT NEW.id, NEW.name, NEW.description, b.name
+			FROM brands b WHERE b.id = NEW.brand_id;
+		END`);
+		db.exec(`CREATE TRIGGER IF NOT EXISTS products_fts_delete AFTER DELETE ON products BEGIN
+			DELETE FROM products_fts WHERE rowid = OLD.id;
+		END`);
+		db.exec(`CREATE TRIGGER IF NOT EXISTS products_fts_update AFTER UPDATE ON products BEGIN
+			UPDATE products_fts SET name = NEW.name, description = NEW.description
+			WHERE rowid = NEW.id;
+		END`);
+	};
+
 	const transaction = db.transaction(() => {
 		for (let i = 0; i < rows.length; i++) {
 			const row = rows[i];
@@ -162,11 +196,14 @@ export function importProducts(rows: Record<string, string>[]): ImportResult {
 			}
 		}
 
-		// Note: FTS5 index is updated automatically by per-row INSERT/UPDATE triggers.
-		// The built-in 'rebuild' command cannot be used because products_fts has
-		// content='products' but uses brand_name (which is on brands table, not products).
 	});
 
+	// 1. Drop FTS triggers (they cause "no such column: T.brand_name")
+	dropFTSTriggers();
+	// 2. Run import without FTS interference
 	transaction();
+	// 3. Rebuild FTS table and restore triggers
+	rebuildFTS();
+
 	return { added, updated, errors };
 }
