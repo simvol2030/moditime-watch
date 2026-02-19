@@ -174,11 +174,11 @@ export const actions: Actions = {
 			const csvResult = await extractFileContents(csvFile, dataType);
 			let { csvText, imageMap, imageCount, imageErrors } = csvResult;
 
-			// If separate images ZIP provided, extract images from it too
+			// If separate images ZIP provided, extract images from it too (no CSV expected)
 			if (imagesZip && imagesZip.size > 0) {
 				const zipBuffer = Buffer.from(await imagesZip.arrayBuffer());
 				const entity = ENTITY_MAP[dataType] || 'misc';
-				const zipResult = await extractZipImport(zipBuffer, entity);
+				const zipResult = await extractZipImport(zipBuffer, entity, { requireCsv: false });
 				// Merge image maps (separate ZIP overrides if duplicate keys)
 				for (const [key, url] of zipResult.imageMap) {
 					imageMap.set(key, url);

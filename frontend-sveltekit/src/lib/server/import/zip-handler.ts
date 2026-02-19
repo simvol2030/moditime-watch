@@ -29,7 +29,8 @@ export interface ZipContents {
  */
 export async function extractZipImport(
 	zipBuffer: Buffer,
-	entity: EntityType
+	entity: EntityType,
+	options?: { requireCsv?: boolean }
 ): Promise<ZipContents> {
 	const zip = new AdmZip(zipBuffer);
 	const entries = zip.getEntries();
@@ -49,7 +50,7 @@ export async function extractZipImport(
 		}
 	}
 
-	if (!csvText) {
+	if (!csvText && options?.requireCsv !== false) {
 		throw new Error('No CSV file found in ZIP archive');
 	}
 
