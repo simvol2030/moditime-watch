@@ -11,10 +11,10 @@
 | Метрика | Значение |
 |---------|----------|
 | **Всего задач** | 152 |
-| **Выполнено** | 92 (61%) |
-| **Осталось** | 60 (39%) |
+| **Выполнено** | 97 (64%) |
+| **Осталось** | 55 (36%) |
 | **Всего сессий** | 22 |
-| **Завершено сессий** | 15 (68%) |
+| **Завершено сессий** | 16 (73%) |
 
 ---
 
@@ -37,6 +37,7 @@
 | Session-13 | Critical Bugfixes Session-12 (3 bugfixes, QA v2 PASS) | 2025-02-03 | 4d79170 |
 | Session-16 | Smart Import — Supplier CSV Auto-detect (6 tasks) | 2026-02-19 | 12b4615 |
 | Session-17 | Image Upload при импорте (6 tasks) | 2026-02-19 | 29853be |
+| Session-18 | Homepage Admin Part 1 (5 tasks) | 2026-02-19 | f2f7fe7 |
 
 ---
 
@@ -104,20 +105,18 @@
 
 ---
 
-### Session-18: Homepage Admin Part 1 (Hero + Collections + Bestsellers)
+### ~~Session-18: Homepage Admin Part 1~~ ✅ DONE
 
-> **Источник:** ASCII-спеки + Moderator planning
-> **Приоритет:** HIGH
-> **Roadmap:** `project-doc/session-18-homepage-admin-part1/roadmap-start.md`
-> **ASCII:** `ASCII/templates/homepage.admin.md`
+> **Deployed:** 2026-02-19 | **Commit:** f2f7fe7
+> **Result:** Tab-based admin for homepage: Hero editor with structured fields, Collections CRUD with reorder, Showcase auto/manual mode
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| 1 | БД — homepage_section_config + homepage_showcase_items | ⏳ PENDING | - |
-| 2 | Обновить главную — секции читают тексты из БД | ⏳ PENDING | - |
-| 3 | Admin — вкладки + Hero tab | ⏳ PENDING | - |
-| 4 | Admin — вкладка "Коллекции" | ⏳ PENDING | - |
-| 5 | Admin — вкладка "Бестселлеры" | ⏳ PENDING | - |
+| 1 | БД — homepage_section_config + homepage_showcase_items | ✅ DONE | 2026-02-19 |
+| 2 | Обновить главную — секции читают тексты из БД | ✅ DONE | 2026-02-19 |
+| 3 | Admin — вкладки + Hero tab | ✅ DONE | 2026-02-19 |
+| 4 | Admin — вкладка "Коллекции" | ✅ DONE | 2026-02-19 |
+| 5 | Admin — вкладка "Бестселлеры" | ✅ DONE | 2026-02-19 |
 
 ---
 
