@@ -7,6 +7,11 @@ import type { TestimonialsSectionProps } from '$lib/types/testimonials';
 import type { TelegramCtaSectionProps } from '$lib/types/telegram-cta';
 
 export const load: PageServerLoad = async () => {
+	// Section configs from homepage_section_config table
+	const sectionConfigs = queries.getHomepageSectionConfigs.all() as any[];
+	const sectionMap = new Map(sectionConfigs.map((s: any) => [s.section_key, s]));
+	const sc = (key: string) => sectionMap.get(key) || { eyebrow: '', title: '', description: '', extra_json: '{}' };
+
 	// ============================================
 	// 1. HERO - из БД ✅
 	// ============================================
@@ -42,11 +47,11 @@ export const load: PageServerLoad = async () => {
 	// 2. COLLECTIONS - из БД ✅
 	// ============================================
 	const collectionsFromDb = queries.getAllCollections.all() as any[];
+	const collectionsConfig = sc('collections');
 	const collectionsContent: CollectionsSectionProps = {
-		eyebrow: 'Подборки',
-		title: 'Кураторские коллекции Moditimewatch',
-		description:
-			'Каждая подборка создаётся командой сервиса: учитываем силу бренда, инвестиционный потенциал, редкость референса и сценарии ношения.',
+		eyebrow: collectionsConfig.eyebrow || 'Подборки',
+		title: collectionsConfig.title || 'Кураторские коллекции Moditimewatch',
+		description: collectionsConfig.description || 'Каждая подборка создаётся командой сервиса: учитываем силу бренда, инвестиционный потенциал, редкость референса и сценарии ношения.',
 		collections: collectionsFromDb.map((c) => ({
 			id: c.slug,
 			image: c.image_url,
@@ -62,12 +67,14 @@ export const load: PageServerLoad = async () => {
 	// 3. SHOWCASE (Бестселлеры) - из БД ✅
 	// ============================================
 	const featuredProductsFromDb = queries.getFeaturedProducts.all(8) as any[];
+	const showcaseConfig = sc('showcase');
+	const showcaseExtra = JSON.parse(showcaseConfig.extra_json || '{}');
 	const showcaseContent: ShowcaseSectionProps = {
-		eyebrow: 'Бестселлеры',
-		title: 'Топ-модели недели',
+		eyebrow: showcaseConfig.eyebrow || 'Бестселлеры',
+		title: showcaseConfig.title || 'Топ-модели недели',
 		showAllButton: true,
-		showAllHref: '/catalog',
-		showAllText: 'Вся витрина',
+		showAllHref: showcaseExtra.link_href || '/catalog',
+		showAllText: showcaseExtra.link_text || 'Вся витрина',
 		products: featuredProductsFromDb.map((p) => ({
 			id: p.slug,
 			brand: p.brand_name,
@@ -86,11 +93,11 @@ export const load: PageServerLoad = async () => {
 	const servicesFromDb = queries.getHomeServices.all() as any[];
 	const statsFromDb = queries.getHomeServiceStats.all() as any[];
 
+	const experienceConfig = sc('experience');
 	const experienceContent = {
-		eyebrow: 'Опыт Moditimewatch',
-		title: 'Премиальный сервис для ценителей часов',
-		description:
-			'Команда сервиса сопровождает на каждом этапе: от консультации и поиска редких моделей до постгарантийного обслуживания и оценки коллекций.',
+		eyebrow: experienceConfig.eyebrow || 'Опыт Moditimewatch',
+		title: experienceConfig.title || 'Премиальный сервис для ценителей часов',
+		description: experienceConfig.description || 'Команда сервиса сопровождает на каждом этапе: от консультации и поиска редких моделей до постгарантийного обслуживания и оценки коллекций.',
 		stats: statsFromDb.map((s) => ({
 			label: s.label,
 			value: s.value
@@ -111,11 +118,11 @@ export const load: PageServerLoad = async () => {
 	// 5. TESTIMONIALS - из БД ✅
 	// ============================================
 	const testimonialsFromDb = queries.getAllTestimonials.all() as any[];
+	const testimonialsConfig = sc('testimonials');
 	const testimonialsContent: TestimonialsSectionProps = {
-		eyebrow: 'Отзывы клиентов',
-		title: 'Истории владельцев Moditimewatch',
-		description:
-			'Мы строим долгосрочные отношения: подбираем часы для особых событий, поддерживаем коллекции и сопровождаем на каждом этапе.',
+		eyebrow: testimonialsConfig.eyebrow || 'Отзывы клиентов',
+		title: testimonialsConfig.title || 'Истории владельцев Moditimewatch',
+		description: testimonialsConfig.description || 'Мы строим долгосрочные отношения: подбираем часы для особых событий, поддерживаем коллекции и сопровождаем на каждом этапе.',
 		testimonials: testimonialsFromDb.map((t) => ({
 			id: String(t.id),
 			name: t.name,
@@ -130,9 +137,10 @@ export const load: PageServerLoad = async () => {
 	// 6. EDITORIAL (Журнал) - из БД ✅
 	// ============================================
 	const articlesFromDb = queries.getFeaturedArticles.all(6) as any[];
+	const editorialConfig = sc('editorial');
 	const editorialContent = {
-		eyebrow: 'Журнал',
-		title: 'Экспертиза и вдохновение',
+		eyebrow: editorialConfig.eyebrow || 'Журнал',
+		title: editorialConfig.title || 'Экспертиза и вдохновение',
 		articles: articlesFromDb.map((a) => ({
 			id: a.slug,
 			tag: a.category_name || 'Статья',
