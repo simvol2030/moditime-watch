@@ -405,6 +405,7 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm);
+		grid-column: -1;
 	}
 
 	.icon-button {
