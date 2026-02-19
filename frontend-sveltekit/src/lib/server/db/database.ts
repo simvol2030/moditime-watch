@@ -992,6 +992,9 @@ const createQueries = () => ({
     VALUES (@label, @href, @parent_id, @position, @menu_type, @is_active, 1)
   `),
   adminDeleteNavItem: db.prepare('DELETE FROM navigation_items WHERE id = ?'),
+  adminDeleteNavItemChildren: db.prepare('DELETE FROM navigation_items WHERE parent_id = ?'),
+  adminGetNavItemsByMenuType: db.prepare('SELECT * FROM navigation_items WHERE menu_type = ? ORDER BY position, id'),
+  adminCountNavItemsByMenuType: db.prepare('SELECT menu_type, COUNT(*) as cnt FROM navigation_items GROUP BY menu_type'),
 
   // ============================================
   // ADMIN - PAGES

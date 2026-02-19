@@ -11,10 +11,10 @@
 | Метрика | Значение |
 |---------|----------|
 | **Всего задач** | 152 |
-| **Выполнено** | 109 (72%) |
-| **Осталось** | 43 (28%) |
+| **Выполнено** | 115 (76%) |
+| **Осталось** | 37 (24%) |
 | **Всего сессий** | 22 |
-| **Завершено сессий** | 18 (82%) |
+| **Завершено сессий** | 19 (86%) |
 
 ---
 
@@ -40,6 +40,7 @@
 | Session-18 | Homepage Admin Part 1 (5 tasks) | 2026-02-19 | f2f7fe7 |
 | Session-19 | Homepage Admin Part 2 (6 tasks) | 2026-02-19 | f1fb586 |
 | Session-20 | Site Settings Admin (6 tasks) | 2026-02-19 | — |
+| Session-21 | Menu Manager Admin (6 tasks) | 2026-02-19 | — |
 
 ---
 
@@ -154,21 +155,19 @@
 
 ---
 
-### Session-21: Menu Manager Admin
+### ~~Session-21: Menu Manager Admin~~ ✅ DONE
 
-> **Источник:** ASCII-спеки + Moderator planning
-> **Приоритет:** MEDIUM
-> **Roadmap:** `project-doc/session-21-menu-manager/roadmap-start.md`
-> **ASCII:** `ASCII/admin/menu-manager.md`
+> **Deployed:** 2026-02-19 | **Commit:** —
+> **Result:** Unified menu management page at /admin/menus. Overview table with 5 menu types, editors for header desktop/mobile (with submenu support), footer sections+links, footer legal, city navigation. All with CRUD + reorder. Sidebar link added.
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| 1 | БД — prepared statements для меню | ⏳ PENDING | - |
-| 2 | Admin — страница списка меню | ⏳ PENDING | - |
-| 3 | Редактор Header меню (Desktop + Mobile) | ⏳ PENDING | - |
-| 4 | Редактор Footer меню | ⏳ PENDING | - |
-| 5 | Редактор City навигации | ⏳ PENDING | - |
-| 6 | Sidebar — ссылка "Меню" | ⏳ PENDING | - |
+| 1 | БД — helper queries для меню | ✅ DONE | 2026-02-19 |
+| 2 | Admin — страница списка меню | ✅ DONE | 2026-02-19 |
+| 3 | Редактор Header меню (Desktop + Mobile) | ✅ DONE | 2026-02-19 |
+| 4 | Редактор Footer меню | ✅ DONE | 2026-02-19 |
+| 5 | Редактор City навигации | ✅ DONE | 2026-02-19 |
+| 6 | Sidebar — ссылка "Меню" | ✅ DONE | 2026-02-19 |
 
 ---
 
@@ -226,5 +225,5 @@
 18. Session-18 (homepage admin part 1 — hero, collections, bestsellers) ✅
 19. Session-19 (homepage admin part 2 — services, testimonials, journal, telegram) ✅
 20. Session-20 (site settings admin) ✅
-21. Session-21 (menu manager admin) ⏳
+21. Session-21 (menu manager admin) ✅
 22. Session-22 (page manager admin) ⏳
