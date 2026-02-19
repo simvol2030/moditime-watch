@@ -1163,7 +1163,37 @@ const createQueries = () => ({
   reorderCategory: db.prepare('UPDATE categories SET position = @position WHERE id = @id'),
   reorderBrand: db.prepare('UPDATE brands SET position = @position WHERE id = @id'),
   reorderTestimonial: db.prepare('UPDATE testimonials SET display_order = @display_order WHERE id = @id'),
-  reorderCityArticleCategory: db.prepare('UPDATE city_article_categories SET position = @position WHERE id = @id')
+  reorderCityArticleCategory: db.prepare('UPDATE city_article_categories SET position = @position WHERE id = @id'),
+
+  // ============================================
+  // SESSION-19: Homepage Admin Part 2
+  // ============================================
+
+  // Homepage Editorial Items — manual journal mode
+  getEditorialItems: db.prepare(`SELECT hei.*, a.title, a.slug, a.excerpt, a.image_url, ac.name as category_name FROM homepage_editorial_items hei JOIN articles a ON a.id = hei.article_id LEFT JOIN article_categories ac ON ac.id = a.category_id ORDER BY hei.position`),
+  addEditorialItem: db.prepare('INSERT INTO homepage_editorial_items (article_id, position) VALUES (@article_id, @position)'),
+  removeEditorialItem: db.prepare('DELETE FROM homepage_editorial_items WHERE id = ?'),
+  clearEditorialItems: db.prepare('DELETE FROM homepage_editorial_items'),
+  getMaxEditorialPosition: db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM homepage_editorial_items'),
+  reorderEditorialItem: db.prepare('UPDATE homepage_editorial_items SET position = @position WHERE id = @id'),
+
+  // Article search for editorial manual mode
+  searchArticles: db.prepare(`SELECT a.id, a.title, a.slug, a.excerpt, a.image_url, ac.name as category_name FROM articles a LEFT JOIN article_categories ac ON ac.id = a.category_id WHERE a.is_published = 1 AND (a.title LIKE @q OR a.slug LIKE @q) ORDER BY a.published_at DESC LIMIT 10`),
+
+  // Service reorder
+  reorderService: db.prepare('UPDATE home_services SET position = @position WHERE id = @id'),
+  adminGetMaxServicePosition: db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM home_services'),
+
+  // Stat reorder
+  reorderStat: db.prepare('UPDATE home_service_stats SET position = @position WHERE id = @id'),
+  adminGetMaxStatPosition: db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM home_service_stats'),
+
+  // Site Config — update by key
+  updateConfigByKey: db.prepare('UPDATE site_config SET value = ? WHERE key = ?'),
+
+  // Telegram widget — upsert
+  upsertTelegramWidget: db.prepare(`INSERT INTO widgets (type, title, data_json, is_active) VALUES ('telegram_cta', 'Telegram CTA', @data_json, @is_active) ON CONFLICT(id) DO UPDATE SET data_json = @data_json, is_active = @is_active`),
+  getTelegramWidgetForAdmin: db.prepare("SELECT * FROM widgets WHERE type = 'telegram_cta' LIMIT 1")
 });
 
 // Lazy queries cache

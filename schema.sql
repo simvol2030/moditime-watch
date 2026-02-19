@@ -159,6 +159,14 @@ CREATE TABLE IF NOT EXISTS homepage_showcase_items (
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
+-- Ручной режим журнала (editorial)
+CREATE TABLE IF NOT EXISTS homepage_editorial_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  article_id INTEGER NOT NULL,
+  position INTEGER DEFAULT 0,
+  FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE
+);
+
 -- Сервисы на главной (Experience Section)
 CREATE TABLE IF NOT EXISTS home_services (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
