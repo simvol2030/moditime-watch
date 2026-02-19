@@ -302,7 +302,7 @@
 	<form method="POST" action="?/saveSectionConfig" use:enhance>
 		<input type="hidden" name="section_key" value="collections" />
 		<input type="hidden" name="tab" value="collections" />
-		<input type="hidden" name="extra_json" value="{}" />
+		<input type="hidden" name="extra_json" value={'{}' } />
 		<input type="hidden" name="is_active" value="1" />
 		<div class="card">
 			<h3>Тексты секции</h3>
@@ -1193,7 +1193,7 @@
 				{#each telegramFeatures as feature, i}
 					<div class="dynamic-row">
 						<div class="dynamic-field grow">
-							<input type="text" name="feature_text" bind:value={feature} maxlength="60" placeholder="Эксклюзивные предложения" />
+							<input type="text" name="feature_text" bind:value={telegramFeatures[i]} maxlength="60" placeholder="Эксклюзивные предложения" />
 						</div>
 						<button type="button" class="btn-remove" onclick={() => removeFeature(i)} title="Удалить">-</button>
 					</div>
