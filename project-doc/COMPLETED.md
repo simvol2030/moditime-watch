@@ -11,10 +11,10 @@
 | Метрика | Значение |
 |---------|----------|
 | **Всего задач** | 152 |
-| **Выполнено** | 103 (68%) |
-| **Осталось** | 49 (32%) |
+| **Выполнено** | 109 (72%) |
+| **Осталось** | 43 (28%) |
 | **Всего сессий** | 22 |
-| **Завершено сессий** | 17 (77%) |
+| **Завершено сессий** | 18 (82%) |
 
 ---
 
@@ -39,6 +39,7 @@
 | Session-17 | Image Upload при импорте (6 tasks) | 2026-02-19 | 29853be |
 | Session-18 | Homepage Admin Part 1 (5 tasks) | 2026-02-19 | f2f7fe7 |
 | Session-19 | Homepage Admin Part 2 (6 tasks) | 2026-02-19 | f1fb586 |
+| Session-20 | Site Settings Admin (6 tasks) | 2026-02-19 | — |
 
 ---
 
@@ -137,21 +138,19 @@
 
 ---
 
-### Session-20: Site Settings Admin
+### ~~Session-20: Site Settings Admin~~ ✅ DONE
 
-> **Источник:** ASCII-спеки + Moderator planning
-> **Приоритет:** HIGH
-> **Roadmap:** `project-doc/session-20-site-settings/roadmap-start.md`
-> **ASCII:** `ASCII/admin/site-settings.md`, `ASCII/layouts/headers/main.admin.md`, `ASCII/layouts/footers/main.admin.md`
+> **Deployed:** 2026-02-19 | **Commit:** —
+> **Result:** Admin page for site settings (logo, contacts, socials, topbar, legal). All layout components (SiteHeader, SiteFooter, CityHeader, CityFooter) read from site_config with fallback defaults. Sidebar link added.
 
 | Task | Summary | Status | Deployed |
 |------|---------|--------|----------|
-| 1 | БД — новые ключи site_config + seed | ⏳ PENDING | - |
-| 2 | Admin — страница Site Settings | ⏳ PENDING | - |
-| 3 | Обновить SiteHeader — данные из site_config | ⏳ PENDING | - |
-| 4 | Обновить SiteFooter — данные из site_config | ⏳ PENDING | - |
-| 5 | Обновить CityHeader + CityFooter | ⏳ PENDING | - |
-| 6 | Sidebar — ссылка "Настройки сайта" | ⏳ PENDING | - |
+| 1 | БД — новые ключи site_config + seed | ✅ DONE | 2026-02-19 |
+| 2 | Admin — страница Site Settings | ✅ DONE | 2026-02-19 |
+| 3 | Обновить SiteHeader — данные из site_config | ✅ DONE | 2026-02-19 |
+| 4 | Обновить SiteFooter — данные из site_config | ✅ DONE | 2026-02-19 |
+| 5 | Обновить CityHeader + CityFooter | ✅ DONE | 2026-02-19 |
+| 6 | Sidebar — ссылка "Настройки сайта" | ✅ DONE | 2026-02-19 |
 
 ---
 
@@ -226,6 +225,6 @@
 17. Session-17 (image upload при импорте) ✅
 18. Session-18 (homepage admin part 1 — hero, collections, bestsellers) ✅
 19. Session-19 (homepage admin part 2 — services, testimonials, journal, telegram) ✅
-20. Session-20 (site settings admin) ⏳
+20. Session-20 (site settings admin) ✅
 21. Session-21 (menu manager admin) ⏳
 22. Session-22 (page manager admin) ⏳

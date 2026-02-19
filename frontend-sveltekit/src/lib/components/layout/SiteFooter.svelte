@@ -16,6 +16,20 @@
 	const workingHours = $derived(siteConfig.working_hours || 'Пн-Пт: 10:00-20:00, Сб: 11:00-18:00');
 	const copyright = $derived(siteConfig.copyright_text || `\u00A9 ${new Date().getFullYear()} Moditimewatch. Все права защищены.`);
 	const phoneHref = $derived('tel:' + phone.replace(/[\s()-]/g, ''));
+	const companyDescription = $derived(siteConfig.company_description || 'Сервис доставки оригинальных часов из-за рубежа с гарантией подлинности и персональными консультациями.');
+
+	// Logo from site_config
+	const logoMode = $derived(siteConfig.logo_mode || 'text');
+	const logoWordmark = $derived(siteConfig.logo_wordmark || 'Moditimewatch');
+	const logoTagline = $derived(siteConfig.logo_tagline || 'Fine Time Delivery');
+	const logoImageUrl = $derived(siteConfig.logo_image_url || '');
+
+	// Social links from site_config
+	const socialTelegram = $derived(siteConfig.social_telegram || '');
+	const socialVk = $derived(siteConfig.social_vk || '');
+	const socialYoutube = $derived(siteConfig.social_youtube || '');
+	const socialWhatsapp = $derived(siteConfig.social_whatsapp || '');
+	const hasSocials = $derived(!!socialTelegram || !!socialVk || !!socialYoutube || !!socialWhatsapp);
 
 	// Найти секцию "Правовая информация" для отображения в футере (bottom)
 	const legalSection = $derived(footerSections.find((s) => s.title === 'Правовая информация'));
@@ -27,14 +41,26 @@
 	<div class="container site-footer__grid">
 		<div class="site-footer__brand">
 			<a class="site-logo" href="/">
-				<span class="site-logo__wordmark">Moditimewatch</span>
-				<span class="site-logo__tagline">Fine Time Delivery</span>
+				{#if logoMode === 'image' && logoImageUrl}
+					<img src={logoImageUrl} alt={logoWordmark} class="site-logo__image" />
+				{:else}
+					<span class="site-logo__wordmark">{logoWordmark}</span>
+					<span class="site-logo__tagline">{logoTagline}</span>
+				{/if}
 			</a>
-			<p>Сервис доставки оригинальных часов из-за рубежа с гарантией подлинности и персональными консультациями.</p>
+			<p>{companyDescription}</p>
 			<div class="site-footer__contact">
 				<a href={phoneHref}>{phone}</a>
 				<a href="mailto:{email}">{email}</a>
 			</div>
+			{#if hasSocials}
+				<div class="site-footer__socials">
+					{#if socialTelegram}<a href={socialTelegram} target="_blank" rel="noopener noreferrer">Telegram</a>{/if}
+					{#if socialVk}<a href={socialVk} target="_blank" rel="noopener noreferrer">VK</a>{/if}
+					{#if socialYoutube}<a href={socialYoutube} target="_blank" rel="noopener noreferrer">YouTube</a>{/if}
+					{#if socialWhatsapp}<a href={socialWhatsapp} target="_blank" rel="noopener noreferrer">WhatsApp</a>{/if}
+				</div>
+			{/if}
 		</div>
 		{#each mainSections as section}
 			<div class="site-footer__col">
@@ -114,6 +140,32 @@
 		gap: var(--space-xs);
 		margin-top: var(--space-lg);
 		font-weight: 600;
+	}
+
+	.site-footer__socials {
+		display: flex;
+		gap: var(--space-md);
+		margin-top: var(--space-sm);
+	}
+
+	.site-footer__socials a {
+		color: var(--color-text-soft);
+		font-size: var(--font-size-body-sm);
+		text-decoration: none;
+		transition: color 0.2s ease;
+	}
+
+	.site-footer__socials a:hover {
+		color: var(--color-primary);
+	}
+
+	:global(body[data-theme='dark']) .site-footer__socials a {
+		color: rgba(255, 255, 255, 0.6);
+	}
+
+	.site-logo__image {
+		max-height: 40px;
+		width: auto;
 	}
 
 	.site-footer__col h3 {
