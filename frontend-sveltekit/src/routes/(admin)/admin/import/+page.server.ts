@@ -3,6 +3,7 @@ import { parseCSV } from '$lib/server/import/csv-parser';
 import { detectCsvFormat, convertSupplierRows, type CsvFormat } from '$lib/server/import/csv-format-detector';
 import { importProducts } from '$lib/server/import/product-importer';
 import { importBrands } from '$lib/server/import/brand-importer';
+import { matchImagesToProducts, updateProductImages } from '$lib/server/import/image-updater';
 import { importCategories } from '$lib/server/import/category-importer';
 import { importCities } from '$lib/server/import/city-importer';
 import { importCityArticles } from '$lib/server/import/city-article-importer';
@@ -277,6 +278,99 @@ export const actions: Actions = {
 			};
 		} catch (err) {
 			return { error: `Import failed: ${err instanceof Error ? err.message : 'Unknown error'}` };
+		}
+	},
+
+	/**
+	 * Preview ZIP-only mode: match images to existing products without CSV.
+	 */
+	previewImages: async ({ request }) => {
+		const formData = await request.formData();
+		const zipFile = formData.get('images_only_zip') as File | null;
+
+		if (!zipFile || zipFile.size === 0) {
+			return { error: 'Please select a ZIP file with images' };
+		}
+		if (zipFile.size > MAX_FILE_SIZE) {
+			return { error: 'ZIP file exceeds 50MB limit' };
+		}
+
+		try {
+			const zipBuffer = Buffer.from(await zipFile.arrayBuffer());
+			const zipInfo = await extractZipImages(zipBuffer);
+			const matchResult = matchImagesToProducts(zipInfo.filenames);
+
+			return {
+				imagePreview: true,
+				zipFileName: zipFile.name,
+				totalImages: zipInfo.imageCount,
+				matched: matchResult.matched.map(m => ({
+					filename: m.filename,
+					productName: m.productName,
+					productSku: m.productSku,
+					matchedBy: m.matchedBy,
+					isGallery: m.isGallery
+				})),
+				unmatched: matchResult.unmatched,
+				matchedProducts: new Set(matchResult.matched.map(m => m.productId)).size
+			};
+		} catch (err) {
+			return { error: `Preview failed: ${err instanceof Error ? err.message : 'Unknown error'}` };
+		}
+	},
+
+	/**
+	 * ZIP-only import: update images for existing products.
+	 */
+	updateImages: async ({ request }) => {
+		const formData = await request.formData();
+		const zipFile = formData.get('images_only_zip') as File | null;
+
+		if (!zipFile || zipFile.size === 0) {
+			return { error: 'Please select a ZIP file with images' };
+		}
+		if (zipFile.size > MAX_FILE_SIZE) {
+			return { error: 'ZIP file exceeds 50MB limit' };
+		}
+
+		try {
+			// Process images from ZIP
+			const zipBuffer = Buffer.from(await zipFile.arrayBuffer());
+			const entity = ENTITY_MAP['products'] || 'products';
+			const zipResult = await extractZipImport(zipBuffer, entity);
+
+			// Get filenames for matching
+			const filenames = Array.from(new Set(
+				Array.from(zipResult.imageMap.keys()).map(k => k.split('/').pop() || k)
+			)).filter(f => /\.(jpg|jpeg|png|webp|gif|avif)$/i.test(f));
+
+			// Match to products
+			const matchResult = matchImagesToProducts(filenames);
+
+			if (matchResult.matched.length === 0) {
+				return { error: 'No images could be matched to existing products' };
+			}
+
+			// Update product images
+			const updateResult = updateProductImages(
+				matchResult.matched,
+				zipResult.imageMap,
+				zipResult.thumbMap
+			);
+
+			return {
+				imageUpdateSuccess: true,
+				productsUpdated: updateResult.updated,
+				imagesProcessed: zipResult.imageCount,
+				imagesMatched: matchResult.matched.length,
+				unmatched: matchResult.unmatched,
+				imageErrors: [
+					...zipResult.imageErrors,
+					...updateResult.errors
+				].filter(Boolean)
+			};
+		} catch (err) {
+			return { error: `Image update failed: ${err instanceof Error ? err.message : 'Unknown error'}` };
 		}
 	}
 };

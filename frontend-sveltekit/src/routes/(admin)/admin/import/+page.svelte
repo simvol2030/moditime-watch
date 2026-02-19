@@ -336,6 +336,122 @@
 	</div>
 {/if}
 
+<!-- ZIP-only mode: update images for existing products -->
+{#if selectedType === 'products'}
+	<div class="card zip-only-card">
+		<h3>Update Photos (ZIP only)</h3>
+		<p class="zip-only-desc">Upload a ZIP with images to update photos for existing products. Files are matched by SKU or slug in filename.</p>
+
+		{#if form?.imageUpdateSuccess}
+			<div class="alert success">
+				<strong>Images Updated!</strong>
+				Products: {form.productsUpdated} | Images: {form.imagesProcessed} processed, {form.imagesMatched} matched
+				{#if form.unmatched?.length}
+					| Unmatched: {form.unmatched.length}
+				{/if}
+			</div>
+			{#if form.unmatched?.length}
+				<details class="unmatched-details">
+					<summary>Unmatched files ({form.unmatched.length})</summary>
+					<ul class="unmatched-list">
+						{#each form.unmatched as f}
+							<li>{f}</li>
+						{/each}
+					</ul>
+				</details>
+			{/if}
+		{/if}
+
+		{#if form?.imagePreview}
+			<div class="image-preview-info">
+				<p><strong>{form.zipFileName}</strong>: {form.totalImages} images, {form.matchedProducts} products matched</p>
+				{#if form.matched?.length}
+					<div class="preview-scroll">
+						<table class="preview-table">
+							<thead>
+								<tr>
+									<th>File</th>
+									<th>Product</th>
+									<th>SKU</th>
+									<th>Matched By</th>
+									<th>Type</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each form.matched as m}
+									<tr>
+										<td>{m.filename}</td>
+										<td>{m.productName}</td>
+										<td><code>{m.productSku}</code></td>
+										<td>{m.matchedBy}</td>
+										<td>{m.isGallery ? 'Gallery' : 'Main'}</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{/if}
+				{#if form.unmatched?.length}
+					<details class="unmatched-details">
+						<summary>Unmatched files ({form.unmatched.length})</summary>
+						<ul class="unmatched-list">
+							{#each form.unmatched as f}
+								<li>{f}</li>
+							{/each}
+						</ul>
+					</details>
+				{/if}
+
+				<form method="POST" action="?/updateImages" enctype="multipart/form-data" use:enhance={() => {
+					loading = true;
+					return async ({ update }) => {
+						loading = false;
+						await update();
+					};
+				}}>
+					<input
+						type="file"
+						name="images_only_zip"
+						accept=".zip"
+						required
+						class="file-input"
+					/>
+					<p class="import-note">Re-select the same ZIP to apply changes.</p>
+					<div class="import-actions">
+						<ActionButton type="submit" variant="primary" disabled={loading}>
+							{loading ? 'Updating...' : `Update ${form.matchedProducts} products`}
+						</ActionButton>
+					</div>
+				</form>
+			</div>
+		{:else}
+			<form method="POST" action="?/previewImages" enctype="multipart/form-data" use:enhance={() => {
+				loading = true;
+				return async ({ update }) => {
+					loading = false;
+					await update();
+				};
+			}}>
+				<div class="upload-field">
+					<input
+						type="file"
+						name="images_only_zip"
+						accept=".zip"
+						required
+						class="file-input"
+					/>
+					<p class="upload-hint">ZIP с фото. Имя файла = артикул (SKU) или slug товара.</p>
+				</div>
+				<div class="upload-actions">
+					<ActionButton type="submit" variant="secondary" disabled={loading}>
+						{loading ? 'Scanning...' : 'Preview Matches'}
+					</ActionButton>
+				</div>
+			</form>
+		{/if}
+	</div>
+{/if}
+
 <style>
 	.card {
 		background: white;
@@ -852,5 +968,57 @@
 	.template-btn-supplier:hover {
 		background: #dbeafe;
 		border-color: #3b82f6;
+	}
+
+	/* ZIP-only mode card */
+	.zip-only-card {
+		background: #faf5ff;
+		border: 1px solid #c4b5fd;
+	}
+
+	.zip-only-card h3 {
+		color: #6d28d9;
+	}
+
+	.zip-only-desc {
+		font-size: 0.8125rem;
+		color: #6b7280;
+		margin: 0 0 1rem;
+	}
+
+	.image-preview-info {
+		margin-top: 0.75rem;
+	}
+
+	.image-preview-info p {
+		font-size: 0.875rem;
+		color: #374151;
+		margin: 0 0 0.75rem;
+	}
+
+	.unmatched-details {
+		margin: 0.75rem 0;
+	}
+
+	.unmatched-details summary {
+		cursor: pointer;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: #b45309;
+	}
+
+	.unmatched-details summary:hover {
+		color: #92400e;
+	}
+
+	.unmatched-list {
+		margin: 0.375rem 0 0;
+		padding-left: 1.25rem;
+		font-size: 0.8125rem;
+		color: #6b7280;
+	}
+
+	.unmatched-list li {
+		margin-bottom: 0.125rem;
 	}
 </style>
