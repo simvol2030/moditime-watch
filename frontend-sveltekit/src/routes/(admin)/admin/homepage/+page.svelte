@@ -40,6 +40,22 @@
 	function removeQuickLink(i: number) {
 		heroQuickLinks = heroQuickLinks.filter((_, idx) => idx !== i);
 	}
+
+	// Collections state
+	let editingCollectionId = $state<number | null>((form as any)?.editingCollectionId || null);
+	let showAddCollection = $state(false);
+	let collectionProductSearch = $state('');
+
+	// Showcase state
+	let showcaseMode = $state<'auto' | 'manual'>(
+		(() => {
+			try {
+				const extra = JSON.parse(data.sectionConfigs?.showcase?.extra_json || '{}');
+				return extra.mode || 'auto';
+			} catch { return 'auto'; }
+		})()
+	);
+	let showcaseProductSearch = $state('');
 </script>
 
 <svelte:head>
@@ -244,11 +260,199 @@
 	</form>
 {/if}
 
-<!-- COLLECTIONS TAB (Task 4) -->
+<!-- COLLECTIONS TAB -->
 {#if data.tab === 'collections'}
+	<!-- Section config -->
+	{@const cfg = data.sectionConfigs?.collections || { eyebrow: '', title: '', description: '' }}
+	<form method="POST" action="?/saveSectionConfig" use:enhance>
+		<input type="hidden" name="section_key" value="collections" />
+		<input type="hidden" name="tab" value="collections" />
+		<input type="hidden" name="extra_json" value="{}" />
+		<input type="hidden" name="is_active" value="1" />
+		<div class="card">
+			<h3>Тексты секции</h3>
+			<div class="form-grid">
+				<div class="form-group">
+					<label for="coll-eyebrow">Eyebrow <span class="hint">max 40</span></label>
+					<input type="text" id="coll-eyebrow" name="eyebrow" value={cfg.eyebrow} maxlength="40" />
+				</div>
+				<div class="form-group">
+					<label for="coll-title">Заголовок <span class="hint">max 100</span></label>
+					<input type="text" id="coll-title" name="title" value={cfg.title} maxlength="100" />
+				</div>
+				<div class="form-group full">
+					<label for="coll-desc">Описание <span class="hint">max 300</span></label>
+					<textarea id="coll-desc" name="description" rows="2" maxlength="300">{cfg.description}</textarea>
+				</div>
+			</div>
+			<div class="form-actions-inline">
+				<ActionButton type="submit" variant="primary" size="sm">Сохранить тексты</ActionButton>
+			</div>
+		</div>
+	</form>
+
+	<!-- Collections list -->
 	<div class="card">
-		<h3>Коллекции</h3>
-		<p class="coming-soon-text">Вкладка реализуется в Task 4...</p>
+		<div class="card-header">
+			<h3>Список коллекций ({data.collections.length})</h3>
+			<ActionButton variant="secondary" size="sm" onclick={() => showAddCollection = !showAddCollection}>
+				{showAddCollection ? 'Отмена' : '+ Добавить коллекцию'}
+			</ActionButton>
+		</div>
+
+		<!-- Add new collection form -->
+		{#if showAddCollection}
+			<form method="POST" action="?/createCollection" use:enhance class="collection-edit-form">
+				<div class="form-grid">
+					<div class="form-group">
+						<label>Slug</label>
+						<input type="text" name="slug" required placeholder="my-collection" />
+					</div>
+					<div class="form-group">
+						<label>Категория <span class="hint">max 50</span></label>
+						<input type="text" name="category" placeholder="Для переговоров" maxlength="50" />
+					</div>
+					<div class="form-group full">
+						<label>Название <span class="hint">max 100</span></label>
+						<input type="text" name="title" required placeholder="Executive Collection" maxlength="100" />
+					</div>
+					<div class="form-group full">
+						<label>Описание</label>
+						<textarea name="description" rows="2" placeholder="Описание коллекции..."></textarea>
+					</div>
+					<div class="form-group full">
+						<label>Изображение URL</label>
+						<input type="text" name="image_url" placeholder="https://..." />
+					</div>
+					<div class="form-group">
+						<label>Текст ссылки</label>
+						<input type="text" name="link_text" value="Открыть подборку" maxlength="40" />
+					</div>
+					<div class="form-group">
+						<label>URL ссылки</label>
+						<input type="text" name="link_href" placeholder="/catalog?collection=..." />
+					</div>
+					<div class="form-group checkbox">
+						<label><input type="checkbox" name="is_active" checked /> Активна</label>
+					</div>
+				</div>
+				<div class="form-actions-inline">
+					<ActionButton type="submit" variant="primary" size="sm">Создать</ActionButton>
+				</div>
+			</form>
+		{/if}
+
+		<!-- Collections rows -->
+		<div class="items-list">
+			{#each data.collections as collection, i}
+				<div class="item-row">
+					{#if editingCollectionId === collection.id}
+						<!-- Inline edit form -->
+						<form method="POST" action="?/updateCollection" use:enhance class="collection-edit-form">
+							<input type="hidden" name="id" value={collection.id} />
+							<input type="hidden" name="position" value={collection.position} />
+							<div class="form-grid">
+								<div class="form-group">
+									<label>Slug</label>
+									<input type="text" name="slug" value={collection.slug} required />
+								</div>
+								<div class="form-group">
+									<label>Категория</label>
+									<input type="text" name="category" value={collection.category} />
+								</div>
+								<div class="form-group full">
+									<label>Название</label>
+									<input type="text" name="title" value={collection.title} required />
+								</div>
+								<div class="form-group full">
+									<label>Описание</label>
+									<textarea name="description" rows="2">{collection.description}</textarea>
+								</div>
+								<div class="form-group full">
+									<label>Изображение URL</label>
+									<input type="text" name="image_url" value={collection.image_url} />
+								</div>
+								{#if collection.image_url}
+									<div class="form-group full">
+										<img src={collection.image_url} alt="Preview" class="image-preview-sm" />
+									</div>
+								{/if}
+								<div class="form-group">
+									<label>Текст ссылки</label>
+									<input type="text" name="link_text" value={collection.link_text} />
+								</div>
+								<div class="form-group">
+									<label>URL ссылки</label>
+									<input type="text" name="link_href" value={collection.link_href} />
+								</div>
+								<div class="form-group checkbox">
+									<label><input type="checkbox" name="is_active" checked={collection.is_active === 1} /> Активна</label>
+								</div>
+							</div>
+							<div class="form-actions-inline">
+								<ActionButton type="submit" variant="primary" size="sm">Сохранить</ActionButton>
+								<ActionButton variant="ghost" size="sm" onclick={() => editingCollectionId = null}>Отмена</ActionButton>
+							</div>
+						</form>
+
+						<!-- Products in collection -->
+						<div class="collection-products">
+							<h4>Товары в коллекции</h4>
+							<form method="POST" action="?/addProductToCollection" use:enhance class="product-add-row">
+								<input type="hidden" name="collection_id" value={collection.id} />
+								<select name="product_id">
+									<option value="">Выберите товар...</option>
+									{#each data.brands as brand}
+										{@const brandProducts = data.showcaseItems}
+									{/each}
+								</select>
+								<ActionButton type="submit" variant="secondary" size="sm">Добавить</ActionButton>
+							</form>
+						</div>
+					{:else}
+						<!-- Display row -->
+						<div class="item-content">
+							<div class="item-info">
+								{#if collection.image_url}
+									<img src={collection.image_url} alt="" class="item-thumb" />
+								{/if}
+								<div>
+									<strong>{collection.title}</strong>
+									<span class="item-meta">{collection.category || ''}</span>
+								</div>
+							</div>
+							<div class="item-actions">
+								<span class="item-count">{collection.product_count || 0} тов.</span>
+								<span class="status-badge" class:active={collection.is_active === 1}>
+									{collection.is_active ? 'Active' : 'Off'}
+								</span>
+								<!-- Move buttons -->
+								{#if i > 0}
+									<form method="POST" action="?/moveCollection" use:enhance class="inline-form">
+										<input type="hidden" name="id" value={collection.id} />
+										<input type="hidden" name="direction" value="up" />
+										<button type="submit" class="btn-arrow" title="Вверх">↑</button>
+									</form>
+								{/if}
+								{#if i < data.collections.length - 1}
+									<form method="POST" action="?/moveCollection" use:enhance class="inline-form">
+										<input type="hidden" name="id" value={collection.id} />
+										<input type="hidden" name="direction" value="down" />
+										<button type="submit" class="btn-arrow" title="Вниз">↓</button>
+									</form>
+								{/if}
+								<button type="button" class="btn-link" onclick={() => editingCollectionId = collection.id}>Ред.</button>
+								<form method="POST" action="?/deleteCollection" use:enhance class="inline-form">
+									<input type="hidden" name="id" value={collection.id} />
+									<button type="submit" class="btn-link danger"
+										onclick={(e) => { if (!confirm('Удалить коллекцию?')) e.preventDefault(); }}>Удал.</button>
+								</form>
+							</div>
+						</div>
+					{/if}
+				</div>
+			{/each}
+		</div>
 	</div>
 {/if}
 
@@ -518,6 +722,171 @@
 		font-size: 0.875rem;
 		color: #374151;
 		cursor: pointer;
+	}
+
+	/* Collections / Showcase shared styles */
+	.card-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1rem;
+	}
+
+	.card-header h3 {
+		margin: 0;
+	}
+
+	.items-list {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.item-row {
+		padding: 0.75rem 0;
+		border-bottom: 1px solid #f3f4f6;
+	}
+
+	.item-row:last-child {
+		border-bottom: none;
+	}
+
+	.item-content {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.item-info {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		flex: 1;
+		color: #1f2937;
+	}
+
+	.item-info div {
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
+	}
+
+	.item-meta {
+		color: #6b7280;
+		font-size: 0.8125rem;
+	}
+
+	.item-thumb {
+		width: 48px;
+		height: 36px;
+		object-fit: cover;
+		border-radius: 4px;
+		border: 1px solid #e5e7eb;
+	}
+
+	.item-actions {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+		flex-shrink: 0;
+	}
+
+	.item-count {
+		font-size: 0.75rem;
+		color: #9ca3af;
+	}
+
+	.status-badge {
+		font-size: 0.6875rem;
+		padding: 0.125rem 0.5rem;
+		border-radius: 9999px;
+		background: #fee2e2;
+		color: #dc2626;
+	}
+
+	.status-badge.active {
+		background: #dcfce7;
+		color: #16a34a;
+	}
+
+	.btn-link {
+		background: none;
+		border: none;
+		color: #3b82f6;
+		font-size: 0.8125rem;
+		cursor: pointer;
+		padding: 0;
+	}
+
+	.btn-link:hover {
+		text-decoration: underline;
+	}
+
+	.btn-link.danger {
+		color: #ef4444;
+	}
+
+	.btn-arrow {
+		background: none;
+		border: 1px solid #d1d5db;
+		border-radius: 4px;
+		padding: 0.125rem 0.375rem;
+		cursor: pointer;
+		font-size: 0.75rem;
+		color: #6b7280;
+	}
+
+	.btn-arrow:hover {
+		background: #f3f4f6;
+		color: #1f2937;
+	}
+
+	.inline-form {
+		display: inline;
+	}
+
+	.form-actions-inline {
+		display: flex;
+		gap: 0.5rem;
+		margin-top: 0.75rem;
+	}
+
+	.collection-edit-form {
+		padding: 0.75rem 0;
+		border-bottom: 1px solid #e5e7eb;
+	}
+
+	.image-preview-sm {
+		max-width: 120px;
+		max-height: 80px;
+		border-radius: 6px;
+		object-fit: cover;
+		border: 1px solid #e5e7eb;
+	}
+
+	.collection-products {
+		padding: 0.75rem 0;
+	}
+
+	.collection-products h4 {
+		font-size: 0.875rem;
+		color: #374151;
+		margin: 0 0 0.5rem 0;
+	}
+
+	.product-add-row {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+		margin-bottom: 0.5rem;
+	}
+
+	.product-add-row select {
+		padding: 0.375rem 0.5rem;
+		border: 1px solid #d1d5db;
+		border-radius: 6px;
+		font-size: 0.8125rem;
+		flex: 1;
 	}
 
 	/* Coming soon */
