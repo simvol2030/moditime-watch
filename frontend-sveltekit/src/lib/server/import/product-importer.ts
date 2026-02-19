@@ -53,8 +53,14 @@ export function importProducts(rows: Record<string, string>[]): ImportResult {
 	// Brand name lookup (hoisted out of loop)
 	const getBrandName = db.prepare('SELECT name FROM brands WHERE id = ?');
 
-	// FTS5 rebuild after import (external content table requires 'rebuild' instead of per-row delete/insert)
-	const rebuildFTS = db.prepare("INSERT INTO products_fts(products_fts) VALUES('rebuild')");
+	// FTS5 manual rebuild: content='products' but products has brand_id not brand_name,
+	// so the built-in 'rebuild' command fails. We manually reconstruct the FTS index.
+	const deleteFTS = db.prepare("INSERT INTO products_fts(products_fts) VALUES('delete-all')");
+	const populateFTS = db.prepare(`
+		INSERT INTO products_fts(rowid, name, description, brand_name)
+		SELECT p.id, p.name, p.description, b.name
+		FROM products p JOIN brands b ON b.id = p.brand_id
+	`);
 
 	const transaction = db.transaction(() => {
 		for (let i = 0; i < rows.length; i++) {
@@ -168,8 +174,9 @@ export function importProducts(rows: Record<string, string>[]): ImportResult {
 			}
 		}
 
-		// Rebuild FTS5 index after all product changes (external content table)
-		rebuildFTS.run();
+		// Rebuild FTS5 index after all product changes
+		deleteFTS.run();
+		populateFTS.run();
 	});
 
 	transaction();
