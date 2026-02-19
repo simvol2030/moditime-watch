@@ -157,49 +157,74 @@ export const load: PageServerLoad = async () => {
 	// ============================================
 	// 6. EDITORIAL (Журнал) - из БД ✅
 	// ============================================
-	const articlesFromDb = queries.getFeaturedArticles.all(6) as any[];
 	const editorialConfig = sc('editorial');
+	const editorialExtra = JSON.parse(editorialConfig.extra_json || '{}');
+
+	// Manual mode: use homepage_editorial_items; Auto mode: use is_featured articles
+	let editorialArticles: any[];
+	if (editorialExtra.mode === 'manual') {
+		const manualItems = queries.getEditorialItems.all() as any[];
+		if (manualItems.length > 0) {
+			editorialArticles = manualItems.map((item: any) => ({
+				id: item.slug,
+				tag: item.category_name || 'Статья',
+				title: item.title,
+				description: item.excerpt,
+				image: item.image_url,
+				link: `/journal/${item.slug}`,
+				linkText: 'Читать'
+			}));
+		} else {
+			editorialArticles = (queries.getFeaturedArticles.all(6) as any[]).map((a) => ({
+				id: a.slug, tag: a.category_name || 'Статья', title: a.title,
+				description: a.excerpt, image: a.image_url, link: `/journal/${a.slug}`, linkText: 'Читать'
+			}));
+		}
+	} else {
+		editorialArticles = (queries.getFeaturedArticles.all(6) as any[]).map((a) => ({
+			id: a.slug, tag: a.category_name || 'Статья', title: a.title,
+			description: a.excerpt, image: a.image_url, link: `/journal/${a.slug}`, linkText: 'Читать'
+		}));
+	}
+
 	const editorialContent = {
 		eyebrow: editorialConfig.eyebrow || 'Журнал',
 		title: editorialConfig.title || 'Экспертиза и вдохновение',
-		articles: articlesFromDb.map((a) => ({
-			id: a.slug,
-			tag: a.category_name || 'Статья',
-			title: a.title,
-			description: a.excerpt,
-			image: a.image_url,
-			link: `/journal/${a.slug}`,
-			linkText: 'Читать'
-		}))
+		articles: editorialArticles
 	};
 
 	// ============================================
-	// 7. TELEGRAM CTA - из config + виджет (Session-12: link instead of iframe)
+	// 7. TELEGRAM CTA - из config + виджет + section_config (Session-19)
 	// ============================================
 	const telegramGroupEnabled = (queries.getConfigByKey.get('telegram_group_enabled') as any)?.value === 'true';
 	const telegramGroupUrl = (queries.getConfigByKey.get('telegram_group_url') as any)?.value || 'https://t.me/moditime_watch';
-	const telegramGroupLabel = (queries.getConfigByKey.get('telegram_group_label') as any)?.value || 'Telegram группа Moditimewatch';
 
+	const telegramConfig = sc('telegram');
 	const telegramWidgetFromDb = queries.getTelegramWidget.get() as any;
 	let telegramCtaContent: TelegramCtaSectionProps;
 
 	if (telegramWidgetFromDb?.data_json) {
-		telegramCtaContent = JSON.parse(telegramWidgetFromDb.data_json);
+		const widgetData = JSON.parse(telegramWidgetFromDb.data_json);
+		telegramCtaContent = {
+			eyebrow: telegramConfig.eyebrow || widgetData.eyebrow || 'Подписка',
+			title: telegramConfig.title || widgetData.title || 'Канал Moditimewatch в Telegram',
+			description: telegramConfig.description || widgetData.description || 'Анонсы релизов и эксклюзивные предложения',
+			features: widgetData.features || ['Эксклюзивные предложения', 'Подборки часов', 'Обзоры новинок'],
+			ctaText: widgetData.ctaText || 'Подписаться',
+			ctaHref: telegramGroupUrl,
+			channelUrl: telegramGroupUrl
+		};
 	} else {
 		telegramCtaContent = {
-			eyebrow: 'Подписка',
-			title: 'Канал Moditimewatch в Telegram',
-			description: 'Анонсы релизов и эксклюзивные предложения',
+			eyebrow: telegramConfig.eyebrow || 'Подписка',
+			title: telegramConfig.title || 'Канал Moditimewatch в Telegram',
+			description: telegramConfig.description || 'Анонсы релизов и эксклюзивные предложения',
 			features: ['Эксклюзивные предложения', 'Подборки часов', 'Обзоры новинок'],
 			ctaText: 'Подписаться',
 			ctaHref: telegramGroupUrl,
 			channelUrl: telegramGroupUrl
 		};
 	}
-
-	// Override with config values
-	telegramCtaContent.ctaHref = telegramGroupUrl;
-	telegramCtaContent.channelUrl = telegramGroupUrl;
 
 	return {
 		heroContent,
