@@ -50,18 +50,6 @@ export function importProducts(rows: Record<string, string>[]): ImportResult {
 	const deleteProductImages = db.prepare('DELETE FROM product_images WHERE product_id = ?');
 	const insertImage = db.prepare('INSERT INTO product_images (product_id, url, thumbnail_url, alt, position, is_main) VALUES (?, ?, ?, ?, ?, ?)');
 
-	// Brand name lookup (hoisted out of loop)
-	const getBrandName = db.prepare('SELECT name FROM brands WHERE id = ?');
-
-	// FTS5 manual rebuild: content='products' but products has brand_id not brand_name,
-	// so the built-in 'rebuild' command fails. We manually reconstruct the FTS index.
-	const deleteFTS = db.prepare("INSERT INTO products_fts(products_fts) VALUES('delete-all')");
-	const populateFTS = db.prepare(`
-		INSERT INTO products_fts(rowid, name, description, brand_name)
-		SELECT p.id, p.name, p.description, b.name
-		FROM products p JOIN brands b ON b.id = p.brand_id
-	`);
-
 	const transaction = db.transaction(() => {
 		for (let i = 0; i < rows.length; i++) {
 			const row = rows[i];
@@ -174,9 +162,9 @@ export function importProducts(rows: Record<string, string>[]): ImportResult {
 			}
 		}
 
-		// Rebuild FTS5 index after all product changes
-		deleteFTS.run();
-		populateFTS.run();
+		// Note: FTS5 index is updated automatically by per-row INSERT/UPDATE triggers.
+		// The built-in 'rebuild' command cannot be used because products_fts has
+		// content='products' but uses brand_name (which is on brands table, not products).
 	});
 
 	transaction();
