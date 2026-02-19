@@ -2,7 +2,7 @@
 
 > **Developer:** НЕ делай задачи со статусом DONE!
 > **Полный roadmap всех сессий:** см. `SESSIONS_ROADMAP.md`
-> **Текущая сессия:** Session-15 (16 задач)
+> **Текущие сессии:** Session-18..22 (Homepage Admin + Site Settings + Menu + Pages)
 
 ---
 
@@ -10,11 +10,11 @@
 
 | Метрика | Значение |
 |---------|----------|
-| **Всего задач** | 122 |
-| **Выполнено** | 92 (75%) |
-| **Осталось** | 30 (25%) |
-| **Всего сессий** | 17 |
-| **Завершено сессий** | 15 (88%) |
+| **Всего задач** | 152 |
+| **Выполнено** | 92 (61%) |
+| **Осталось** | 60 (39%) |
+| **Всего сессий** | 22 |
+| **Завершено сессий** | 15 (68%) |
 
 ---
 
@@ -104,6 +104,93 @@
 
 ---
 
+### Session-18: Homepage Admin Part 1 (Hero + Collections + Bestsellers)
+
+> **Источник:** ASCII-спеки + Moderator planning
+> **Приоритет:** HIGH
+> **Roadmap:** `project-doc/session-18-homepage-admin-part1/roadmap-start.md`
+> **ASCII:** `ASCII/templates/homepage.admin.md`
+
+| Task | Summary | Status | Deployed |
+|------|---------|--------|----------|
+| 1 | БД — homepage_section_config + homepage_showcase_items | ⏳ PENDING | - |
+| 2 | Обновить главную — секции читают тексты из БД | ⏳ PENDING | - |
+| 3 | Admin — вкладки + Hero tab | ⏳ PENDING | - |
+| 4 | Admin — вкладка "Коллекции" | ⏳ PENDING | - |
+| 5 | Admin — вкладка "Бестселлеры" | ⏳ PENDING | - |
+
+---
+
+### Session-19: Homepage Admin Part 2 (Services + Testimonials + Journal + Telegram)
+
+> **Источник:** ASCII-спеки + Moderator planning
+> **Приоритет:** HIGH
+> **Зависит от:** Session-18
+> **Roadmap:** `project-doc/session-19-homepage-admin-part2/roadmap-start.md`
+> **ASCII:** `ASCII/templates/homepage.admin.md`
+
+| Task | Summary | Status | Deployed |
+|------|---------|--------|----------|
+| 1 | БД — homepage_editorial_items + queries | ⏳ PENDING | - |
+| 2 | Обновить главную — оставшиеся секции из БД | ⏳ PENDING | - |
+| 3 | Admin — вкладка "Сервисы" | ⏳ PENDING | - |
+| 4 | Admin — вкладка "Отзывы" | ⏳ PENDING | - |
+| 5 | Admin — вкладка "Журнал" | ⏳ PENDING | - |
+| 6 | Admin — вкладка "Telegram" | ⏳ PENDING | - |
+
+---
+
+### Session-20: Site Settings Admin
+
+> **Источник:** ASCII-спеки + Moderator planning
+> **Приоритет:** HIGH
+> **Roadmap:** `project-doc/session-20-site-settings/roadmap-start.md`
+> **ASCII:** `ASCII/admin/site-settings.md`, `ASCII/layouts/headers/main.admin.md`, `ASCII/layouts/footers/main.admin.md`
+
+| Task | Summary | Status | Deployed |
+|------|---------|--------|----------|
+| 1 | БД — новые ключи site_config + seed | ⏳ PENDING | - |
+| 2 | Admin — страница Site Settings | ⏳ PENDING | - |
+| 3 | Обновить SiteHeader — данные из site_config | ⏳ PENDING | - |
+| 4 | Обновить SiteFooter — данные из site_config | ⏳ PENDING | - |
+| 5 | Обновить CityHeader + CityFooter | ⏳ PENDING | - |
+| 6 | Sidebar — ссылка "Настройки сайта" | ⏳ PENDING | - |
+
+---
+
+### Session-21: Menu Manager Admin
+
+> **Источник:** ASCII-спеки + Moderator planning
+> **Приоритет:** MEDIUM
+> **Roadmap:** `project-doc/session-21-menu-manager/roadmap-start.md`
+> **ASCII:** `ASCII/admin/menu-manager.md`
+
+| Task | Summary | Status | Deployed |
+|------|---------|--------|----------|
+| 1 | БД — prepared statements для меню | ⏳ PENDING | - |
+| 2 | Admin — страница списка меню | ⏳ PENDING | - |
+| 3 | Редактор Header меню (Desktop + Mobile) | ⏳ PENDING | - |
+| 4 | Редактор Footer меню | ⏳ PENDING | - |
+| 5 | Редактор City навигации | ⏳ PENDING | - |
+| 6 | Sidebar — ссылка "Меню" | ⏳ PENDING | - |
+
+---
+
+### Session-22: Page Manager Admin
+
+> **Источник:** ASCII-спеки + Moderator planning
+> **Приоритет:** MEDIUM
+> **Roadmap:** `project-doc/session-22-page-manager/roadmap-start.md`
+> **ASCII:** `ASCII/admin/page-manager.md`
+
+| Task | Summary | Status | Deployed |
+|------|---------|--------|----------|
+| 1 | Server load — агрегация данных страниц | ⏳ PENDING | - |
+| 2 | UI — страница Page Manager | ⏳ PENDING | - |
+| 3 | Sidebar — ссылка "Страницы" | ⏳ PENDING | - |
+
+---
+
 ### ~~Session-16: Smart Import — Автоопределение формата CSV поставщика~~ ✅ DONE
 
 > **Deployed:** 2026-02-19 | **Commit:** 12b4615
@@ -140,3 +227,8 @@
 15. Session-15 (import/export v2) 🔄
 16. Session-16 (smart import — supplier CSV format) ✅
 17. Session-17 (image upload при импорте) ✅
+18. Session-18 (homepage admin part 1 — hero, collections, bestsellers) ⏳
+19. Session-19 (homepage admin part 2 — services, testimonials, journal, telegram) ⏳
+20. Session-20 (site settings admin) ⏳
+21. Session-21 (menu manager admin) ⏳
+22. Session-22 (page manager admin) ⏳
