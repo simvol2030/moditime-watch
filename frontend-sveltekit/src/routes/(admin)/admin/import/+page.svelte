@@ -27,13 +27,13 @@
 		filters: '/admin/import/templates/filters'
 	};
 
-	const exportUrls: { label: string; url: string }[] = [
-		{ label: 'Products', url: '/admin/export/products' },
-		{ label: 'Brands', url: '/admin/export/brands' },
-		{ label: 'Categories', url: '/admin/export/categories' },
-		{ label: 'Cities', url: '/admin/export/cities' },
-		{ label: 'Filters', url: '/admin/export/filters' },
-		{ label: 'City Articles', url: '/admin/export/city_articles' }
+	const exportUrls: { label: string; url: string; icon: string }[] = [
+		{ label: 'Products', url: '/admin/export/products', icon: '⌚' },
+		{ label: 'Brands', url: '/admin/export/brands', icon: '🏷️' },
+		{ label: 'Categories', url: '/admin/export/categories', icon: '📁' },
+		{ label: 'Cities', url: '/admin/export/cities', icon: '🏙️' },
+		{ label: 'Filters', url: '/admin/export/filters', icon: '🔍' },
+		{ label: 'City Articles', url: '/admin/export/city_articles', icon: '📰' }
 	];
 </script>
 
@@ -46,48 +46,72 @@
 		<a href={templateUrls[selectedType]} download class="template-btn">
 			Download {dataTypes.find(d => d.value === selectedType)?.label} Template
 		</a>
+		{#if selectedType === 'products'}
+			<a href="/admin/import/templates/supplier" download class="template-btn template-btn-supplier">
+				Supplier Template
+			</a>
+		{/if}
 	{/snippet}
 </PageHeader>
 
-<div class="card guide-card">
-	<h3>Как пользоваться импортом</h3>
-	<div class="guide-steps">
-		<div class="guide-step">
-			<span class="step-num">1</span>
-			<div>
-				<strong>Подготовьте CSV-файл</strong>
-				<p>Два способа:</p>
-				<ul>
-					<li><b>Экспорт + редактирование</b> — скачайте текущие данные (кнопки Export ниже), отредактируйте в Excel/Google Sheets, добавьте новые строки</li>
-					<li><b>Шаблон</b> — скачайте пустой шаблон (кнопка "Download Template" вверху), заполните по образцу</li>
-				</ul>
-			</div>
-		</div>
-		<div class="guide-step">
-			<span class="step-num">2</span>
-			<div>
-				<strong>Загрузите и проверьте</strong>
-				<p>Выберите тип данных, загрузите файл, нажмите Preview. Проверьте таблицу — всё ли на месте.</p>
-			</div>
-		</div>
-		<div class="guide-step">
-			<span class="step-num">3</span>
-			<div>
-				<strong>Импортируйте</strong>
-				<p>Выберите файл повторно и нажмите Import. Существующие записи обновятся (по SKU или slug), новые — добавятся.</p>
-			</div>
-		</div>
+<!-- Export Data — prominent block at top -->
+<div class="card export-card">
+	<h3>Export Data</h3>
+	<p class="export-desc">Download current data as CSV files</p>
+	<div class="export-grid">
+		{#each exportUrls as exp}
+			<a href={exp.url} download class="export-btn">
+				<span class="export-btn-icon">{exp.icon}</span>
+				<span class="export-btn-label">{exp.label}</span>
+			</a>
+		{/each}
 	</div>
-	<details class="guide-details">
-		<summary>Подробнее о форматах и правилах</summary>
-		<div class="guide-details-content">
-			<p><b>Products:</b> цена в рублях (без копеек). Изображения — URL через | (пайп). Характеристики — JSON в поле specs_json. Пустые поля изображений = не трогать существующие.</p>
-			<p><b>Brands/Categories:</b> обязательны slug и name. При импорте товаров бренд и категория должны уже существовать (или включите "Cascade import").</p>
-			<p><b>ZIP с изображениями:</b> архив с CSV + папка images/. Имена файлов указывайте в CSV без пути (например: watch-1.jpg). Изображения автоматически конвертируются в WebP.</p>
-			<p><b>Кодировка:</b> UTF-8. При сохранении из Excel выбирайте "CSV UTF-8".</p>
-		</div>
-	</details>
 </div>
+
+<!-- Instructions — collapsed by default -->
+<details class="card guide-card">
+	<summary class="guide-summary">Как пользоваться импортом</summary>
+	<div class="guide-content">
+		<div class="guide-steps">
+			<div class="guide-step">
+				<span class="step-num">1</span>
+				<div>
+					<strong>Подготовьте CSV-файл</strong>
+					<p>Два способа:</p>
+					<ul>
+						<li><b>Экспорт + редактирование</b> — скачайте текущие данные (кнопки Export выше), отредактируйте в Excel/Google Sheets, добавьте новые строки</li>
+						<li><b>Шаблон</b> — скачайте пустой шаблон (кнопка "Download Template" вверху), заполните по образцу</li>
+						<li><b>CSV от поставщика</b> — загрузите файл как есть, система автоматически определит формат и сконвертирует данные</li>
+					</ul>
+				</div>
+			</div>
+			<div class="guide-step">
+				<span class="step-num">2</span>
+				<div>
+					<strong>Загрузите и проверьте</strong>
+					<p>Выберите тип данных, загрузите файл, нажмите Preview. Проверьте таблицу — всё ли на месте.</p>
+				</div>
+			</div>
+			<div class="guide-step">
+				<span class="step-num">3</span>
+				<div>
+					<strong>Импортируйте</strong>
+					<p>Выберите файл повторно и нажмите Import. Существующие записи обновятся (по SKU или slug), новые — добавятся.</p>
+				</div>
+			</div>
+		</div>
+		<details class="guide-details">
+			<summary>Подробнее о форматах и правилах</summary>
+			<div class="guide-details-content">
+				<p><b>Products:</b> цена в рублях (без копеек). Изображения — URL через | (пайп). Характеристики — JSON в поле specs_json. Пустые поля изображений = не трогать существующие.</p>
+				<p><b>Brands/Categories:</b> обязательны slug и name. При импорте товаров бренд и категория должны уже существовать (или включите "Cascade import").</p>
+				<p><b>CSV поставщика:</b> если CSV содержит колонки "Имя", "Бренд", "Пол" — система автоматически сконвертирует данные в наш формат, создаст бренды и категории.</p>
+				<p><b>ZIP с изображениями:</b> архив с CSV + папка images/. Имена файлов указывайте в CSV без пути (например: watch-1.jpg). Числовые ID (17156) автоматически найдут файл 17156.jpg/png/webp. Изображения автоматически конвертируются в WebP.</p>
+				<p><b>Кодировка:</b> UTF-8. При сохранении из Excel выбирайте "CSV UTF-8".</p>
+			</div>
+		</details>
+	</div>
+</details>
 
 {#if form?.error}
 	<div class="alert error">{form.error}</div>
@@ -102,6 +126,9 @@
 		{/if}
 		{#if form.result.errors.length > 0}
 			| Errors: {form.result.errors.length}
+		{/if}
+		{#if form.detectedFormat === 'supplier'}
+			<span class="format-badge format-supplier">Supplier format (auto-converted)</span>
 		{/if}
 	</div>
 
@@ -140,16 +167,6 @@
 		</div>
 	{/if}
 {/if}
-
-<div class="card">
-	<h3>Export Data</h3>
-	<p class="export-desc">Download current data as CSV files</p>
-	<div class="export-grid">
-		{#each exportUrls as exp}
-			<a href={exp.url} download class="export-btn">{exp.label}</a>
-		{/each}
-	</div>
-</div>
 
 <div class="card">
 	<h3>1. Select Data Type</h3>
@@ -199,7 +216,34 @@
 
 {#if form?.preview}
 	<div class="card">
-		<h3>3. Preview ({form.totalRows} rows in {form.fileName})</h3>
+		<div class="preview-header">
+			<h3>3. Preview ({form.totalRows} rows in {form.fileName})</h3>
+			{#if form.detectedFormat === 'supplier'}
+				<span class="format-badge format-supplier">Supplier format (auto-converted)</span>
+			{:else if form.detectedFormat === 'native'}
+				<span class="format-badge format-native">Standard format</span>
+			{:else if form.detectedFormat === 'unknown'}
+				<span class="format-badge format-unknown">Unknown format</span>
+			{/if}
+		</div>
+
+		{#if form.conversionInfo}
+			<div class="conversion-info">
+				<p class="conversion-title">Auto-conversion applied:</p>
+				<ul class="conversion-list">
+					{#if form.conversionInfo.newBrands.length > 0}
+						<li>Brands: {form.conversionInfo.newBrands.join(', ')}</li>
+					{/if}
+					{#if form.conversionInfo.newCategories.length > 0}
+						<li>Categories: {form.conversionInfo.newCategories.join(', ')}</li>
+					{/if}
+					{#if form.conversionInfo.specsCollected}
+						<li>Specs collected from individual columns into specs_json</li>
+					{/if}
+				</ul>
+			</div>
+		{/if}
+
 		<div class="preview-scroll">
 			<table class="preview-table">
 				<thead>
@@ -240,11 +284,14 @@
 				class="file-input"
 			/>
 			<p class="import-note">Please re-select the same file to proceed with import.</p>
-			{#if form.dataType === 'products'}
+			{#if form.dataType === 'products' && form.detectedFormat !== 'supplier'}
 				<label class="cascade-option">
 					<input type="checkbox" name="cascade" value="1" />
 					<span>Cascade import: auto-create missing brands and categories</span>
 				</label>
+			{/if}
+			{#if form.detectedFormat === 'supplier'}
+				<p class="cascade-auto-note">Cascade import enabled automatically for supplier format.</p>
 			{/if}
 			<div class="import-actions">
 				<ActionButton type="submit" variant="primary" disabled={loading}>
@@ -290,185 +337,14 @@
 		color: #16a34a;
 	}
 
-	.type-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-		gap: 0.75rem;
+	/* Export card — prominent */
+	.export-card {
+		background: #f0fdf4;
+		border: 1px solid #86efac;
 	}
 
-	.type-card {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 1rem;
-		border: 2px solid #e5e7eb;
-		border-radius: 10px;
-		background: white;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.type-card:hover {
-		border-color: #93c5fd;
-		background: #f0f9ff;
-	}
-
-	.type-card.active {
-		border-color: #3b82f6;
-		background: #eff6ff;
-	}
-
-	.type-icon {
-		font-size: 1.5rem;
-	}
-
-	.type-label {
-		font-size: 0.8125rem;
-		font-weight: 500;
-		color: #374151;
-	}
-
-	.upload-area {
-		margin-bottom: 1rem;
-	}
-
-	.file-input {
-		display: block;
-		width: 100%;
-		padding: 0.75rem;
-		border: 2px dashed #d1d5db;
-		border-radius: 8px;
-		font-size: 0.875rem;
-		cursor: pointer;
-	}
-
-	.file-input:hover {
-		border-color: #93c5fd;
-	}
-
-	.upload-hint {
-		margin: 0.5rem 0 0;
-		font-size: 0.8125rem;
-		color: #6b7280;
-	}
-
-	.upload-actions {
-		display: flex;
-		justify-content: flex-end;
-	}
-
-	.preview-scroll {
-		overflow-x: auto;
-		margin-bottom: 1rem;
-	}
-
-	.preview-table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: 0.8125rem;
-	}
-
-	.preview-table th,
-	.preview-table td {
-		padding: 0.5rem 0.75rem;
-		text-align: left;
-		border-bottom: 1px solid #e5e7eb;
-		white-space: nowrap;
-		max-width: 250px;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.preview-table th {
-		font-size: 0.75rem;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: #6b7280;
-		font-weight: 600;
-		background: #f9fafb;
-	}
-
-	.preview-note {
-		font-size: 0.8125rem;
-		color: #6b7280;
-		text-align: center;
-		margin: 0 0 1rem;
-	}
-
-	.import-note {
-		font-size: 0.8125rem;
-		color: #f59e0b;
-		margin: 0.5rem 0;
-	}
-
-	.cascade-option {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		margin: 0.75rem 0;
-		font-size: 0.875rem;
-		color: #374151;
-		cursor: pointer;
-	}
-
-	.cascade-option input[type='checkbox'] {
-		width: 1rem;
-		height: 1rem;
-	}
-
-	.import-actions {
-		display: flex;
-		justify-content: flex-end;
-		margin-top: 1rem;
-	}
-
-	.errors-card h3 {
-		color: #dc2626;
-	}
-
-	.image-errors {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-
-	.image-errors li {
-		padding: 0.375rem 0;
-		font-size: 0.8125rem;
-		color: #b45309;
-		border-bottom: 1px solid #fef3c7;
-	}
-
-	.image-errors li:last-child {
-		border-bottom: none;
-	}
-
-	.errors-table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: 0.8125rem;
-	}
-
-	.errors-table th,
-	.errors-table td {
-		padding: 0.5rem 0.75rem;
-		text-align: left;
-		border-bottom: 1px solid #e5e7eb;
-	}
-
-	.errors-table th {
-		font-size: 0.75rem;
-		text-transform: uppercase;
-		color: #6b7280;
-		font-weight: 600;
-	}
-
-	.errors-table code {
-		background: #fee2e2;
-		padding: 0.125rem 0.375rem;
-		border-radius: 4px;
-		font-size: 0.75rem;
+	.export-card h3 {
+		color: #15803d;
 	}
 
 	.export-desc {
@@ -478,22 +354,24 @@
 	}
 
 	.export-grid {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		gap: 0.75rem;
 	}
 
 	.export-btn {
-		display: inline-flex;
+		display: flex;
 		align-items: center;
-		padding: 0.375rem 0.875rem;
-		background: #f0fdf4;
+		gap: 0.5rem;
+		padding: 0.75rem 1rem;
+		background: white;
 		border: 1px solid #86efac;
-		border-radius: 6px;
-		font-size: 0.8125rem;
+		border-radius: 8px;
+		font-size: 0.875rem;
 		color: #15803d;
 		text-decoration: none;
 		transition: all 0.2s;
+		font-weight: 500;
 	}
 
 	.export-btn:hover {
@@ -501,31 +379,49 @@
 		border-color: #22c55e;
 	}
 
-	.template-btn {
-		display: inline-flex;
-		align-items: center;
-		padding: 0.5rem 1rem;
-		background: white;
-		border: 1px solid #d1d5db;
-		border-radius: 8px;
-		font-size: 0.875rem;
-		color: #374151;
-		text-decoration: none;
-		transition: all 0.2s;
+	.export-btn-icon {
+		font-size: 1.125rem;
 	}
 
-	.template-btn:hover {
-		background: #f9fafb;
-		border-color: #9ca3af;
+	.export-btn-label {
+		flex: 1;
 	}
 
+	/* Guide card — collapsed by default */
 	.guide-card {
 		background: #f0f9ff;
 		border: 1px solid #bae6fd;
+		cursor: default;
 	}
 
-	.guide-card h3 {
+	.guide-summary {
+		cursor: pointer;
+		font-size: 1rem;
+		font-weight: 600;
 		color: #0369a1;
+		padding: 0;
+		list-style: none;
+	}
+
+	.guide-summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.guide-summary::before {
+		content: '▶ ';
+		font-size: 0.75rem;
+	}
+
+	.guide-card[open] > .guide-summary::before {
+		content: '▼ ';
+	}
+
+	.guide-summary:hover {
+		color: #0284c7;
+	}
+
+	.guide-content {
+		margin-top: 1rem;
 	}
 
 	.guide-steps {
@@ -603,5 +499,288 @@
 		color: #4b5563;
 		margin: 0.5rem 0;
 		line-height: 1.5;
+	}
+
+	.type-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		gap: 0.75rem;
+	}
+
+	.type-card {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 1rem;
+		border: 2px solid #e5e7eb;
+		border-radius: 10px;
+		background: white;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.type-card:hover {
+		border-color: #93c5fd;
+		background: #f0f9ff;
+	}
+
+	.type-card.active {
+		border-color: #3b82f6;
+		background: #eff6ff;
+	}
+
+	.type-icon {
+		font-size: 1.5rem;
+	}
+
+	.type-label {
+		font-size: 0.8125rem;
+		font-weight: 500;
+		color: #374151;
+	}
+
+	.upload-area {
+		margin-bottom: 1rem;
+	}
+
+	.file-input {
+		display: block;
+		width: 100%;
+		padding: 0.75rem;
+		border: 2px dashed #d1d5db;
+		border-radius: 8px;
+		font-size: 0.875rem;
+		cursor: pointer;
+	}
+
+	.file-input:hover {
+		border-color: #93c5fd;
+	}
+
+	.upload-hint {
+		margin: 0.5rem 0 0;
+		font-size: 0.8125rem;
+		color: #6b7280;
+	}
+
+	.upload-actions {
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	/* Preview header with format badge */
+	.preview-header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 1rem;
+	}
+
+	.preview-header h3 {
+		margin: 0;
+	}
+
+	.format-badge {
+		display: inline-block;
+		padding: 0.25rem 0.625rem;
+		border-radius: 999px;
+		font-size: 0.75rem;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+
+	.format-native {
+		background: #dcfce7;
+		color: #15803d;
+		border: 1px solid #86efac;
+	}
+
+	.format-supplier {
+		background: #dbeafe;
+		color: #1d4ed8;
+		border: 1px solid #93c5fd;
+	}
+
+	.format-unknown {
+		background: #fef3c7;
+		color: #92400e;
+		border: 1px solid #fcd34d;
+	}
+
+	/* Conversion info block */
+	.conversion-info {
+		background: #eff6ff;
+		border: 1px solid #bfdbfe;
+		border-radius: 8px;
+		padding: 0.75rem 1rem;
+		margin-bottom: 1rem;
+	}
+
+	.conversion-title {
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: #1d4ed8;
+		margin: 0 0 0.375rem;
+	}
+
+	.conversion-list {
+		margin: 0;
+		padding-left: 1.25rem;
+		font-size: 0.8125rem;
+		color: #374151;
+	}
+
+	.conversion-list li {
+		margin-bottom: 0.25rem;
+	}
+
+	.preview-scroll {
+		overflow-x: auto;
+		margin-bottom: 1rem;
+	}
+
+	.preview-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.8125rem;
+	}
+
+	.preview-table th,
+	.preview-table td {
+		padding: 0.5rem 0.75rem;
+		text-align: left;
+		border-bottom: 1px solid #e5e7eb;
+		white-space: nowrap;
+		max-width: 250px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.preview-table th {
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: #6b7280;
+		font-weight: 600;
+		background: #f9fafb;
+	}
+
+	.preview-note {
+		font-size: 0.8125rem;
+		color: #6b7280;
+		text-align: center;
+		margin: 0 0 1rem;
+	}
+
+	.import-note {
+		font-size: 0.8125rem;
+		color: #f59e0b;
+		margin: 0.5rem 0;
+	}
+
+	.cascade-option {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0.75rem 0;
+		font-size: 0.875rem;
+		color: #374151;
+		cursor: pointer;
+	}
+
+	.cascade-option input[type='checkbox'] {
+		width: 1rem;
+		height: 1rem;
+	}
+
+	.cascade-auto-note {
+		font-size: 0.8125rem;
+		color: #1d4ed8;
+		margin: 0.5rem 0;
+		font-style: italic;
+	}
+
+	.import-actions {
+		display: flex;
+		justify-content: flex-end;
+		margin-top: 1rem;
+	}
+
+	.errors-card h3 {
+		color: #dc2626;
+	}
+
+	.image-errors {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+
+	.image-errors li {
+		padding: 0.375rem 0;
+		font-size: 0.8125rem;
+		color: #b45309;
+		border-bottom: 1px solid #fef3c7;
+	}
+
+	.image-errors li:last-child {
+		border-bottom: none;
+	}
+
+	.errors-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.8125rem;
+	}
+
+	.errors-table th,
+	.errors-table td {
+		padding: 0.5rem 0.75rem;
+		text-align: left;
+		border-bottom: 1px solid #e5e7eb;
+	}
+
+	.errors-table th {
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		color: #6b7280;
+		font-weight: 600;
+	}
+
+	.errors-table code {
+		background: #fee2e2;
+		padding: 0.125rem 0.375rem;
+		border-radius: 4px;
+		font-size: 0.75rem;
+	}
+
+	.template-btn {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.5rem 1rem;
+		background: white;
+		border: 1px solid #d1d5db;
+		border-radius: 8px;
+		font-size: 0.875rem;
+		color: #374151;
+		text-decoration: none;
+		transition: all 0.2s;
+	}
+
+	.template-btn:hover {
+		background: #f9fafb;
+		border-color: #9ca3af;
+	}
+
+	.template-btn-supplier {
+		background: #eff6ff;
+		border-color: #93c5fd;
+		color: #1d4ed8;
+	}
+
+	.template-btn-supplier:hover {
+		background: #dbeafe;
+		border-color: #3b82f6;
 	}
 </style>

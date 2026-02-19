@@ -1,5 +1,6 @@
 import type { Actions } from './$types';
 import { parseCSV } from '$lib/server/import/csv-parser';
+import { detectCsvFormat, convertSupplierRows, type CsvFormat } from '$lib/server/import/csv-format-detector';
 import { importProducts } from '$lib/server/import/product-importer';
 import { importBrands } from '$lib/server/import/brand-importer';
 import { importCategories } from '$lib/server/import/category-importer';
@@ -48,6 +49,7 @@ async function extractFileContents(file: File, dataType: string): Promise<{
 	csvText: string;
 	imageMap: Map<string, string>;
 	thumbMap: Map<string, string>;
+	imageCount: number;
 	imageErrors: string[];
 }> {
 	const isZip = file.name.endsWith('.zip') || file.type === 'application/zip';
@@ -61,12 +63,13 @@ async function extractFileContents(file: File, dataType: string): Promise<{
 			csvText: result.csvText,
 			imageMap: result.imageMap,
 			thumbMap: result.thumbMap,
+			imageCount: result.imageCount,
 			imageErrors: result.imageErrors
 		};
 	}
 
 	const csvText = await file.text();
-	return { csvText, imageMap: new Map(), thumbMap: new Map(), imageErrors: [] };
+	return { csvText, imageMap: new Map(), thumbMap: new Map(), imageCount: 0, imageErrors: [] };
 }
 
 export const actions: Actions = {
@@ -87,13 +90,33 @@ export const actions: Actions = {
 
 		try {
 			const { csvText } = await extractFileContents(file, dataType);
-			const { rows, headers } = parseCSV(csvText);
+			const { rows: rawRows, headers: rawHeaders } = parseCSV(csvText);
 
-			if (rows.length === 0) {
+			if (rawRows.length === 0) {
 				return { error: 'CSV file is empty or has no data rows' };
 			}
 
 			const isZip = file.name.endsWith('.zip');
+
+			// Detect CSV format and convert if supplier
+			const detectedFormat: CsvFormat = dataType === 'products'
+				? detectCsvFormat(rawHeaders)
+				: 'native';
+
+			let rows = rawRows;
+			let headers = rawHeaders;
+			let conversionInfo: { newBrands: string[]; newCategories: string[]; specsCollected: boolean } | undefined;
+
+			if (detectedFormat === 'supplier') {
+				const conversion = convertSupplierRows(rawRows);
+				rows = conversion.rows;
+				headers = Object.keys(rows[0] || {});
+				conversionInfo = {
+					newBrands: Array.from(conversion.brandNames.entries()).map(([slug, name]) => `${name} → ${slug}`),
+					newCategories: Array.from(conversion.categoryNames.entries()).map(([slug, name]) => `${name} → ${slug}`),
+					specsCollected: true
+				};
+			}
 
 			return {
 				preview: true,
@@ -102,7 +125,9 @@ export const actions: Actions = {
 				rows: rows.slice(0, 5),
 				totalRows: rows.length,
 				fileName: file.name,
-				isZip
+				isZip,
+				detectedFormat,
+				conversionInfo
 			};
 		} catch (err) {
 			return { error: `Preview failed: ${err instanceof Error ? err.message : 'Unknown error'}` };
@@ -128,11 +153,27 @@ export const actions: Actions = {
 		}
 
 		try {
-			const { csvText, imageMap, imageErrors } = await extractFileContents(file, dataType);
-			let { rows } = parseCSV(csvText);
+			const { csvText, imageMap, imageCount, imageErrors } = await extractFileContents(file, dataType);
+			const { rows: rawRows, headers: rawHeaders } = parseCSV(csvText);
 
-			if (rows.length === 0) {
+			if (rawRows.length === 0) {
 				return { error: 'CSV file is empty or has no data rows' };
+			}
+
+			// Detect CSV format and convert if supplier
+			const detectedFormat: CsvFormat = dataType === 'products'
+				? detectCsvFormat(rawHeaders)
+				: 'native';
+
+			let rows = rawRows;
+			let supplierBrandNames: Map<string, string> | undefined;
+			let supplierCategoryNames: Map<string, string> | undefined;
+
+			if (detectedFormat === 'supplier') {
+				const conversion = convertSupplierRows(rawRows);
+				rows = conversion.rows;
+				supplierBrandNames = conversion.brandNames;
+				supplierCategoryNames = conversion.categoryNames;
 			}
 
 			// Resolve image references from ZIP
@@ -144,7 +185,10 @@ export const actions: Actions = {
 			}
 
 			// Cascade import: auto-create brands/categories before products
-			if (cascade && dataType === 'products') {
+			// For supplier format — auto-enable cascade with proper names
+			const shouldCascade = (cascade || detectedFormat === 'supplier') && dataType === 'products';
+
+			if (shouldCascade) {
 				const brandSlugs = new Set<string>();
 				const categorySlugs = new Set<string>();
 
@@ -153,11 +197,11 @@ export const actions: Actions = {
 					if (row.category_slug) categorySlugs.add(row.category_slug);
 				}
 
-				// Auto-create brands
+				// Auto-create brands (use original names from supplier if available)
 				if (brandSlugs.size > 0) {
 					const brandRows = Array.from(brandSlugs).map(slug => ({
 						slug,
-						name: slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+						name: supplierBrandNames?.get(slug) || slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
 						description: '',
 						logo_url: '',
 						country: 'Switzerland',
@@ -169,11 +213,11 @@ export const actions: Actions = {
 					importBrands(brandRows);
 				}
 
-				// Auto-create categories
+				// Auto-create categories (use Russian names from supplier if available)
 				if (categorySlugs.size > 0) {
 					const catRows = Array.from(categorySlugs).map(slug => ({
 						slug,
-						name: slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+						name: supplierCategoryNames?.get(slug) || slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
 						description: '',
 						parent_slug: '',
 						image_url: '',
@@ -189,7 +233,8 @@ export const actions: Actions = {
 				success: true,
 				dataType,
 				result,
-				imagesProcessed: imageMap.size,
+				detectedFormat,
+				imagesProcessed: imageCount,
 				imageErrors: imageErrors.length > 0 ? imageErrors : undefined
 			};
 		} catch (err) {

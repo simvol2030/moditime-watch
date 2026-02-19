@@ -9,6 +9,8 @@ export interface ZipContents {
 	imageMap: Map<string, string>;
 	/** Map of original filename → thumbnail URL */
 	thumbMap: Map<string, string>;
+	/** Actual number of unique images successfully processed */
+	imageCount: number;
 	/** Errors encountered during image processing */
 	imageErrors: string[];
 }
@@ -35,6 +37,7 @@ export async function extractZipImport(
 	let csvText = '';
 	const imageMap = new Map<string, string>();
 	const thumbMap = new Map<string, string>();
+	let imageCount = 0;
 	const imageErrors: string[] = [];
 
 	// Find CSV file (first .csv file found)
@@ -57,7 +60,7 @@ export async function extractZipImport(
 		const basename = entry.entryName.split('/').pop() || '';
 
 		// Check if this is an image file
-		if (/\.(jpg|jpeg|png|webp|gif|avif)$/i.test(name)) {
+		if (/\.(jpg|jpeg|png|webp|gif|avif|tiff|tif|bmp|svg)$/i.test(name)) {
 			try {
 				const imageBuffer = entry.getData();
 				const result = await processImage(imageBuffer);
@@ -70,11 +73,15 @@ export async function extractZipImport(
 				const url = saveMedia(entity, mainFilename, result.buffer);
 				const thumbUrl = saveMedia(entity, thumbFilename, result.thumbBuffer);
 
-				// Map both the full entry name and just the basename
+				// Map by: full entry name, basename, and basename without extension
+				// This allows matching by numeric ID (e.g., "17156" → "17156.jpg")
 				imageMap.set(entry.entryName, url);
 				imageMap.set(basename, url);
+				imageMap.set(slug, url);
 				thumbMap.set(entry.entryName, thumbUrl);
 				thumbMap.set(basename, thumbUrl);
+				thumbMap.set(slug, thumbUrl);
+				imageCount++;
 			} catch (err) {
 				const msg = `Failed to process image "${basename}": ${err instanceof Error ? err.message : 'Unknown error'}`;
 				imageErrors.push(msg);
@@ -83,12 +90,52 @@ export async function extractZipImport(
 		}
 	}
 
-	return { csvText, imageMap, thumbMap, imageErrors };
+	return { csvText, imageMap, thumbMap, imageCount, imageErrors };
+}
+
+/** Image extensions for fuzzy matching */
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'tiff', 'tif', 'bmp', 'svg'];
+
+/**
+ * Fuzzy-match a value against imageMap.
+ * Tries: exact match, trimmed, case-insensitive, numeric ID with extensions, with images/ prefix.
+ */
+function fuzzyImageMatch(value: string, imageMap: Map<string, string>): string | undefined {
+	const trimmed = value.trim();
+	if (!trimmed) return undefined;
+
+	// 1. Exact match
+	if (imageMap.has(trimmed)) return imageMap.get(trimmed);
+
+	// 2. Case-insensitive fallback
+	const lower = trimmed.toLowerCase();
+	for (const [key, url] of imageMap) {
+		if (key.toLowerCase() === lower) return url;
+	}
+
+	// 3. If value looks like a numeric ID, try with extensions
+	if (/^\d+$/.test(trimmed)) {
+		for (const ext of IMAGE_EXTENSIONS) {
+			const withExt = `${trimmed}.${ext}`;
+			if (imageMap.has(withExt)) return imageMap.get(withExt);
+			// Try with images/ prefix
+			const withPrefix = `images/${withExt}`;
+			if (imageMap.has(withPrefix)) return imageMap.get(withPrefix);
+		}
+	}
+
+	// 4. Try without extension (matches the slug key we added above)
+	const withoutExt = trimmed.replace(/\.[^.]+$/, '');
+	if (withoutExt !== trimmed && imageMap.has(withoutExt)) {
+		return imageMap.get(withoutExt);
+	}
+
+	return undefined;
 }
 
 /**
  * Replace image references in CSV rows with processed media URLs.
- * Checks columns that typically contain image URLs (ending with _url, _image, image_url, etc.)
+ * Supports fuzzy matching: numeric IDs, case-insensitive, extension variants.
  */
 export function resolveImageReferences(
 	rows: Record<string, string>[],
@@ -111,13 +158,14 @@ export function resolveImageReferences(
 					.map(v => {
 						const trimmed = v.trim();
 						if (trimmed.startsWith('/media/')) return trimmed;
-						return imageMap.get(trimmed) || trimmed;
+						return fuzzyImageMatch(trimmed, imageMap) || trimmed;
 					})
 					.join('|');
 			} else {
-				// Single value
-				if (imageMap.has(value)) {
-					resolved[col] = imageMap.get(value)!;
+				// Single value — fuzzy match
+				const matched = fuzzyImageMatch(value, imageMap);
+				if (matched) {
+					resolved[col] = matched;
 				}
 			}
 		}
