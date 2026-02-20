@@ -28,7 +28,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 				path: '/',
 				httpOnly: true,
 				sameSite: 'strict',
-				secure: false,
+				secure: process.env.NODE_ENV === 'production',
 				maxAge: 60 * 60 * 24 * 7 // 7 days
 			});
 		}

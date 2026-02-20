@@ -53,6 +53,11 @@ export function sanitizeMessage(input: string): string {
 // Track consecutive fallbacks per session
 const fallbackCounts = new Map<string, number>();
 
+// Cleanup fallbackCounts every 5 minutes to prevent memory leak
+setInterval(() => {
+	if (fallbackCounts.size > 1000) fallbackCounts.clear();
+}, 300_000);
+
 export function generateResponse(message: string, sessionId: string): BotResponse {
 	const normalized = message.toLowerCase().trim();
 
@@ -262,8 +267,8 @@ function getTopProducts(limit: number): ProductCard[] {
 
 function getProductsByBrand(brandId: number): ProductCard[] {
 	try {
-		const rows = queries.getAllActiveProducts.all() as any[];
-		return rows.filter(r => r.brand_id === brandId).slice(0, 4).map(toProductCard);
+		const rows = queries.getActiveProductsByBrand.all(brandId) as any[];
+		return rows.map(toProductCard);
 	} catch {
 		return [];
 	}
@@ -271,8 +276,8 @@ function getProductsByBrand(brandId: number): ProductCard[] {
 
 function getProductsByCategory(categoryId: number): ProductCard[] {
 	try {
-		const rows = queries.getAllActiveProducts.all() as any[];
-		return rows.filter(r => r.category_id === categoryId).slice(0, 4).map(toProductCard);
+		const rows = queries.getActiveProductsByCategory.all(categoryId) as any[];
+		return rows.map(toProductCard);
 	} catch {
 		return [];
 	}

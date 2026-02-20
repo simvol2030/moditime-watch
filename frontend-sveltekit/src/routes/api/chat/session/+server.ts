@@ -28,7 +28,7 @@ export const GET: RequestHandler = async ({ cookies }) => {
 				path: '/',
 				httpOnly: true,
 				sameSite: 'strict',
-				secure: false,
+				secure: process.env.NODE_ENV === 'production',
 				maxAge: 60 * 60 * 24 * 7
 			});
 		}

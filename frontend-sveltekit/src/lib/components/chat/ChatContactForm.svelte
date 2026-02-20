@@ -12,7 +12,8 @@
 	let success = $state(false);
 	let loading = $state(false);
 
-	async function handleSubmit() {
+	async function handleSubmit(e: SubmitEvent) {
+		e.preventDefault();
 		error = '';
 		if (!name.trim() || name.trim().length < 2) {
 			error = 'Укажите имя (минимум 2 символа)';
@@ -52,7 +53,7 @@
 		</div>
 	{:else}
 		<div class="chat-contact__title">Оставьте ваши контакты</div>
-		<form class="chat-contact__form" onsubmit|preventDefault={handleSubmit}>
+		<form class="chat-contact__form" onsubmit={handleSubmit}>
 			<input
 				type="text"
 				placeholder="Ваше имя *"

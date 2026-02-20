@@ -751,6 +751,8 @@ const createQueries = () => ({
   getProductBySlug: db.prepare('SELECT p.*, b.name as brand_name, b.slug as brand_slug FROM products p JOIN brands b ON b.id = p.brand_id WHERE p.slug = ? AND p.is_active = 1'),
   getAllActiveProducts: db.prepare('SELECT p.*, b.name as brand_name FROM products p JOIN brands b ON b.id = p.brand_id WHERE p.is_active = 1 ORDER BY p.position'),
   getFeaturedProducts: db.prepare('SELECT p.*, b.name as brand_name FROM products p JOIN brands b ON b.id = p.brand_id WHERE p.is_featured = 1 AND p.is_active = 1 ORDER BY p.position LIMIT ?'),
+  getActiveProductsByBrand: db.prepare('SELECT p.*, b.name as brand_name FROM products p JOIN brands b ON b.id = p.brand_id WHERE p.brand_id = ? AND p.is_active = 1 ORDER BY p.position LIMIT 4'),
+  getActiveProductsByCategory: db.prepare('SELECT p.*, b.name as brand_name FROM products p JOIN brands b ON b.id = p.brand_id WHERE p.category_id = ? AND p.is_active = 1 ORDER BY p.position LIMIT 4'),
   getProductImages: db.prepare('SELECT * FROM product_images WHERE product_id = ? ORDER BY position'),
 
   // Products - Catalog (pagination, filters)
@@ -1239,6 +1241,7 @@ const createQueries = () => ({
   adminCountChatSessions: db.prepare('SELECT COUNT(*) as total FROM chat_sessions'),
   adminCountChatSessionsToday: db.prepare(`SELECT COUNT(*) as total FROM chat_sessions WHERE date(created_at) = date('now')`),
   adminCountChatSessionsWaiting: db.prepare(`SELECT COUNT(*) as total FROM chat_sessions WHERE status = 'waiting_human'`),
+  adminCountChatSessionsByStatus: db.prepare('SELECT COUNT(*) as total FROM chat_sessions WHERE status = ?'),
 
   // Chat Messages
   insertChatMessage: db.prepare(`INSERT INTO chat_messages (session_id, role, content, metadata_json) VALUES (@session_id, @role, @content, @metadata_json)`),

@@ -15,7 +15,9 @@ export const load: PageServerLoad = async ({ url }) => {
 		? queries.adminListChatSessionsByStatus.all(status, PER_PAGE, offset) as any[]
 		: queries.adminListChatSessions.all(PER_PAGE, offset) as any[];
 
-	const totalCount = (queries.adminCountChatSessions.get() as any)?.total || 0;
+	const totalCount = status
+		? (queries.adminCountChatSessionsByStatus.get(status) as any)?.total || 0
+		: (queries.adminCountChatSessions.get() as any)?.total || 0;
 	const totalPages = Math.max(1, Math.ceil(totalCount / PER_PAGE));
 
 	// If session detail requested, load messages

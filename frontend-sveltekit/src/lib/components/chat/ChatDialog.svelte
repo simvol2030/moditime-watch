@@ -157,9 +157,6 @@
 					{/each}
 				</div>
 			{/if}
-			{#if msg.show_contact_form}
-				<ChatContactForm {sessionId} onsubmit={handleContactSubmit} />
-			{/if}
 		{/each}
 		{#if isLoading}
 			<ChatMessage role="bot" content="" isTyping={true} />
