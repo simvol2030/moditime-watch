@@ -154,7 +154,7 @@ const csrfProtection: Handle = async ({ event, resolve }) => {
 			// Проверяем токен
 			if (!cookieToken || !submittedToken || cookieToken !== submittedToken) {
 				// Публичные endpoints без защиты
-				const publicEndpoints = ['/api/health'];
+				const publicEndpoints = ['/api/health', '/api/chat', '/api/chat/session', '/api/chat/contact'];
 				if (!publicEndpoints.includes(event.url.pathname)) {
 					console.warn(`CSRF token mismatch for ${request.method} ${event.url.pathname}`);
 
