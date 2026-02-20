@@ -748,6 +748,7 @@ function seedSiteConfigExtras() {
 // INITIALIZE DATABASE BEFORE CREATING QUERIES! (only in main thread)
 if (isMainThread) {
 	initializeDatabase();
+	migrateChatbotAI();
 	seedDatabase();
 	seedAdditionalCities();
 	seedSiteConfigExtras();
