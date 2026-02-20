@@ -1034,5 +1034,21 @@ CREATE TABLE IF NOT EXISTS chat_config (
 );
 
 -- ============================================
+-- БЛОК 14b: CHATBOT AI Extension (Session-24)
+-- ============================================
+
+-- AI-поля для сообщений
+-- response_mode: 'rules' | 'ai' | 'fallback' | NULL (user/human)
+ALTER TABLE chat_messages ADD COLUMN response_mode TEXT DEFAULT NULL;
+ALTER TABLE chat_messages ADD COLUMN model TEXT DEFAULT NULL;
+ALTER TABLE chat_messages ADD COLUMN tokens_prompt INTEGER DEFAULT 0;
+ALTER TABLE chat_messages ADD COLUMN tokens_completion INTEGER DEFAULT 0;
+ALTER TABLE chat_messages ADD COLUMN cost REAL DEFAULT 0;
+
+-- Суммарные токены и стоимость по сессии
+ALTER TABLE chat_sessions ADD COLUMN total_tokens INTEGER DEFAULT 0;
+ALTER TABLE chat_sessions ADD COLUMN total_cost REAL DEFAULT 0;
+
+-- ============================================
 -- КОНЕЦ СХЕМЫ
 -- ============================================

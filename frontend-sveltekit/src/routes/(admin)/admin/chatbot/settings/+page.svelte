@@ -97,6 +97,93 @@
 			</div>
 		</div>
 
+		<!-- Mode -->
+		<div class="card">
+			<h2>Режим работы</h2>
+			<div class="radio-group">
+				<label class="radio-card">
+					<input type="radio" name="chat_mode" value="rules" checked={c('chat_mode', 'auto') === 'rules'} />
+					<div>
+						<strong>Правила</strong>
+						<span class="radio-desc">Только FAQ и ключевые слова. Без AI, без расходов.</span>
+					</div>
+				</label>
+				<label class="radio-card">
+					<input type="radio" name="chat_mode" value="ai" checked={c('chat_mode', 'auto') === 'ai'} />
+					<div>
+						<strong>AI</strong>
+						<span class="radio-desc">Все ответы через OpenRouter AI. Требуется API ключ.</span>
+					</div>
+				</label>
+				<label class="radio-card">
+					<input type="radio" name="chat_mode" value="auto" checked={c('chat_mode', 'auto') === 'auto'} />
+					<div>
+						<strong>Авто</strong>
+						<span class="radio-desc">Сначала правила, если нет совпадения — AI. Оптимальный режим.</span>
+					</div>
+				</label>
+			</div>
+		</div>
+
+		<!-- OpenRouter AI -->
+		<div class="card">
+			<h2>OpenRouter AI</h2>
+			<div class="form-grid">
+				<div class="form-group full">
+					<label for="openrouter_api_key">API ключ</label>
+					<input type="password" id="openrouter_api_key" name="openrouter_api_key" value="" placeholder={c('openrouter_api_key') ? '••••••••' : 'Введите ключ OpenRouter'} />
+					<span class="hint">Оставьте пустым, чтобы не менять. Env: OPENROUTER_API_KEY</span>
+				</div>
+				<div class="form-group">
+					<label for="ai_model">Модель</label>
+					<select id="ai_model" name="ai_model">
+						<option value="google/gemini-2.0-flash-001" selected={c('ai_model', 'google/gemini-2.0-flash-001') === 'google/gemini-2.0-flash-001'}>Gemini 2.0 Flash</option>
+						<option value="google/gemini-2.5-flash-preview" selected={c('ai_model') === 'google/gemini-2.5-flash-preview'}>Gemini 2.5 Flash Preview</option>
+						<option value="anthropic/claude-3.5-haiku" selected={c('ai_model') === 'anthropic/claude-3.5-haiku'}>Claude 3.5 Haiku</option>
+						<option value="openai/gpt-4o-mini" selected={c('ai_model') === 'openai/gpt-4o-mini'}>GPT-4o Mini</option>
+						<option value="mistralai/mistral-small-latest" selected={c('ai_model') === 'mistralai/mistral-small-latest'}>Mistral Small</option>
+					</select>
+				</div>
+				<div class="form-group">
+					<label for="ai_temperature">Температура: {c('ai_temperature', '0.7')}</label>
+					<input type="range" id="ai_temperature" name="ai_temperature" min="0" max="2" step="0.1" value={c('ai_temperature', '0.7')} />
+					<span class="hint">0 = точные ответы, 2 = креативные</span>
+				</div>
+				<div class="form-group">
+					<label for="ai_max_tokens">Макс. токенов ответа</label>
+					<input type="number" id="ai_max_tokens" name="ai_max_tokens" value={c('ai_max_tokens', '500')} min="50" max="4000" />
+				</div>
+				<div class="form-group">
+					<label for="ai_history_depth">Глубина контекста (сообщений)</label>
+					<input type="number" id="ai_history_depth" name="ai_history_depth" value={c('ai_history_depth', '10')} min="0" max="50" />
+				</div>
+				<div class="form-group full">
+					<label for="ai_system_prompt">Системный промпт</label>
+					<textarea id="ai_system_prompt" name="ai_system_prompt" rows="5" maxlength="2000">{c('ai_system_prompt', 'Ты Modi — профессиональный консультант интернет-магазина премиальных часов Moditime Watch.\nОтвечай кратко, по-русски, в дружелюбном тоне.\nПомогай с выбором часов, доставкой, гарантией и оплатой.\nНе выходи за рамки тематики магазина часов.\nЕсли не знаешь ответа — предложи связаться с менеджером.')}</textarea>
+				</div>
+			</div>
+		</div>
+
+		<!-- Budget -->
+		<div class="card">
+			<h2>Бюджет AI</h2>
+			<div class="form-grid">
+				<div class="form-group">
+					<label for="ai_monthly_budget">Месячный лимит ($)</label>
+					<input type="number" id="ai_monthly_budget" name="ai_monthly_budget" value={c('ai_monthly_budget', '10')} min="0" step="1" />
+					<span class="hint">0 = без лимита</span>
+				</div>
+				<div class="form-group">
+					<label>Расход за месяц</label>
+					<div class="budget-display">
+						<span class="budget-spent">${data.monthlySpend.toFixed(2)}</span>
+						<span class="budget-sep">/</span>
+						<span class="budget-limit">${parseFloat(c('ai_monthly_budget', '10')) > 0 ? parseFloat(c('ai_monthly_budget', '10')).toFixed(0) : '∞'}</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<button type="submit" class="btn-primary">Сохранить настройки</button>
 	</form>
 </div>
@@ -134,4 +221,18 @@
 	.alert { padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.875rem; }
 	.alert-success { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
 	.alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+	.radio-group { display: flex; flex-direction: column; gap: 0.5rem; }
+	.radio-card { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; }
+	.radio-card:has(input:checked) { background: #eff6ff; border-color: #3b82f6; }
+	.radio-card input { margin-top: 3px; }
+	.radio-card strong { display: block; font-size: 0.875rem; }
+	.radio-desc { font-size: 0.75rem; color: #6b7280; }
+
+	.hint { font-size: 0.7rem; color: #9ca3af; }
+
+	.budget-display { display: flex; align-items: baseline; gap: 0.25rem; padding: 0.5rem 0; }
+	.budget-spent { font-size: 1.5rem; font-weight: 700; color: #059669; }
+	.budget-sep { color: #9ca3af; }
+	.budget-limit { font-size: 1rem; color: #6b7280; }
 </style>

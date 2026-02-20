@@ -1,11 +1,21 @@
 import { queries } from '$lib/server/db/database';
+import { callOpenRouter, getApiKey, checkBudget, type OpenRouterMessage } from './openrouter';
 
-interface BotResponse {
+// ============================================
+// Bot Logic — Session-24: async + 3 modes + FAQ grounding
+// ============================================
+
+export interface BotResponse {
 	reply: string;
 	products?: ProductCard[];
 	quick_replies?: string[];
 	metadata?: Record<string, unknown>;
 	show_contact_form?: boolean;
+	response_mode: 'rules' | 'ai' | 'fallback';
+	model?: string;
+	tokens_prompt?: number;
+	tokens_completion?: number;
+	cost?: number;
 }
 
 interface ProductCard {
@@ -15,6 +25,14 @@ interface ProductCard {
 	price: number;
 	slug: string;
 	image: string | null;
+}
+
+interface FaqEntry {
+	id: number;
+	question: string;
+	answer: string;
+	keywords: string | null;
+	category: string;
 }
 
 // Rate limiting: in-memory map
@@ -58,28 +76,65 @@ setInterval(() => {
 	if (fallbackCounts.size > 1000) fallbackCounts.clear();
 }, 300_000);
 
-export function generateResponse(message: string, sessionId: string): BotResponse {
+// ============================================
+// Main entry point — async, 3 modes
+// ============================================
+
+export async function generateResponse(message: string, sessionId: string): Promise<BotResponse> {
+	const mode = getChatConfigValue('chat_mode') || 'auto';
+
+	if (mode === 'rules') {
+		return rulesResponse(message, sessionId);
+	}
+
+	if (mode === 'ai') {
+		return aiResponse(message, sessionId);
+	}
+
+	// mode === 'auto': rules first, AI fallback
+	const rulesResult = rulesResponse(message, sessionId);
+	if (rulesResult.metadata?.matched_faq_id || rulesResult.products?.length || rulesResult.show_contact_form) {
+		// Rules found a real match — return it
+		return rulesResult;
+	}
+
+	// No rules match — try AI
+	try {
+		const aiResult = await aiResponse(message, sessionId);
+		fallbackCounts.set(sessionId, 0);
+		return aiResult;
+	} catch {
+		// AI failed — return rules fallback
+		return rulesResult;
+	}
+}
+
+// ============================================
+// Rules-based response (Session-23 logic)
+// ============================================
+
+function rulesResponse(message: string, sessionId: string): BotResponse {
 	const normalized = message.toLowerCase().trim();
 
-	// 1. Check quick reply intents (exact match)
+	// 1. Quick reply intents (exact match)
 	const quickReplyResponse = matchQuickReply(normalized);
 	if (quickReplyResponse) {
 		fallbackCounts.set(sessionId, 0);
-		return quickReplyResponse;
+		return { ...quickReplyResponse, response_mode: 'rules' };
 	}
 
 	// 2. FAQ matching
 	const faqResponse = matchFaq(normalized);
 	if (faqResponse) {
 		fallbackCounts.set(sessionId, 0);
-		return faqResponse;
+		return { ...faqResponse, response_mode: 'rules' };
 	}
 
 	// 3. Product matching
 	const productResponse = matchProducts(normalized);
 	if (productResponse) {
 		fallbackCounts.set(sessionId, 0);
-		return productResponse;
+		return { ...productResponse, response_mode: 'rules' };
 	}
 
 	// 4. Fallback
@@ -89,25 +144,134 @@ export function generateResponse(message: string, sessionId: string): BotRespons
 	const offlineMsg = getChatConfigValue('offline_message') ||
 		'К сожалению, я не смог найти ответ. Оставьте контакт, и мы свяжемся с вами.';
 
-	const defaultQuickReplies = getQuickReplies();
-
 	if (fallbacks >= 3) {
 		return {
 			reply: offlineMsg,
 			quick_replies: ['Связаться с консультантом'],
-			show_contact_form: true
+			show_contact_form: true,
+			response_mode: 'fallback'
 		};
 	}
 
 	return {
 		reply: 'Я пока не нашёл точного ответа на ваш вопрос. Попробуйте уточнить или выберите тему:',
-		quick_replies: defaultQuickReplies
+		quick_replies: getQuickReplies(),
+		response_mode: 'fallback'
 	};
 }
 
-function matchQuickReply(normalized: string): BotResponse | null {
+// ============================================
+// AI response (OpenRouter + FAQ grounding)
+// ============================================
+
+async function aiResponse(message: string, sessionId: string): Promise<BotResponse> {
+	const apiKey = getApiKey();
+	if (!apiKey) {
+		return {
+			reply: getChatConfigValue('offline_message') || 'Извините, AI-консультант временно недоступен.',
+			quick_replies: getQuickReplies(),
+			response_mode: 'fallback'
+		};
+	}
+
+	const budget = checkBudget();
+	if (!budget.allowed) {
+		return {
+			reply: getChatConfigValue('offline_message') || 'Извините, AI-консультант временно недоступен.',
+			quick_replies: getQuickReplies(),
+			response_mode: 'fallback'
+		};
+	}
+
+	// Build context
+	const history = getMessageHistory(sessionId);
+	const faqContext = getRelevantFaq(message, 3);
+	const systemPrompt = buildSystemPrompt(faqContext);
+	const model = getChatConfigValue('ai_model') || 'google/gemini-2.0-flash-001';
+	const temperature = parseFloat(getChatConfigValue('ai_temperature') || '0.7');
+	const maxTokens = parseInt(getChatConfigValue('ai_max_tokens') || '500');
+
+	const messages: OpenRouterMessage[] = [
+		{ role: 'system', content: systemPrompt },
+		...history,
+		{ role: 'user', content: message }
+	];
+
+	const result = await callOpenRouter({ model, temperature, max_tokens: maxTokens, messages }, apiKey);
+
+	return {
+		reply: result.content,
+		quick_replies: getQuickReplies(),
+		response_mode: 'ai',
+		model: result.model,
+		tokens_prompt: result.tokens_prompt,
+		tokens_completion: result.tokens_completion,
+		cost: result.cost
+	};
+}
+
+// ============================================
+// FAQ grounding helpers
+// ============================================
+
+function getRelevantFaq(message: string, limit: number): FaqEntry[] {
+	try {
+		const allFaq = queries.getChatFaqActive.all() as FaqEntry[];
+		const normalized = message.toLowerCase().trim();
+
+		const scored = allFaq
+			.map(faq => {
+				if (!faq.keywords) return { faq, score: 0 };
+				const keywords = faq.keywords.split(',').map(k => k.trim().toLowerCase());
+				let score = 0;
+				for (const kw of keywords) {
+					if (kw && normalized.includes(kw)) score++;
+				}
+				return { faq, score };
+			})
+			.filter(item => item.score > 0)
+			.sort((a, b) => b.score - a.score)
+			.slice(0, limit);
+
+		return scored.map(item => item.faq);
+	} catch {
+		return [];
+	}
+}
+
+function buildSystemPrompt(faqEntries: FaqEntry[]): string {
+	const base = getChatConfigValue('ai_system_prompt') ||
+		'Ты Modi — профессиональный консультант интернет-магазина премиальных часов Moditime Watch.\nОтвечай кратко, по-русски, в дружелюбном тоне.\nПомогай с выбором часов, доставкой, гарантией и оплатой.\nНе выходи за рамки тематики магазина часов.\nЕсли не знаешь ответа — предложи связаться с менеджером.';
+
+	if (faqEntries.length === 0) return base;
+
+	const faqSection = faqEntries.map(f =>
+		`В: ${f.question}\nО: ${f.answer}`
+	).join('\n---\n');
+
+	return `${base}\n\n<context>\nЧасто задаваемые вопросы:\n${faqSection}\n</context>`;
+}
+
+function getMessageHistory(sessionId: string): OpenRouterMessage[] {
+	try {
+		const depth = parseInt(getChatConfigValue('ai_history_depth') || '10');
+		const rows = queries.getChatMessagesForContext.all(sessionId, depth) as { role: string; content: string }[];
+		// Rows are DESC order — reverse to chronological
+		return rows.reverse().map(r => ({
+			role: r.role === 'user' ? 'user' as const : 'assistant' as const,
+			content: r.content
+		}));
+	} catch {
+		return [];
+	}
+}
+
+// ============================================
+// Rules matching helpers (from Session-23)
+// ============================================
+
+function matchQuickReply(normalized: string): Omit<BotResponse, 'response_mode'> | null {
 	if (normalized === 'каталог часов') {
-		// Find active brands
 		try {
 			const brands = queries.getAllBrands.all() as { name: string }[];
 			const brandList = brands.slice(0, 5).map(b => b.name).join(', ');
@@ -144,14 +308,11 @@ function matchQuickReply(normalized: string): BotResponse | null {
 	return null;
 }
 
-function matchFaq(normalized: string): BotResponse | null {
+function matchFaq(normalized: string): Omit<BotResponse, 'response_mode'> | null {
 	try {
-		const allFaq = queries.getChatFaqActive.all() as {
-			id: number; question: string; answer: string; keywords: string | null; category: string;
-		}[];
+		const allFaq = queries.getChatFaqActive.all() as FaqEntry[];
 
-		// Score each FAQ by keyword matches
-		let bestMatch: typeof allFaq[0] | null = null;
+		let bestMatch: FaqEntry | null = null;
 		let bestScore = 0;
 
 		for (const faq of allFaq) {
@@ -181,11 +342,9 @@ function matchFaq(normalized: string): BotResponse | null {
 	return null;
 }
 
-function matchFaqByCategory(category: string): BotResponse | null {
+function matchFaqByCategory(category: string): Omit<BotResponse, 'response_mode'> | null {
 	try {
-		const faqs = queries.getChatFaqActive.all() as {
-			id: number; answer: string; category: string;
-		}[];
+		const faqs = queries.getChatFaqActive.all() as FaqEntry[];
 		const matched = faqs.filter(f => f.category === category);
 		if (matched.length > 0) {
 			const answers = matched.map(f => f.answer).join('\n\n');
@@ -201,7 +360,7 @@ function matchFaqByCategory(category: string): BotResponse | null {
 	return null;
 }
 
-function matchProducts(normalized: string): BotResponse | null {
+function matchProducts(normalized: string): Omit<BotResponse, 'response_mode'> | null {
 	try {
 		// Check brand names
 		const brands = queries.getAllBrands.all() as { id: number; name: string; slug: string }[];
@@ -256,6 +415,10 @@ function matchProducts(normalized: string): BotResponse | null {
 	return null;
 }
 
+// ============================================
+// Product helpers
+// ============================================
+
 function getTopProducts(limit: number): ProductCard[] {
 	try {
 		const rows = queries.getFeaturedProducts.all(limit) as any[];
@@ -293,6 +456,10 @@ function toProductCard(row: any): ProductCard {
 		image: null
 	};
 }
+
+// ============================================
+// Config helpers
+// ============================================
 
 function getChatConfigValue(key: string): string | null {
 	try {

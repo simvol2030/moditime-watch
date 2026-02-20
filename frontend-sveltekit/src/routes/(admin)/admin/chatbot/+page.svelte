@@ -8,11 +8,13 @@
 		if (!d) return '—';
 		return new Date(d).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 	}
+
+	const modeLabels: Record<string, string> = { rules: 'Правила', ai: 'AI', auto: 'Авто' };
 </script>
 
 <div class="admin-page">
 	<div class="page-header">
-		<h1>Chatbot Dashboard</h1>
+		<h1>Чатбот — Dashboard</h1>
 		<div class="header-actions">
 			<a href="/admin/chatbot/faq" class="btn-link">FAQ</a>
 			<a href="/admin/chatbot/history" class="btn-link">История</a>
@@ -44,6 +46,16 @@
 			<div class="stat-value">{data.waitingCount}</div>
 			<div class="stat-label">Ожидают ответа</div>
 		</div>
+		<div class="stat-card">
+			<div class="stat-value stat-mode">{modeLabels[data.chatMode] || data.chatMode}</div>
+			<div class="stat-label">Режим бота</div>
+		</div>
+		{#if data.chatMode !== 'rules'}
+			<div class="stat-card">
+				<div class="stat-value stat-cost">${data.monthlySpend.toFixed(2)}</div>
+				<div class="stat-label">AI расход / ${data.monthlyBudget > 0 ? data.monthlyBudget.toFixed(0) : '∞'}</div>
+			</div>
+		{/if}
 	</div>
 
 	<!-- Recent sessions -->
@@ -70,7 +82,7 @@
 							<td>{s.message_count}</td>
 							<td>
 								<span class="status-badge" class:active={s.status === 'active'} class:waiting={s.status === 'waiting_human'}>
-									{s.status === 'active' ? 'Active' : s.status === 'waiting_human' ? 'Waiting' : 'Closed'}
+									{s.status === 'active' ? 'Активный' : s.status === 'waiting_human' ? 'Ожидает' : 'Закрыт'}
 								</span>
 							</td>
 							<td>{formatDate(s.last_message_at || s.created_at)}</td>
@@ -98,10 +110,12 @@
 	.toggle-btn { padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid #d1d5db; background: #f9fafb; cursor: pointer; font-size: 0.875rem; font-family: inherit; }
 	.toggle-btn.active { background: #dcfce7; border-color: #86efac; color: #166534; }
 
-	.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem; }
+	.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
 	.stat-card { background: white; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
 	.stat-value { font-size: 2rem; font-weight: 700; color: #1e40af; }
 	.stat-label { font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem; }
+	.stat-mode { font-size: 1.25rem; }
+	.stat-cost { font-size: 1.25rem; color: #059669; }
 
 	.table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 	.table th { text-align: left; padding: 0.75rem; border-bottom: 2px solid #e5e7eb; font-weight: 600; color: #374151; }
