@@ -38,7 +38,7 @@
 		{ label: 'Footer', href: '/admin/footer', icon: '🦶', group: 'Content' },
 		{ label: 'Homepage', href: '/admin/homepage', icon: '🏠', group: 'Content' },
 		{ label: 'Чатбот', href: '/admin/chatbot', icon: '💬', group: 'Поддержка' },
-		{ label: 'FAQ', href: '/admin/chatbot/faq', icon: '❓', group: 'Поддержка' },
+		{ label: 'База знаний', href: '/admin/chatbot/faq', icon: '❓', group: 'Поддержка' },
 		{ label: 'История чатов', href: '/admin/chatbot/history', icon: '📜', group: 'Поддержка' },
 		{ label: 'Настройки бота', href: '/admin/chatbot/settings', icon: '🤖', group: 'Поддержка' },
 		{ label: 'Menus', href: '/admin/menus', icon: '📋', group: 'Settings' },

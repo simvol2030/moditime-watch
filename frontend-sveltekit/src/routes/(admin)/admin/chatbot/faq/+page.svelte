@@ -17,7 +17,7 @@
 
 <div class="admin-page">
 	<div class="page-header">
-		<h1>Chatbot FAQ</h1>
+		<h1>База знаний</h1>
 		<div class="header-actions">
 			<a href="/admin/chatbot" class="btn-link btn-back">&larr; Dashboard</a>
 			<button class="btn-link" onclick={() => showCreate = !showCreate}>
