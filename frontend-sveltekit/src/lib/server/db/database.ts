@@ -1222,7 +1222,44 @@ const createQueries = () => ({
 
   // Telegram widget — upsert
   upsertTelegramWidget: db.prepare(`INSERT INTO widgets (type, title, data_json, is_active) VALUES ('telegram_cta', 'Telegram CTA', @data_json, @is_active) ON CONFLICT(id) DO UPDATE SET data_json = @data_json, is_active = @is_active`),
-  getTelegramWidgetForAdmin: db.prepare("SELECT * FROM widgets WHERE type = 'telegram_cta' LIMIT 1")
+  getTelegramWidgetForAdmin: db.prepare("SELECT * FROM widgets WHERE type = 'telegram_cta' LIMIT 1"),
+
+  // ============================================
+  // SESSION-23: CHATBOT
+  // ============================================
+
+  // Chat Sessions
+  createChatSession: db.prepare(`INSERT INTO chat_sessions (session_id, ip_address, user_agent, page_url) VALUES (@session_id, @ip_address, @user_agent, @page_url)`),
+  getChatSession: db.prepare('SELECT * FROM chat_sessions WHERE session_id = ?'),
+  updateChatSessionMessage: db.prepare(`UPDATE chat_sessions SET message_count = message_count + 1, last_message_at = datetime('now'), updated_at = datetime('now') WHERE session_id = ?`),
+  updateChatSessionContact: db.prepare(`UPDATE chat_sessions SET visitor_name = @visitor_name, visitor_email = @visitor_email, visitor_phone = @visitor_phone, status = 'waiting_human', updated_at = datetime('now') WHERE session_id = @session_id`),
+  updateChatSessionStatus: db.prepare(`UPDATE chat_sessions SET status = ?, updated_at = datetime('now') WHERE session_id = ?`),
+  adminListChatSessions: db.prepare(`SELECT * FROM chat_sessions ORDER BY last_message_at DESC, created_at DESC LIMIT ? OFFSET ?`),
+  adminListChatSessionsByStatus: db.prepare(`SELECT * FROM chat_sessions WHERE status = ? ORDER BY last_message_at DESC, created_at DESC LIMIT ? OFFSET ?`),
+  adminCountChatSessions: db.prepare('SELECT COUNT(*) as total FROM chat_sessions'),
+  adminCountChatSessionsToday: db.prepare(`SELECT COUNT(*) as total FROM chat_sessions WHERE date(created_at) = date('now')`),
+  adminCountChatSessionsWaiting: db.prepare(`SELECT COUNT(*) as total FROM chat_sessions WHERE status = 'waiting_human'`),
+
+  // Chat Messages
+  insertChatMessage: db.prepare(`INSERT INTO chat_messages (session_id, role, content, metadata_json) VALUES (@session_id, @role, @content, @metadata_json)`),
+  getChatMessagesBySession: db.prepare('SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC'),
+  markChatMessagesRead: db.prepare(`UPDATE chat_messages SET is_read = 1 WHERE session_id = ? AND role = 'bot' AND is_read = 0`),
+
+  // Chat FAQ
+  getChatFaqActive: db.prepare('SELECT * FROM chat_faq WHERE is_active = 1 ORDER BY position'),
+  adminListChatFaq: db.prepare('SELECT * FROM chat_faq ORDER BY position, id'),
+  adminListChatFaqByCategory: db.prepare('SELECT * FROM chat_faq WHERE category = ? ORDER BY position, id'),
+  adminCreateChatFaq: db.prepare(`INSERT INTO chat_faq (question, answer, keywords, category, is_active, position) VALUES (@question, @answer, @keywords, @category, @is_active, @position)`),
+  adminUpdateChatFaq: db.prepare(`UPDATE chat_faq SET question = @question, answer = @answer, keywords = @keywords, category = @category, is_active = @is_active, position = @position, updated_at = datetime('now') WHERE id = @id`),
+  adminDeleteChatFaq: db.prepare('DELETE FROM chat_faq WHERE id = ?'),
+  adminToggleChatFaq: db.prepare(`UPDATE chat_faq SET is_active = CASE WHEN is_active = 1 THEN 0 ELSE 1 END, updated_at = datetime('now') WHERE id = ?`),
+  incrementFaqMatchCount: db.prepare('UPDATE chat_faq SET match_count = match_count + 1 WHERE id = ?'),
+  adminGetMaxFaqPosition: db.prepare('SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM chat_faq'),
+
+  // Chat Config
+  getChatConfig: db.prepare('SELECT value FROM chat_config WHERE key = ?'),
+  setChatConfig: db.prepare(`INSERT INTO chat_config (key, value, description) VALUES (@key, @value, @description) ON CONFLICT(key) DO UPDATE SET value = @value, updated_at = datetime('now')`),
+  getAllChatConfig: db.prepare('SELECT key, value, description FROM chat_config ORDER BY key')
 });
 
 // Lazy queries cache
@@ -1264,6 +1301,37 @@ export function getProductComplete(slug: string): (Product & { brand_name: strin
 export function getConfigValue(key: string): string | null {
   const row = queries.getConfigByKey.get(key) as { value: string } | undefined;
   return row?.value ?? null;
+}
+
+// Seed chatbot data (FAQ + config)
+export function seedChatbot() {
+  const faqCount = db.prepare('SELECT COUNT(*) as count FROM chat_faq').get() as { count: number };
+  if (faqCount && faqCount.count > 0) return;
+
+  console.log('Seeding chatbot data...');
+  const seed = db.transaction(() => {
+    const insertFaq = db.prepare('INSERT INTO chat_faq (question, answer, keywords, category, is_active, position) VALUES (?, ?, ?, ?, 1, ?)');
+    insertFaq.run('Как оформить заказ?', 'Выберите часы в каталоге, добавьте в корзину и оформите заказ. Наш менеджер свяжется с вами для подтверждения.', 'заказ,оформить,купить,покупка,оформление', 'general', 1);
+    insertFaq.run('Какие способы доставки?', 'Мы доставляем по всей России. Сроки: Москва 1-2 дня, Санкт-Петербург 2-3 дня, регионы 3-7 дней. Доставка курьером или в пункт выдачи.', 'доставка,доставить,курьер,сроки,пункт выдачи', 'delivery', 2);
+    insertFaq.run('Какие способы оплаты?', 'Принимаем оплату банковской картой, переводом на расчётный счёт, наличными при получении. Также доступна рассрочка.', 'оплата,оплатить,карта,наличные,рассрочка,перевод', 'payment', 3);
+    insertFaq.run('Какая гарантия на часы?', 'Все часы поставляются с официальной международной гарантией от производителя. Срок гарантии зависит от бренда (обычно 2-5 лет).', 'гарантия,гарантийный,ремонт,сервис', 'warranty', 4);
+    insertFaq.run('Часы оригинальные?', 'Мы работаем только с оригинальными часами. Каждые часы проходят проверку подлинности и поставляются с полным комплектом документов.', 'оригинал,подделка,подлинность,сертификат,документы,оригинальные', 'general', 5);
+    insertFaq.run('Как вернуть часы?', 'Возврат возможен в течение 14 дней при сохранении товарного вида и полного комплекта. Свяжитесь с нами для оформления возврата.', 'возврат,вернуть,обмен,обменять', 'returns', 6);
+    insertFaq.run('Как с вами связаться?', 'Телефон: +7 (495) 120-00-00, Email: info@moditime-watch.ru. Также вы можете оставить заявку на обратный звонок.', 'контакты,телефон,email,позвонить,связаться,адрес', 'general', 7);
+    insertFaq.run('Какие часы работы?', 'Мы работаем Пн-Пт: 10:00-20:00, Сб: 11:00-18:00. В выходные обработка заказов может занять больше времени.', 'часы работы,график,расписание,выходные,режим', 'general', 8);
+
+    const insertConfig = db.prepare('INSERT OR IGNORE INTO chat_config (key, value, description) VALUES (?, ?, ?)');
+    insertConfig.run('bot_name', 'Modi', 'Имя бота');
+    insertConfig.run('bot_avatar_emoji', '\u231A', 'Эмодзи-аватар бота');
+    insertConfig.run('welcome_message', 'Здравствуйте! Я Modi — ваш консультант по часам. Чем могу помочь?', 'Приветственное сообщение');
+    insertConfig.run('offline_message', 'К сожалению, я не смог найти ответ на ваш вопрос. Оставьте контакт, и наш менеджер свяжется с вами.', 'Сообщение при отсутствии ответа');
+    insertConfig.run('is_enabled', 'true', 'Включён ли чатбот');
+    insertConfig.run('auto_open_delay', '0', 'Задержка автооткрытия (0 = не открывать)');
+    insertConfig.run('working_hours', '{"start":"10:00","end":"20:00"}', 'Часы работы');
+    insertConfig.run('quick_replies_json', '["Каталог часов","Доставка и оплата","Гарантия","Связаться с консультантом"]', 'Быстрые ответы');
+  });
+  seed();
+  console.log('Chatbot data seeded');
 }
 
 console.log('✅ Moditimewatch database ready');
