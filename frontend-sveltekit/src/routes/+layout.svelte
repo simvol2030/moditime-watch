@@ -5,6 +5,7 @@
 	import SiteHeader from '$lib/components/layout/SiteHeader.svelte';
 	import SiteFooter from '$lib/components/layout/SiteFooter.svelte';
 	import { initializeTheme } from '$lib/stores/ui.svelte';
+	import ChatWidget from '$lib/components/chat/ChatWidget.svelte';
 	import SeoManager from '$lib/components/seo/SeoManager.svelte';
 	import { page } from '$app/stores';
 	import type { LayoutData } from './$types';
@@ -55,4 +56,5 @@
 
 {#if !isAdminPage && !isCityPage}
 	<SiteFooter footerSections={data.footerSections} siteConfig={data.siteConfig} />
+	<ChatWidget />
 {/if}

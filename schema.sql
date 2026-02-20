@@ -968,5 +968,71 @@ CREATE TABLE IF NOT EXISTS callback_requests (
 CREATE INDEX IF NOT EXISTS idx_callback_requests_status ON callback_requests(status, created_at DESC);
 
 -- ============================================
+-- БЛОК 14: CHATBOT (Session-23)
+-- ============================================
+
+-- Сессии чатов
+CREATE TABLE IF NOT EXISTS chat_sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id TEXT UNIQUE NOT NULL,
+  visitor_name TEXT,
+  visitor_email TEXT,
+  visitor_phone TEXT,
+  status TEXT DEFAULT 'active',
+  message_count INTEGER DEFAULT 0,
+  last_message_at DATETIME,
+  ip_address TEXT,
+  user_agent TEXT,
+  page_url TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_session_id ON chat_sessions(session_id);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_status ON chat_sessions(status);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_created ON chat_sessions(created_at DESC);
+
+-- Сообщения чатов
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id TEXT NOT NULL,
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  metadata_json TEXT,
+  is_read INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES chat_sessions(session_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id, created_at);
+
+-- FAQ база чатбота
+CREATE TABLE IF NOT EXISTS chat_faq (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  question TEXT NOT NULL,
+  answer TEXT NOT NULL,
+  keywords TEXT,
+  category TEXT DEFAULT 'general',
+  is_active INTEGER DEFAULT 1,
+  position INTEGER DEFAULT 0,
+  match_count INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_faq_active ON chat_faq(is_active, position);
+CREATE INDEX IF NOT EXISTS idx_chat_faq_category ON chat_faq(category) WHERE is_active = 1;
+
+-- Настройки чатбота
+CREATE TABLE IF NOT EXISTS chat_config (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  key TEXT UNIQUE NOT NULL,
+  value TEXT,
+  description TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
 -- КОНЕЦ СХЕМЫ
 -- ============================================
