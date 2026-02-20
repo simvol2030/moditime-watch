@@ -81,7 +81,8 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			show_contact_form: response.show_contact_form || false,
 			response_mode: response.response_mode
 		});
-	} catch {
+	} catch (err) {
+		console.error('[chat API error]', err instanceof Error ? err.message : err, err instanceof Error ? err.stack : '');
 		return json({ error: 'Внутренняя ошибка сервера' }, { status: 500 });
 	}
 };
