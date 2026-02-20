@@ -1262,7 +1262,23 @@ const createQueries = () => ({
   // Chat Config
   getChatConfig: db.prepare('SELECT value FROM chat_config WHERE key = ?'),
   setChatConfig: db.prepare(`INSERT INTO chat_config (key, value, description) VALUES (@key, @value, @description) ON CONFLICT(key) DO UPDATE SET value = @value, updated_at = datetime('now')`),
-  getAllChatConfig: db.prepare('SELECT key, value, description FROM chat_config ORDER BY key')
+  getAllChatConfig: db.prepare('SELECT key, value, description FROM chat_config ORDER BY key'),
+
+  // ============================================
+  // SESSION-24: AI CHATBOT EXTENSION
+  // ============================================
+
+  // Chat Messages — AI-aware insert
+  insertChatMessageWithAI: db.prepare(`INSERT INTO chat_messages (session_id, role, content, metadata_json, response_mode, model, tokens_prompt, tokens_completion, cost) VALUES (@session_id, @role, @content, @metadata_json, @response_mode, @model, @tokens_prompt, @tokens_completion, @cost)`),
+
+  // Chat Sessions — token/cost tracking
+  updateChatSessionTokens: db.prepare(`UPDATE chat_sessions SET total_tokens = total_tokens + @tokens, total_cost = total_cost + @cost, updated_at = datetime('now') WHERE session_id = @session_id`),
+
+  // Chat Messages — last N for AI context (reversed to chronological)
+  getChatMessagesForContext: db.prepare(`SELECT role, content FROM chat_messages WHERE session_id = ? AND role IN ('user', 'bot') ORDER BY created_at DESC LIMIT ?`),
+
+  // Monthly AI spend for budget check
+  getMonthlyAISpend: db.prepare(`SELECT COALESCE(SUM(cost), 0) as total_cost FROM chat_messages WHERE cost > 0 AND created_at >= date('now', 'start of month')`)
 });
 
 // Lazy queries cache
@@ -1306,10 +1322,33 @@ export function getConfigValue(key: string): string | null {
   return row?.value ?? null;
 }
 
+// Session-24: Migrate chatbot tables (idempotent ALTER TABLE)
+export function migrateChatbotAI() {
+  const alters = [
+    'ALTER TABLE chat_messages ADD COLUMN response_mode TEXT DEFAULT NULL',
+    'ALTER TABLE chat_messages ADD COLUMN model TEXT DEFAULT NULL',
+    'ALTER TABLE chat_messages ADD COLUMN tokens_prompt INTEGER DEFAULT 0',
+    'ALTER TABLE chat_messages ADD COLUMN tokens_completion INTEGER DEFAULT 0',
+    'ALTER TABLE chat_messages ADD COLUMN cost REAL DEFAULT 0',
+    'ALTER TABLE chat_sessions ADD COLUMN total_tokens INTEGER DEFAULT 0',
+    'ALTER TABLE chat_sessions ADD COLUMN total_cost REAL DEFAULT 0'
+  ];
+  for (const sql of alters) {
+    try { db.exec(sql); } catch { /* column already exists */ }
+  }
+}
+
 // Seed chatbot data (FAQ + config)
 export function seedChatbot() {
+  // Run migration first (idempotent)
+  migrateChatbotAI();
+
   const faqCount = db.prepare('SELECT COUNT(*) as count FROM chat_faq').get() as { count: number };
-  if (faqCount && faqCount.count > 0) return;
+  if (faqCount && faqCount.count > 0) {
+    // Even if FAQ exists, ensure AI config keys are present
+    seedAIConfig();
+    return;
+  }
 
   console.log('Seeding chatbot data...');
   const seed = db.transaction(() => {
@@ -1334,7 +1373,22 @@ export function seedChatbot() {
     insertConfig.run('quick_replies_json', '["Каталог часов","Доставка и оплата","Гарантия","Связаться с консультантом"]', 'Быстрые ответы');
   });
   seed();
+  seedAIConfig();
   console.log('Chatbot data seeded');
+}
+
+// Seed AI-specific config keys (idempotent via INSERT OR IGNORE)
+function seedAIConfig() {
+  const insertConfig = db.prepare('INSERT OR IGNORE INTO chat_config (key, value, description) VALUES (?, ?, ?)');
+  insertConfig.run('chat_mode', 'auto', 'Режим бота: ai / rules / auto');
+  insertConfig.run('openrouter_api_key', '', 'API ключ OpenRouter');
+  insertConfig.run('ai_model', 'google/gemini-2.0-flash-001', 'Основная AI модель');
+  insertConfig.run('ai_fallback_models', '["meta-llama/llama-3.3-70b-instruct"]', 'Fallback модели JSON');
+  insertConfig.run('ai_temperature', '0.7', 'Температура (0.0-2.0)');
+  insertConfig.run('ai_max_tokens', '500', 'Макс. токенов в ответе');
+  insertConfig.run('ai_system_prompt', 'Ты Modi — профессиональный консультант интернет-магазина премиальных часов Moditime Watch.\nОтвечай кратко, по-русски, в дружелюбном тоне.\nПомогай с выбором часов, доставкой, гарантией и оплатой.\nНе выходи за рамки тематики магазина часов.\nЕсли не знаешь ответа — предложи связаться с менеджером.', 'Системный промпт AI');
+  insertConfig.run('ai_history_depth', '10', 'Кол-во сообщений в контексте AI');
+  insertConfig.run('ai_monthly_budget', '10', 'Бюджет USD/месяц (0 = без лимита)');
 }
 
 console.log('✅ Moditimewatch database ready');
