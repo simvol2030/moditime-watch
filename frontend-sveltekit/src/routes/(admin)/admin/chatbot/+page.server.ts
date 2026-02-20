@@ -11,12 +11,20 @@ export const load: PageServerLoad = async () => {
 	const recentSessions = queries.adminListChatSessions.all(10, 0) as any[];
 	const isEnabled = (queries.getChatConfig.get('is_enabled') as any)?.value !== 'false';
 
+	// AI stats
+	const chatMode = (queries.getChatConfig.get('chat_mode') as any)?.value || 'auto';
+	const monthlySpend = (queries.getMonthlyAISpend.get() as any)?.total_cost || 0;
+	const monthlyBudget = parseFloat((queries.getChatConfig.get('ai_monthly_budget') as any)?.value || '10');
+
 	return {
 		totalCount,
 		todayCount,
 		waitingCount,
 		recentSessions,
-		isEnabled
+		isEnabled,
+		chatMode,
+		monthlySpend,
+		monthlyBudget
 	};
 };
 

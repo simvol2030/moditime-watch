@@ -27,9 +27,9 @@
 	<!-- Filters -->
 	<div class="filters">
 		<a href="/admin/chatbot/history" class="filter-btn" class:active={!data.status}>Все</a>
-		<a href="/admin/chatbot/history?status=active" class="filter-btn" class:active={data.status === 'active'}>Active</a>
-		<a href="/admin/chatbot/history?status=waiting_human" class="filter-btn" class:active={data.status === 'waiting_human'}>Waiting</a>
-		<a href="/admin/chatbot/history?status=closed" class="filter-btn" class:active={data.status === 'closed'}>Closed</a>
+		<a href="/admin/chatbot/history?status=active" class="filter-btn" class:active={data.status === 'active'}>Активные</a>
+		<a href="/admin/chatbot/history?status=waiting_human" class="filter-btn" class:active={data.status === 'waiting_human'}>Ожидают</a>
+		<a href="/admin/chatbot/history?status=closed" class="filter-btn" class:active={data.status === 'closed'}>Закрыты</a>
 	</div>
 
 	<div class="layout-split">
@@ -50,7 +50,7 @@
 						</div>
 						<div class="session-row__meta">
 							<span class="status-badge" class:active={s.status === 'active'} class:waiting={s.status === 'waiting_human'}>
-								{s.status === 'active' ? 'Active' : s.status === 'waiting_human' ? 'Waiting' : 'Closed'}
+								{s.status === 'active' ? 'Активный' : s.status === 'waiting_human' ? 'Ожидает' : 'Закрыт'}
 							</span>
 							<span class="session-row__date">{formatDate(s.last_message_at || s.created_at)}</span>
 						</div>
@@ -84,14 +84,31 @@
 					{/if}
 				</div>
 
+				{#if data.selectedSession.total_tokens > 0}
+					<div class="session-stats">
+						<span class="session-stat">Токены: {data.selectedSession.total_tokens}</span>
+						<span class="session-stat">Стоимость: ${(data.selectedSession.total_cost || 0).toFixed(4)}</span>
+					</div>
+				{/if}
+
 				<div class="messages-list">
 					{#each data.sessionMessages as msg}
 						<div class="msg msg--{msg.role}">
 							<div class="msg__role">
 								{msg.role === 'user' ? 'Посетитель' : msg.role === 'bot' ? 'Modi' : msg.role === 'human' ? 'Оператор' : 'Система'}
+								{#if msg.role === 'bot' && msg.response_mode}
+									<span class="mode-badge mode-badge--{msg.response_mode}">
+										{msg.response_mode === 'rules' ? 'правила' : msg.response_mode === 'ai' ? 'AI' : 'fallback'}
+									</span>
+								{/if}
 							</div>
 							<div class="msg__content">{msg.content}</div>
-							<div class="msg__time">{formatDate(msg.created_at)}</div>
+							<div class="msg__meta">
+								<span class="msg__time">{formatDate(msg.created_at)}</span>
+								{#if msg.role === 'bot' && msg.response_mode === 'ai' && msg.tokens_prompt}
+									<span class="msg__tokens">{msg.tokens_prompt + (msg.tokens_completion || 0)} tok · ${(msg.cost || 0).toFixed(4)}</span>
+								{/if}
+							</div>
 						</div>
 					{/each}
 				</div>
@@ -153,7 +170,17 @@
 	.msg--human .msg__role { color: #d97706; }
 	.msg--system .msg__role { color: #9ca3af; }
 	.msg__content { font-size: 0.85rem; margin: 4px 0; white-space: pre-wrap; }
+	.msg__meta { display: flex; align-items: center; gap: 0.75rem; }
 	.msg__time { font-size: 0.7rem; color: #9ca3af; }
+	.msg__tokens { font-size: 0.65rem; color: #6b7280; font-family: monospace; }
+
+	.mode-badge { padding: 1px 6px; border-radius: 8px; font-size: 0.6rem; font-weight: 500; margin-left: 0.5rem; vertical-align: middle; }
+	.mode-badge--rules { background: #dcfce7; color: #166534; }
+	.mode-badge--ai { background: #dbeafe; color: #1e40af; }
+	.mode-badge--fallback { background: #f3f4f6; color: #6b7280; }
+
+	.session-stats { display: flex; gap: 1rem; padding: 0.5rem 0.75rem; background: #f9fafb; border-radius: 6px; margin-bottom: 0.75rem; font-size: 0.8rem; }
+	.session-stat { color: #374151; }
 
 	.note-form { display: flex; gap: 0.5rem; }
 	.note-input { flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.85rem; font-family: inherit; }
