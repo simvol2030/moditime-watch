@@ -16,7 +16,15 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
 		// Get or create session
 		let sessionId = cookies.get('chat_session_id') || body.session_id;
-		if (!sessionId) {
+
+		// Verify session exists in DB (cookie may reference deleted/old session)
+		let sessionExists = false;
+		if (sessionId) {
+			const row = queries.getChatSession.get(sessionId) as any;
+			sessionExists = !!row;
+		}
+
+		if (!sessionId || !sessionExists) {
 			sessionId = randomUUID();
 			queries.createChatSession.run({
 				session_id: sessionId,
