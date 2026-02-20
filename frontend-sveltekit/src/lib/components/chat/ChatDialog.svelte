@@ -381,7 +381,7 @@
 	}
 
 	/* Mobile fullscreen */
-	@media (max-width: 768px) {
+	@media (max-width: 480px) {
 		.chat-dialog {
 			width: 100vw;
 			height: 100vh;

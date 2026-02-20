@@ -47,24 +47,39 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		});
 		queries.updateChatSessionMessage.run(sessionId);
 
-		// Generate bot response
-		const response = generateResponse(message, sessionId);
+		// Generate bot response (async — supports AI mode)
+		const response = await generateResponse(message, sessionId);
 
-		// Save bot response
-		queries.insertChatMessage.run({
+		// Save bot response with AI metadata
+		queries.insertChatMessageWithAI.run({
 			session_id: sessionId,
 			role: 'bot',
 			content: response.reply,
-			metadata_json: response.metadata ? JSON.stringify(response.metadata) : null
+			metadata_json: response.metadata ? JSON.stringify(response.metadata) : null,
+			response_mode: response.response_mode,
+			model: response.model || null,
+			tokens_prompt: response.tokens_prompt || 0,
+			tokens_completion: response.tokens_completion || 0,
+			cost: response.cost || 0
 		});
 		queries.updateChatSessionMessage.run(sessionId);
+
+		// Update session token totals if AI was used
+		if (response.tokens_prompt || response.tokens_completion) {
+			queries.updateChatSessionTokens.run({
+				session_id: sessionId,
+				tokens: (response.tokens_prompt || 0) + (response.tokens_completion || 0),
+				cost: response.cost || 0
+			});
+		}
 
 		return json({
 			reply: response.reply,
 			products: response.products || [],
 			session_id: sessionId,
 			quick_replies: response.quick_replies || [],
-			show_contact_form: response.show_contact_form || false
+			show_contact_form: response.show_contact_form || false,
+			response_mode: response.response_mode
 		});
 	} catch {
 		return json({ error: 'Внутренняя ошибка сервера' }, { status: 500 });

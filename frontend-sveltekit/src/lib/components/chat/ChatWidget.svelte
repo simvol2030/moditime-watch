@@ -1,14 +1,21 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import ChatDialog from './ChatDialog.svelte';
 
 	let isOpen = $state(false);
 
+	onMount(() => {
+		isOpen = sessionStorage.getItem('chat_widget_open') === 'true';
+	});
+
 	function toggle() {
 		isOpen = !isOpen;
+		sessionStorage.setItem('chat_widget_open', String(isOpen));
 	}
 
 	function close() {
 		isOpen = false;
+		sessionStorage.setItem('chat_widget_open', 'false');
 	}
 </script>
 
@@ -89,7 +96,7 @@
 	}
 
 	/* Mobile: dialog is fullscreen, overlay fills screen */
-	@media (max-width: 768px) {
+	@media (max-width: 480px) {
 		.chat-widget__overlay {
 			inset: 0;
 			bottom: 0;
